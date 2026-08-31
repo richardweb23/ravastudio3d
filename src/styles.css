@@ -1000,9 +1000,9 @@ svg {
 }
 
 .reveal[data-reveal="clip"] {
-  clip-path: inset(0 0 100% 0);
-  opacity: 1;
-  transform: translateY(70px);
+  clip-path: inset(0 0 18% 0);
+  opacity: 0;
+  transform: translateY(70px) scale(0.97);
 }
 
 .reveal.is-visible {
@@ -1019,6 +1019,7 @@ svg {
 
 .reveal[data-reveal="clip"].is-visible {
   clip-path: inset(0 0 0 0);
+  opacity: 1;
   transform: translateY(0);
 }
 
@@ -1102,7 +1103,7 @@ svg {
     background: var(--cream);
     opacity: 0;
     transform: translateY(-16px);
-    transition: opacity 280ms ease, transform 280ms ease, visibility 280ms;
+    transition: opacity 180ms ease, transform 180ms ease, visibility 180ms;
   }
 
   .nav.is-open {
@@ -1280,6 +1281,29 @@ svg {
     padding-left: 20px;
   }
 
+  .cta-copy {
+    width: 100%;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .cta-copy .eyebrow {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .cta-copy h2 {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cta-copy .button {
+    align-self: center;
+  }
+
   .cta-section h2 {
     font-size: clamp(58px, 17vw, 84px);
   }
@@ -1298,16 +1322,31 @@ svg {
     grid-template-columns: 1fr;
     gap: 54px;
     padding: 70px 20px 28px;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .footer-links {
     grid-template-columns: 1fr;
     gap: 30px;
+    justify-items: center;
+  }
+
+  .footer-links div {
+    align-items: center;
   }
 
   .footer-bottom {
     gap: 18px;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 }
 

@@ -163,7 +163,7 @@ export default function App() {
             }
           });
         },
-        { threshold: 0.12, rootMargin: "0px 0px -7% 0px" },
+        { threshold: 0.06, rootMargin: "0px 0px -3% 0px" },
       );
 
       elements.forEach((element) => observer.observe(element));
@@ -259,8 +259,8 @@ export default function App() {
       }
 
       const duration = Math.min(
-        1500,
-        Math.max(900, Math.abs(distance) * 0.48),
+        950,
+        Math.max(550, Math.abs(distance) * 0.28),
       );
       let startTime = null;
 
@@ -269,10 +269,7 @@ export default function App() {
 
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const easedProgress =
-          progress < 0.5
-            ? 8 * progress ** 4
-            : 1 - (-2 * progress + 2) ** 4 / 2;
+        const easedProgress = 1 - (1 - progress) ** 3;
 
         window.scrollTo(0, startPosition + distance * easedProgress);
 
