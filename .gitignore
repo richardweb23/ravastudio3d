@@ -1,0 +1,20 @@
+# Dependências
+node_modules/
+
+# Build local
+dist/
+
+# Arquivos de ambiente
+.env
+.env.*
+!.env.example
+
+# Referência de criação (não faz parte do site publicado)
+referencia/
+
+# Arquivos do sistema e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
