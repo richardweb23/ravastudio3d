@@ -21,6 +21,10 @@ html {
   scroll-behavior: smooth;
 }
 
+section[id] {
+  scroll-margin-top: 86px;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -57,8 +61,22 @@ svg {
   background: var(--cream);
 }
 
+.scroll-progress {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--gold);
+  box-shadow: 0 1px 12px rgba(176, 142, 109, 0.65);
+  transform: scaleX(var(--scroll-progress, 0));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
 .site-header {
-  position: absolute;
+  position: fixed;
   z-index: 20;
   top: 0;
   left: 0;
@@ -68,6 +86,32 @@ svg {
   width: 100%;
   height: 112px;
   padding: 20px clamp(24px, 4vw, 72px);
+  isolation: isolate;
+  transition: height 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.site-header::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-bottom: 1px solid transparent;
+  background: rgba(244, 239, 232, 0.88);
+  content: "";
+  opacity: 0;
+  backdrop-filter: blur(18px);
+  transition: opacity 320ms ease, border-color 320ms ease;
+}
+
+.site-header.is-scrolled {
+  height: 82px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.site-header.is-scrolled::before {
+  border-color: rgba(23, 23, 20, 0.1);
+  opacity: 1;
 }
 
 .brand {
@@ -80,6 +124,11 @@ svg {
   width: 100%;
   height: 66px;
   object-fit: contain;
+  transition: height 350ms ease, transform 350ms ease;
+}
+
+.site-header.is-scrolled .brand img {
+  height: 56px;
 }
 
 .nav {
@@ -210,6 +259,61 @@ svg {
   z-index: 2;
   max-width: 650px;
   padding: 3vw 0 0;
+  will-change: transform, opacity;
+}
+
+.hero-copy.reveal.is-visible {
+  opacity: var(--hero-content-opacity, 1);
+  transform: translate3d(0, var(--hero-copy-shift, 0), 0);
+}
+
+.hero-copy.is-visible .eyebrow,
+.hero-copy.is-visible h1,
+.hero-copy.is-visible .hero-lead,
+.hero-copy.is-visible .hero-actions {
+  animation: hero-content-in 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-copy.is-visible h1 {
+  animation-delay: 100ms;
+}
+
+.hero-copy.is-visible .hero-lead {
+  animation-delay: 220ms;
+}
+
+.hero-copy.is-visible .hero-actions {
+  animation-delay: 340ms;
+}
+
+.hero-visual.is-visible {
+  animation: hero-visual-in 1300ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+}
+
+@keyframes hero-content-in {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(56px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-visual-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translateX(50px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    transform: translateX(0) scale(1);
+  }
 }
 
 .eyebrow {
@@ -310,15 +414,20 @@ svg {
 }
 
 .hero-image-frame img {
+  position: absolute;
+  top: -5%;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 110%;
   object-fit: cover;
   object-position: 55% center;
+  transform: translate3d(0, var(--hero-image-y, 0), 0) scale(1.04);
   transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
 }
 
 .hero-image-frame:hover img {
-  transform: scale(1.025);
+  transform: translate3d(0, var(--hero-image-y, 0), 0) scale(1.075);
 }
 
 .hero-stamp {
@@ -397,6 +506,16 @@ svg {
   border: 1px solid rgba(244, 239, 232, 0.22);
   border-radius: 50%;
   place-items: center;
+  transform: rotate(var(--mark-rotation, 0deg));
+  will-change: transform;
+}
+
+.statement-mark.reveal[data-reveal="scale"] {
+  transform: rotate(var(--mark-rotation, 0deg)) scale(0.65);
+}
+
+.statement-mark.reveal[data-reveal="scale"].is-visible {
+  transform: rotate(var(--mark-rotation, 0deg)) scale(1);
 }
 
 .line-icon {
@@ -483,15 +602,19 @@ svg {
 .collection-card > img {
   position: absolute;
   z-index: -2;
-  inset: 0;
+  top: -32px;
+  right: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% + 64px);
   object-fit: cover;
+  transform: translate3d(0, var(--parallax-y, 0), 0) scale(var(--image-scale, 1.03));
   transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1), filter 600ms ease;
+  will-change: transform;
 }
 
 .collection-card:hover > img {
-  transform: scale(1.035);
+  --image-scale: 1.065;
 }
 
 .collection-overlay {
@@ -553,6 +676,35 @@ svg {
   text-transform: uppercase;
 }
 
+.collection-topline,
+.collection-copy > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 650ms ease, transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.collection-card.is-visible .collection-topline,
+.collection-card.is-visible .collection-copy > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.collection-card.is-visible .collection-topline {
+  transition-delay: calc(var(--reveal-delay, 0ms) + 180ms);
+}
+
+.collection-card.is-visible .collection-copy h3 {
+  transition-delay: calc(var(--reveal-delay, 0ms) + 220ms);
+}
+
+.collection-card.is-visible .collection-copy p {
+  transition-delay: calc(var(--reveal-delay, 0ms) + 300ms);
+}
+
+.collection-card.is-visible .collection-copy a {
+  transition-delay: calc(var(--reveal-delay, 0ms) + 380ms);
+}
+
 .pillars {
   display: grid;
   grid-template-columns: 0.83fr 1.17fr;
@@ -602,6 +754,16 @@ svg {
 .pillar .line-icon {
   width: 34px;
   color: var(--gold);
+  opacity: 0;
+  transform: rotate(-24deg) scale(0.65);
+  transition: opacity 700ms ease,
+    transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--reveal-delay, 0ms) + 280ms);
+}
+
+.pillar.is-visible .line-icon {
+  opacity: 1;
+  transform: rotate(0) scale(1);
 }
 
 .pillar h3,
@@ -635,11 +797,30 @@ svg {
 }
 
 .process-list li {
+  position: relative;
   display: grid;
   grid-template-columns: 90px 1fr;
   gap: 24px;
   padding: 42px 0;
   border-bottom: 1px solid var(--line);
+}
+
+.process-list li::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--gold);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1050ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--reveal-delay, 0ms) + 260ms);
+}
+
+.process-list li.is-visible::after {
+  transform: scaleX(1);
 }
 
 .process-list li > span {
@@ -796,18 +977,76 @@ svg {
 
 .reveal {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 850ms ease, transform 850ms cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(9px);
+  transform: translateY(68px);
+  transition-property: opacity, transform, filter, clip-path;
+  transition-duration: 950ms, 1100ms, 950ms, 1100ms;
+  transition-timing-function: ease, cubic-bezier(0.16, 1, 0.3, 1), ease,
+    cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+
+.reveal[data-reveal="left"] {
+  transform: translateX(-86px);
+}
+
+.reveal[data-reveal="right"] {
+  transform: translateX(86px);
+}
+
+.reveal[data-reveal="scale"] {
+  transform: translateY(52px) scale(0.9);
+}
+
+.reveal[data-reveal="clip"] {
+  clip-path: inset(0 0 100% 0);
+  opacity: 1;
+  transform: translateY(70px);
 }
 
 .reveal.is-visible {
   opacity: 1;
+  filter: blur(0);
   transform: translateY(0);
+}
+
+.reveal[data-reveal="left"].is-visible,
+.reveal[data-reveal="right"].is-visible,
+.reveal[data-reveal="scale"].is-visible {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.reveal[data-reveal="clip"].is-visible {
+  clip-path: inset(0 0 0 0);
+  transform: translateY(0);
+}
+
+.collection-card.reveal {
+  clip-path: inset(6% 0 6% 0);
+}
+
+.collection-card.reveal.is-visible {
+  clip-path: inset(0 0 0 0);
+}
+
+.reveal .eyebrow span {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 750ms cubic-bezier(0.16, 1, 0.3, 1) 240ms;
+}
+
+.reveal.is-visible .eyebrow span {
+  transform: scaleX(1);
 }
 
 @media (max-width: 1040px) {
   .site-header {
     height: 92px;
+  }
+
+  .site-header.is-scrolled {
+    height: 74px;
   }
 
   .brand {
@@ -1087,6 +1326,36 @@ svg {
   }
 
   .reveal {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    will-change: auto;
+  }
+
+  .reveal[data-reveal="clip"] {
+    clip-path: none;
+  }
+
+  .hero-copy.reveal.is-visible,
+  .hero-copy.is-visible .eyebrow,
+  .hero-copy.is-visible h1,
+  .hero-copy.is-visible .hero-lead,
+  .hero-copy.is-visible .hero-actions,
+  .hero-visual.is-visible,
+  .hero-image-frame img,
+  .hero-image-frame:hover img,
+  .collection-card > img,
+  .collection-card:hover > img,
+  .statement-mark {
+    animation: none;
+    clip-path: none;
+    filter: none;
+    transform: none;
+  }
+
+  .collection-topline,
+  .collection-copy > *,
+  .reveal .eyebrow span {
     opacity: 1;
     transform: none;
   }
