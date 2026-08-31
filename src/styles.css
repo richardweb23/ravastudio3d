@@ -1112,6 +1112,10 @@ svg {
     transform: translateY(0);
   }
 
+  .nav:not(.is-open) {
+    transition-duration: 0ms;
+  }
+
   .nav > a:not(.nav-cta) {
     font-family: "Instrument Serif", Georgia, serif;
     font-size: clamp(40px, 8vw, 70px);

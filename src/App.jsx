@@ -258,9 +258,21 @@ export default function App() {
         return;
       }
 
+      const immediateStep =
+        Math.sign(distance) * Math.min(Math.abs(distance), 72);
+      const animationStart = startPosition + immediateStep;
+      const remainingDistance = targetPosition - animationStart;
+
+      window.scrollTo(0, animationStart);
+
+      if (Math.abs(remainingDistance) < 1) {
+        window.history.pushState(null, "", targetSelector);
+        return;
+      }
+
       const duration = Math.min(
-        950,
-        Math.max(550, Math.abs(distance) * 0.28),
+        760,
+        Math.max(420, Math.abs(remainingDistance) * 0.2),
       );
       let startTime = null;
 
@@ -269,9 +281,12 @@ export default function App() {
 
         const elapsed = currentTime - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = 1 - (1 - progress) ** 3;
+        const easedProgress = 1 - (1 - progress) ** 2;
 
-        window.scrollTo(0, startPosition + distance * easedProgress);
+        window.scrollTo(
+          0,
+          animationStart + remainingDistance * easedProgress,
+        );
 
         if (progress < 1) {
           navigationAnimationFrame =
