@@ -1,18 +1,27 @@
 # RAVA Studio 3D
 
-Site institucional da RAVA Studio 3D, desenvolvido em React com Vite.
+Site institucional e sistema administrativo da RAVA Studio 3D, desenvolvidos
+em React com Vite.
 
 ## Desenvolvimento
 
-```bash
-npm install
-npm run dev
-```
+    npm install
+    npm run dev
+
+- Site institucional: `/ravastudio3d/`
+- Área administrativa: `/ravastudio3d/gestao/`
+
+Para configurar banco, autenticação e publicação, consulte
+[SUPABASE_SETUP.md](./SUPABASE_SETUP.md).
+
+## Verificação
+
+    npm run check
+
+Esse comando executa testes, lint e build das duas entradas.
 
 ## Produção
 
-```bash
-npm run build
-```
-
-O projeto atual contém a interface institucional. A estrutura pode ser expandida futuramente para integrar catálogo, carrinho e sistema de vendas.
+O GitHub Actions publica o frontend no GitHub Pages. O Supabase fornece banco
+de dados e autenticação. As contas são administradas diretamente em
+Authentication → Users no painel do Supabase.
