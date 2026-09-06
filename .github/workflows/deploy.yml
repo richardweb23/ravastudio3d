@@ -41,6 +41,18 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
 
+      - name: Validar artefato de produção
+        shell: bash
+        run: |
+          test -f dist/index.html
+          test -f dist/gestao/index.html
+          test -f dist/CNAME
+          test "$(cat dist/CNAME)" = "ravastudio3d.com.br"
+          if grep -R 'src="/src/' dist/*.html dist/gestao/*.html; then
+            echo "O artefato ainda referencia arquivos-fonte em /src."
+            exit 1
+          fi
+
       - name: Configurar GitHub Pages
         uses: actions/configure-pages@v6
 

@@ -133,7 +133,11 @@ export default function AdminApp() {
   useEffect(() => {
     const handleHistoryNavigation = () => setPage(getAdminPage(window.location));
     window.addEventListener("popstate", handleHistoryNavigation);
-    return () => window.removeEventListener("popstate", handleHistoryNavigation);
+    window.addEventListener("hashchange", handleHistoryNavigation);
+    return () => {
+      window.removeEventListener("popstate", handleHistoryNavigation);
+      window.removeEventListener("hashchange", handleHistoryNavigation);
+    };
   }, []);
 
   useEffect(() => {

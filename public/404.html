@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Redirecionando | RAVA Studio 3D</title>
+    <script>
+      (function redirectLegacyManagementRoute() {
+        var path = window.location.pathname;
+        var marker = "/gestao/";
+        var markerIndex = path.toLowerCase().indexOf(marker);
+        if (markerIndex !== -1) {
+          var managementRoot = path.slice(0, markerIndex + marker.length);
+          var route = path.slice(markerIndex + marker.length).replace(/^\/+|\/+$/g, "");
+          window.location.replace(managementRoot + window.location.search + "#/" + route);
+          return;
+        }
+        window.location.replace("/");
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

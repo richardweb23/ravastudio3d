@@ -28,13 +28,18 @@ function asUrl(location) {
   if (typeof location === "string") return new URL(location, "https://local.invalid");
   if (location?.href) return new URL(location.href);
   return new URL(
-    `${location?.pathname || "/gestao/"}${location?.search || ""}`,
+    `${location?.pathname || "/gestao/"}${location?.search || ""}${location?.hash || ""}`,
     "https://local.invalid",
   );
 }
 
 export function getAdminPage(location = window.location) {
   const url = asUrl(location);
+  const hashRoute = url.hash.startsWith("#/")
+    ? decodeURIComponent(url.hash.slice(2)).replace(/^\/+|\/+$/g, "")
+    : null;
+  if (hashRoute !== null) return routePages[hashRoute] || "dashboard";
+
   const legacyPage = url.searchParams.get("pagina");
   if (adminPageIds.has(legacyPage)) return legacyPage;
 
@@ -58,5 +63,5 @@ export function getAdminPageHref(page, location = window.location) {
     : url.pathname.slice(0, markerIndex + marker.length);
   const route = adminPageRoutes[page] ?? adminPageRoutes.dashboard;
 
-  return route ? `${managementRoot}${route}/` : managementRoot;
+  return `${managementRoot}#/${route}`;
 }

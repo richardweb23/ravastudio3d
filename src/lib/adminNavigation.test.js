@@ -18,10 +18,28 @@ describe("navegacao administrativa", () => {
     );
   });
 
-  it("gera rotas aninhadas do módulo financeiro", () => {
+  it("gera rotas por hash para funcionar em hospedagem estática", () => {
     assert.equal(
       getAdminPageHref("financeiroFaturas", { href: "https://example.com/ravastudio3d/gestao/" }),
-      "/ravastudio3d/gestao/financeiro/faturas/",
+      "/ravastudio3d/gestao/#/financeiro/faturas",
+    );
+  });
+
+  it("resolve a página pelo hash antes do caminho legado", () => {
+    assert.equal(
+      getAdminPage("https://ravastudio3d.com.br/gestao/#/financeiro/parcelas"),
+      "financeiroParcelas",
+    );
+    assert.equal(
+      getAdminPage("https://example.com/ravastudio3d/gestao/compras/#/pedidos"),
+      "pedidos",
+    );
+  });
+
+  it("não confunde os tokens de autenticação do Supabase com uma rota", () => {
+    assert.equal(
+      getAdminPage("https://ravastudio3d.com.br/gestao/#access_token=token&type=recovery"),
+      "dashboard",
     );
   });
 
@@ -37,11 +55,11 @@ describe("navegacao administrativa", () => {
     const location = { href: "https://example.com/ravastudio3d/gestao/?pagina=dashboard#token" };
     assert.equal(
       getAdminPageHref("estoquePorLocal", location),
-      "/ravastudio3d/gestao/estoque/",
+      "/ravastudio3d/gestao/#/estoque",
     );
     assert.equal(
       getAdminPageHref("dashboard", location),
-      "/ravastudio3d/gestao/",
+      "/ravastudio3d/gestao/#/",
     );
   });
 });

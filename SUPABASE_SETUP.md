@@ -31,9 +31,10 @@ No painel do Supabase:
 
 1. Abra Authentication → URL Configuration.
 2. Defina a URL do site como
-   `https://SEU-USUARIO.github.io/ravastudio3d/`.
+   `https://ravastudio3d.com.br/`.
 3. Adicione às Redirect URLs:
    - `https://SEU-USUARIO.github.io/ravastudio3d/gestao/`
+   - `https://ravastudio3d.com.br/gestao/`
    - `http://localhost:5173/ravastudio3d/gestao/`
    - `http://localhost:5173/gestao/`
 4. Desative o cadastro público em Authentication → Providers → Email,
