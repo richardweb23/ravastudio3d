@@ -55,6 +55,15 @@ function ArrowIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5.5 20c.6-4 2.8-6 6.5-6s5.9 2 6.5 6" />
+    </svg>
+  );
+}
+
 function CubeIcon({ index = 0 }) {
   const paths = [
     <g key="layers">
@@ -112,6 +121,15 @@ function Header() {
         <a href="#contato" onClick={closeMenu}>Contato</a>
         <a className="nav-cta" href={quoteHref} onClick={closeMenu}>
           Solicitar orçamento <ArrowIcon />
+        </a>
+        <a
+          className="nav-management-link"
+          href="./gestao/#/"
+          onClick={closeMenu}
+          aria-label="Acessar área de gestão"
+          title="Área de gestão"
+        >
+          <UserIcon />
         </a>
       </nav>
     </header>

@@ -141,12 +141,12 @@ svg {
   text-transform: uppercase;
 }
 
-.nav > a:not(.nav-cta) {
+.nav > a:not(.nav-cta):not(.nav-management-link) {
   position: relative;
   padding: 12px 0;
 }
 
-.nav > a:not(.nav-cta)::after {
+.nav > a:not(.nav-cta):not(.nav-management-link)::after {
   position: absolute;
   right: 0;
   bottom: 5px;
@@ -159,9 +159,41 @@ svg {
   transition: transform 280ms ease;
 }
 
-.nav > a:not(.nav-cta):hover::after {
+.nav > a:not(.nav-cta):not(.nav-management-link):hover::after {
   transform: scaleX(1);
   transform-origin: left;
+}
+
+.nav-management-link {
+  display: inline-flex;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(23, 23, 20, 0.22);
+  border-radius: 50%;
+  color: rgba(23, 23, 20, 0.68);
+  transition: color 220ms ease, background 220ms ease, border-color 220ms ease,
+    transform 220ms ease;
+}
+
+.nav-management-link svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
+.nav-management-link:hover,
+.nav-management-link:focus-visible {
+  border-color: var(--ink);
+  color: var(--cream-light);
+  background: var(--ink);
+  transform: translateY(-2px);
 }
 
 .nav-cta,
@@ -1132,7 +1164,7 @@ svg {
     transition-duration: 0ms;
   }
 
-  .nav > a:not(.nav-cta) {
+  .nav > a:not(.nav-cta):not(.nav-management-link) {
     font-family: "Instrument Serif", Georgia, serif;
     font-size: clamp(40px, 8vw, 70px);
     font-weight: 400;
@@ -1142,6 +1174,13 @@ svg {
 
   .nav-cta {
     margin-top: 28px;
+  }
+
+  .nav-management-link {
+    width: 48px;
+    height: 48px;
+    flex-basis: 48px;
+    margin-top: 4px;
   }
 
   .hero {
