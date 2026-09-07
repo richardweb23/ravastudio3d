@@ -15,6 +15,7 @@ import Cadastros from "./components/Cadastros.jsx";
 import HistoricoPage from "./components/historico/HistoricoPage.jsx";
 import CalculadoraCustos from "./components/CalculadoraCustos.jsx";
 import CalculadoraEscala from "./components/CalculadoraEscala.jsx";
+import EstimativaImpressao from "./components/EstimativaImpressao.jsx";
 import FinanceiroModule from "./components/financeiro/FinanceiroModule.jsx";
 
 function Icon({ name }) {
@@ -48,6 +49,7 @@ const productNavigation = [
 const utilityNavigation = [
   ["calculadora", "Calculadora de custos"],
   ["calculadoraEscala", "Calculadora de escala"],
+  ["estimativaImpressao", "Estimativa de impressão"],
   ["historico", "Histórico"],
 ];
 
@@ -204,6 +206,7 @@ export default function AdminApp() {
     cadastros: <Cadastros locais={data.locais} vendedores={data.vendedores} onSaved={refresh} show={show} />,
     calculadora: <CalculadoraCustos materiais={data.materiais} show={show} />,
     calculadoraEscala: <CalculadoraEscala />,
+    estimativaImpressao: <EstimativaImpressao />,
     historico: <HistoricoPage vendas={data.vendas} materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} />,
     financeiro: <FinanceiroModule page="financeiro" onNavigate={navigate} show={show} />,
     financeiroContas: <FinanceiroModule page="financeiroContas" onNavigate={navigate} show={show} />,

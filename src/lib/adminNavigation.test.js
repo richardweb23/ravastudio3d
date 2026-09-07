@@ -13,6 +13,10 @@ describe("navegacao administrativa", () => {
       "calculadoraEscala",
     );
     assert.equal(
+      getAdminPage("https://example.com/ravastudio3d/gestao/estimativa-impressao/"),
+      "estimativaImpressao",
+    );
+    assert.equal(
       getAdminPage("https://example.com/ravastudio3d/gestao/financeiro/contas-a-pagar/"),
       "financeiroContas",
     );
@@ -22,6 +26,10 @@ describe("navegacao administrativa", () => {
     assert.equal(
       getAdminPageHref("financeiroFaturas", { href: "https://example.com/ravastudio3d/gestao/" }),
       "/ravastudio3d/gestao/#/financeiro/faturas",
+    );
+    assert.equal(
+      getAdminPageHref("estimativaImpressao", { href: "https://example.com/ravastudio3d/gestao/" }),
+      "/ravastudio3d/gestao/#/estimativa-impressao",
     );
   });
 
