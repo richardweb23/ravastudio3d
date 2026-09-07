@@ -476,7 +476,12 @@ export default function App() {
           style={{ "--reveal-delay": "120ms" }}
         >
           <span>© {new Date().getFullYear()} RAVA Studio 3D</span>
-          <a href="#inicio">Voltar ao topo ↑</a>
+          <div className="footer-bottom-links">
+            <a className="footer-management-link" href="./gestao/#/">
+              Área de gestão
+            </a>
+            <a href="#inicio">Voltar ao topo ↑</a>
+          </div>
         </div>
       </footer>
     </div>

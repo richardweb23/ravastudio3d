@@ -975,6 +975,22 @@ svg {
   text-transform: uppercase;
 }
 
+.footer-bottom-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.footer-management-link {
+  opacity: 0.48;
+  transition: opacity 180ms ease;
+}
+
+.footer-management-link:hover,
+.footer-management-link:focus-visible {
+  opacity: 1;
+}
+
 .reveal {
   opacity: 0;
   filter: blur(9px);
@@ -1351,6 +1367,11 @@ svg {
     flex-direction: column;
     align-items: center;
     text-align: center;
+  }
+
+  .footer-bottom-links {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 

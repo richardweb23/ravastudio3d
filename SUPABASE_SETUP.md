@@ -64,6 +64,10 @@ Copie `.env.example` para `.env` e preencha apenas valores públicos:
     VITE_SUPABASE_URL=https://SEU_PROJECT_ID.supabase.co
     VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_SUBSTITUA_AQUI
 
+Projetos antigos também podem usar `VITE_SUPABASE_ANON_KEY` no lugar da chave
+publishable. O sistema aceita os dois formatos e prioriza a chave publishable
+quando ambas estiverem definidas.
+
 Em seguida:
 
     npm install
@@ -77,7 +81,8 @@ No repositório GitHub:
 
 1. Em Settings → Secrets and variables → Actions, crie:
    - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_PUBLISHABLE_KEY`
+   - `VITE_SUPABASE_PUBLISHABLE_KEY` (recomendado) ou
+     `VITE_SUPABASE_ANON_KEY` (formato legado)
 2. Em Settings → Pages, selecione GitHub Actions.
 3. Faça push para `main`.
 4. Acompanhe o workflow “Publicar no GitHub Pages”.
