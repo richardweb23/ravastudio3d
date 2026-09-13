@@ -51,6 +51,26 @@ export function splitAmount(totalCents, partners = DEFAULT_PARTNERS) {
   });
 }
 
+export function expenseResponsibilities(totalCents, partners, responsiblePartnerId) {
+  if (!responsiblePartnerId) return splitAmount(totalCents, partners);
+  return partners.map((partner) => ({
+    ...partner,
+    valor_centavos: partner.id === responsiblePartnerId ? normalizeCents(totalCents) : 0,
+  }));
+}
+
+export function installmentResponsibilities(installments, partners) {
+  const shared = installments.filter((item) => !item.financeiro_despesas?.responsavel_socio_id);
+  const responsibilities = splitAmount(shared.reduce((sum, item) => sum + normalizeCents(item.valor_centavos), 0), partners);
+  return responsibilities.map((partner) => ({
+    ...partner,
+    valor_centavos: partner.valor_centavos + installments.reduce((sum, item) => (
+      item.financeiro_despesas?.responsavel_socio_id === partner.id
+        ? sum + normalizeCents(item.valor_centavos) : sum
+    ), 0),
+  }));
+}
+
 export function splitInstallments(totalCents, quantity) {
   const total = normalizeCents(totalCents);
   const count = Math.max(1, Math.trunc(Number(quantity) || 1));
@@ -101,7 +121,7 @@ export function summarizeInstallments(installments, partners, selectedMonth) {
   const overdue = inMonth
     .filter((item) => installmentStatus(item) === "vencido")
     .reduce((sum, item) => sum + normalizeCents(item.valor_centavos), 0);
-  const responsibilities = splitAmount(total, partners);
+  const responsibilities = installmentResponsibilities(inMonth, partners);
   const paidByPartner = Object.fromEntries(
     partners.map((partner) => [partner.id, inMonth.reduce((sum, item) => {
       if (!item.pago) return sum;
@@ -121,6 +141,28 @@ export function summarizeInstallments(installments, partners, selectedMonth) {
     overdue,
     responsibilities,
     paidByPartner,
+  };
+}
+
+export function summarizePartnerInstallments(installments, partners, selectedMonth, partnerId = "") {
+  const summary = summarizeInstallments(installments, partners, selectedMonth);
+  if (!partnerId) return summary;
+  const items = summary.items.filter((item) => {
+    const responsible = item.financeiro_despesas?.responsavel_socio_id;
+    return !responsible || responsible === partnerId;
+  });
+  const share = (rows) => installmentResponsibilities(rows, partners)
+    .find((partner) => partner.id === partnerId)?.valor_centavos || 0;
+  const total = share(items);
+  const paid = share(items.filter((item) => item.pago));
+  return {
+    ...summary,
+    items,
+    total,
+    paid,
+    pending: total - paid,
+    overdue: share(items.filter((item) => installmentStatus(item) === "vencido")),
+    responsibilities: summary.responsibilities.filter((partner) => partner.id === partnerId),
   };
 }
 

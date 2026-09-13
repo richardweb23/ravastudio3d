@@ -14,8 +14,10 @@ import {
   reaisToCents,
   settlementSuggestion,
   shiftMonth,
-  splitAmount,
+  expenseResponsibilities,
+  installmentResponsibilities,
   summarizeInstallments,
+  summarizePartnerInstallments,
 } from "../../lib/financeiro.js";
 
 const pageTitles = {
@@ -80,14 +82,14 @@ function matchesPayer(item, payer) {
       : item.pago_por_socio_id === payer;
 }
 
-function SplitValues({ total, socios, compact = false }) {
-  const split = splitAmount(total, socios);
+function SplitValues({ total, socios, responsibilities, responsiblePartnerId, compact = false }) {
+  const split = responsibilities || expenseResponsibilities(total, socios, responsiblePartnerId);
   return (
     <div className={compact ? "finance-split compact" : "finance-split"}>
       <div><span>Total</span><strong>{formatBRLCents(total)}</strong></div>
       {split.map((partner) => (
         <div key={partner.id}>
-          <span>{partner.nome} — {(partner.percentual_bp / 100).toLocaleString("pt-BR")}%</span>
+          <span>{partner.nome}</span>
           <strong>{formatBRLCents(partner.valor_centavos)}</strong>
         </div>
       ))}
@@ -152,10 +154,10 @@ function PartnerSummary({ summary }) {
   );
 }
 
-function AccountsTable({ items, onPay }) {
+function AccountsTable({ items, socios, onPay }) {
   return (
     <DataTable
-      heads={["Vencimento", "Despesa", "Loja", "Parcela", "Cartão", "Valor", "Pago por", "Status", "Ações"]}
+      heads={["Vencimento", "Despesa", "Loja", "Parcela", "Cartão", "Valor", "Responsável", "Pago por", "Status", "Ações"]}
       rows={items.map((item) => {
         const status = installmentStatus(item);
         const expense = item.financeiro_despesas || {};
@@ -164,7 +166,7 @@ function AccountsTable({ items, onPay }) {
             <td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td>
             <td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td>
             <td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td>
-            <td>{payerLabel(item)}</td><td><span className={`status finance-${status}`}>{statusLabels[status]}</span></td>
+            <td>{expense.responsavel_socio_id ? socios.find((partner) => partner.id === expense.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{payerLabel(item)}</td><td><span className={`status finance-${status}`}>{statusLabels[status]}</span></td>
             <td><button className="link" type="button" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer baixa" : "Marcar como paga"}</button></td>
           </tr>
         );
@@ -193,12 +195,12 @@ function Overview({ data, socios, onNavigate }) {
       <div className="two-columns finance-highlight-grid">
         <section className="panel finance-highlight">
           <div className="panel-title"><h2>Total do mês</h2><button className="link" onClick={() => onNavigate("financeiroContas")}>Ver contas</button></div>
-          <SplitValues total={summary.total} socios={socios} />
+          <SplitValues total={summary.total} socios={socios} responsibilities={summary.responsibilities} />
           <div className="finance-paid-line"><span>Já pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Ainda a pagar</span><strong>{formatBRLCents(summary.pending)}</strong></div>
         </section>
         <section className="panel finance-highlight">
           <div className="panel-title"><h2>Próximo mês</h2><span>{monthLabel(shiftMonth(current, 1))}</span></div>
-          <SplitValues total={next.total} socios={socios} />
+          <SplitValues total={next.total} socios={socios} responsibilities={next.responsibilities} />
           <div className="finance-paid-line"><span>Previsto</span><strong>{formatBRLCents(next.total)}</strong></div>
         </section>
       </div>
@@ -209,17 +211,21 @@ function Overview({ data, socios, onNavigate }) {
 
 function Accounts({ data, socios, onPay, onNavigate }) {
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
-  const summary = useMemo(() => summarizeInstallments(data.parcelas, socios, selectedMonth), [data.parcelas, socios, selectedMonth]);
+  const [selectedPartner, setSelectedPartner] = useState("");
+  const visiblePartners = socios.filter((partner) => !selectedPartner || partner.id === selectedPartner);
+  const summary = useMemo(() => summarizePartnerInstallments(data.parcelas, socios, selectedMonth, selectedPartner), [data.parcelas, socios, selectedMonth, selectedPartner]);
   const projections = Array.from({ length: 6 }, (_, index) => {
     const key = shiftMonth(selectedMonth, index);
-    return { key, summary: summarizeInstallments(data.parcelas, socios, key) };
+    return { key, summary: summarizePartnerInstallments(data.parcelas, socios, key, selectedPartner) };
   });
   return (
     <>
       <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
+      <div className="finance-filters finance-accounts-filter"><label>Sócio<select value={selectedPartner} onChange={(event) => setSelectedPartner(event.target.value)}><option value="">Ambos</option>{socios.map((partner) => <option key={partner.id} value={partner.id}>{partner.nome}</option>)}</select></label></div>
+      {selectedPartner && <p className="finance-accounts-filter-note">Os totais mostram a responsabilidade de {visiblePartners[0]?.nome}, incluindo sua parte nas despesas compartilhadas. A tabela exibe o valor integral de cada parcela; a baixa registra o pagamento da parcela inteira.</p>}
       <div className="metrics finance-metrics six">
         <MetricCard label="Total a pagar" value={summary.total} />
-        {summary.responsibilities.map((partner) => <MetricCard key={partner.id} label={`${partner.nome} — ${partner.percentual_bp / 100}%`} value={partner.valor_centavos} />)}
+        {summary.responsibilities.map((partner) => <MetricCard key={partner.id} label={partner.nome} value={partner.valor_centavos} />)}
         <MetricCard label="Já pago" value={summary.paid} tone="success" />
         <MetricCard label="Ainda falta pagar" value={summary.pending} />
         <MetricCard label="Vencido" value={summary.overdue} tone="danger" />
@@ -227,12 +233,12 @@ function Accounts({ data, socios, onPay, onNavigate }) {
       <PartnerSummary summary={summary} />
       <section className="panel table-panel">
         <div className="panel-title"><h2>Contas de {monthLabel(selectedMonth)}</h2><span>{summary.items.length} parcela(s)</span></div>
-        <AccountsTable items={[...summary.items].sort((a, b) => a.vencimento.localeCompare(b.vencimento))} onPay={onPay} />
-        <div className="table-summary"><SplitValues total={summary.total} socios={socios} compact /><div><span>Pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Pendente</span><strong>{formatBRLCents(summary.pending)}</strong></div></div>
+        <AccountsTable socios={socios} items={[...summary.items].sort((a, b) => a.vencimento.localeCompare(b.vencimento))} onPay={onPay} />
+        <div className="table-summary"><SplitValues total={summary.total} socios={socios} responsibilities={summary.responsibilities} compact /><div><span>Pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Pendente</span><strong>{formatBRLCents(summary.pending)}</strong></div></div>
       </section>
-      <section className="panel table-panel">
+      <section className="panel table-panel finance-accounts-projections">
         <h2>Próximos meses</h2>
-        <DataTable heads={["Mês", "Total", ...socios.map((partner) => partner.nome), ""]} rows={projections.map(({ key, summary: row }) => (
+        <DataTable heads={["Mês", "Total", ...visiblePartners.map((partner) => partner.nome), ""]} rows={projections.map(({ key, summary: row }) => (
           <tr key={key}><td><strong>{monthLabel(key)}</strong></td><td>{formatBRLCents(row.total)}</td>{row.responsibilities.map((partner) => <td key={partner.id}>{formatBRLCents(partner.valor_centavos)}</td>)}<td><button className="link" onClick={() => { setSelectedMonth(key); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Abrir detalhes</button></td></tr>
         ))} empty="Sem previsão." />
       </section>
@@ -244,7 +250,7 @@ function Accounts({ data, socios, onPay, onNavigate }) {
 const emptyExpense = {
   nome: "", categoria_id: "", descricao: "", numero_compra: "", data_compra: today(),
   fornecedor: "", valor: "", forma_pagamento: "pix", cartao_id: "",
-  quantidade_parcelas: "1", primeiro_vencimento: today(), observacoes: "",
+  quantidade_parcelas: "1", primeiro_vencimento: today(), observacoes: "", responsavel_socio_id: "",
 };
 
 function Expenses({ data, socios, onReload, show }) {
@@ -265,7 +271,7 @@ function Expenses({ data, socios, onReload, show }) {
       fornecedor: item.fornecedor || "", valor: centsToInput(item.valor_total_centavos),
       forma_pagamento: item.forma_pagamento, cartao_id: item.cartao_id || "",
       quantidade_parcelas: String(item.quantidade_parcelas), primeiro_vencimento: item.primeiro_vencimento,
-      observacoes: item.observacoes || "",
+      observacoes: item.observacoes || "", responsavel_socio_id: item.responsavel_socio_id || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -298,19 +304,21 @@ function Expenses({ data, socios, onReload, show }) {
           <div className="form-grid"><label>Loja / fornecedor<input value={form.fornecedor} onChange={(e) => setForm({ ...form, fornecedor: e.target.value })} /></label><label>Valor total (R$)<input inputMode="decimal" placeholder="0,00" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} required /></label></div>
           <div className="form-grid"><label>Forma de pagamento<select value={form.forma_pagamento} onChange={(e) => setForm({ ...form, forma_pagamento: e.target.value, quantidade_parcelas: e.target.value === "credito" ? form.quantidade_parcelas : "1", cartao_id: e.target.value === "credito" ? form.cartao_id : "" })}>{Object.entries(paymentLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Primeiro vencimento<input type="date" value={form.primeiro_vencimento} onChange={(e) => setForm({ ...form, primeiro_vencimento: e.target.value })} required /></label></div>
           {form.forma_pagamento === "credito" && <div className="form-grid"><label>Cartão<select value={form.cartao_id} onChange={(e) => setForm({ ...form, cartao_id: e.target.value })} required><option value="">Selecione</option>{data.cartoes.filter((item) => item.ativo).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label><label>Número de parcelas<input type="number" min="1" max="240" value={form.quantidade_parcelas} onChange={(e) => setForm({ ...form, quantidade_parcelas: e.target.value })} required /></label></div>}
+          <label>Responsável pela despesa<select value={form.responsavel_socio_id} onChange={(e) => setForm({ ...form, responsavel_socio_id: e.target.value })}><option value="">Ambos</option>{socios.map((partner) => <option key={partner.id} value={partner.id}>{partner.nome}</option>)}</select></label>
+          <p>Ao escolher um sócio, ele assume 100% do custo. Em “Ambos”, o valor é dividido conforme a participação dos sócios.</p>
           <label>Observações<textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /></label>
-          {totalCents > 0 && <SplitValues total={totalCents} socios={socios} compact />}
+          {totalCents > 0 && <SplitValues total={totalCents} socios={socios} responsiblePartnerId={form.responsavel_socio_id} compact />}
           <button className="primary">{editingId ? "Salvar alterações" : "Cadastrar e gerar parcelas"}</button>
         </form>
         <aside className="panel finance-form-aside"><span className="eyebrow">Prévia</span><h2>{form.quantidade_parcelas || 1} parcela(s)</h2><p>A soma das parcelas sempre será exatamente igual ao valor total, inclusive quando houver diferença de um centavo.</p><strong>{formatBRLCents(totalCents)}</strong></aside>
       </div>
       <section className="panel table-panel">
         <div className="panel-title finance-list-title"><h2>Compras cadastradas</h2><div className="finance-filters"><input placeholder="Pesquisar compra ou loja" value={search} onChange={(e) => setSearch(e.target.value)} /><select value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas as categorias</option>{data.categorias.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></div></div>
-        <DataTable heads={["Data", "Compra", "Loja", "Categoria", "Pagamento", "Parcelas", "Total", "Status", "Ações"]} rows={filtered.map((item) => {
+        <DataTable heads={["Data", "Compra", "Loja", "Categoria", "Pagamento", "Parcelas", "Total", "Responsável", "Status", "Ações"]} rows={filtered.map((item) => {
           const installments = data.parcelas.filter((row) => row.despesa_id === item.id);
           const paid = installments.filter((row) => row.pago).length;
           const status = paid === installments.length && installments.length ? "Paga" : paid ? "Parcialmente paga" : installments.some((row) => installmentStatus(row) === "vencido") ? "Vencida" : "Pendente";
-          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td><strong>{item.nome}</strong>{item.numero_compra && <small>#{item.numero_compra}</small>}</td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{status}</td><td><div className="row-actions"><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => remove(item)}>Excluir</button></div></td></tr>;
+          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td><strong>{item.nome}</strong>{item.numero_compra && <small>#{item.numero_compra}</small>}</td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{item.responsavel_socio_id ? socios.find((partner) => partner.id === item.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{status}</td><td><div className="row-actions"><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => remove(item)}>Excluir</button></div></td></tr>;
         })} empty="Nenhuma compra cadastrada." />
       </section>
     </>
@@ -324,7 +332,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
   const [paymentDate, setPaymentDate] = useState(today);
   const [note, setNote] = useState("");
   const [partnerAmounts, setPartnerAmounts] = useState(() => Object.fromEntries(
-    (singleInstallment ? splitAmount(total, socios) : []).map((partner) => [
+    (singleInstallment ? installmentResponsibilities(installments, socios) : []).map((partner) => [
       partner.id,
       centsToInput(partner.valor_centavos),
     ]),
@@ -472,7 +480,7 @@ function Invoices({ data, socios }) {
     (result[key] ||= []).push(item); return result;
   }, {});
   return (
-    <><MonthPicker value={month} onChange={setMonth} /><div className="invoice-grid">{Object.entries(groups).map(([card, items]) => { const total = items.reduce((sum, item) => sum + Number(item.valor_centavos), 0); const paid = items.filter((item) => item.pago).reduce((sum, item) => sum + Number(item.valor_centavos), 0); return <section className="panel invoice-card" key={card}><div className="panel-title"><div><span className="eyebrow">Fatura</span><h2>{card} — {monthLabel(month)}</h2></div><span className={`status ${paid === total ? "finance-pago" : "finance-pendente"}`}>{paid === total ? "Paga" : paid ? "Parcial" : "Pendente"}</span></div><div className="invoice-lines">{items.map((item) => <div key={item.id}><span>{item.financeiro_despesas.nome} — {item.numero}/{item.total_parcelas}</span><strong>{formatBRLCents(item.valor_centavos)}</strong></div>)}</div><SplitValues total={total} socios={socios} compact /><div className="finance-paid-line"><span>Total pago</span><strong>{formatBRLCents(paid)}</strong><span>Total pendente</span><strong>{formatBRLCents(total - paid)}</strong></div></section>; })}{!Object.keys(groups).length && <section className="panel"><Empty text="Nenhuma fatura encontrada neste mês." /></section>}</div></>
+    <><MonthPicker value={month} onChange={setMonth} /><div className="invoice-grid">{Object.entries(groups).map(([card, items]) => { const total = items.reduce((sum, item) => sum + Number(item.valor_centavos), 0); const paid = items.filter((item) => item.pago).reduce((sum, item) => sum + Number(item.valor_centavos), 0); return <section className="panel invoice-card" key={card}><div className="panel-title"><div><span className="eyebrow">Fatura</span><h2>{card} — {monthLabel(month)}</h2></div><span className={`status ${paid === total ? "finance-pago" : "finance-pendente"}`}>{paid === total ? "Paga" : paid ? "Parcial" : "Pendente"}</span></div><div className="invoice-lines">{items.map((item) => <div key={item.id}><span>{item.financeiro_despesas.nome} — {item.numero}/{item.total_parcelas}</span><strong>{formatBRLCents(item.valor_centavos)}</strong></div>)}</div><SplitValues total={total} socios={socios} responsibilities={installmentResponsibilities(items, socios)} compact /><div className="finance-paid-line"><span>Total pago</span><strong>{formatBRLCents(paid)}</strong><span>Total pendente</span><strong>{formatBRLCents(total - paid)}</strong></div></section>; })}{!Object.keys(groups).length && <section className="panel"><Empty text="Nenhuma fatura encontrada neste mês." /></section>}</div></>
   );
 }
 
@@ -502,7 +510,7 @@ export default function FinanceiroModule({ page, onNavigate, show }) {
       supabase.from("financeiro_categorias").select("*").order("nome"),
       supabase.from("financeiro_cartoes").select("*").order("nome"),
       supabase.from("financeiro_despesas").select("*, financeiro_categorias(nome), financeiro_cartoes(nome)").order("data_compra", { ascending: false }),
-      supabase.from("financeiro_parcelas").select("*, financeiro_despesas(nome, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento"),
+      supabase.from("financeiro_parcelas").select("*, financeiro_despesas(nome, responsavel_socio_id, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento"),
     ]);
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");

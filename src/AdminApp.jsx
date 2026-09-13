@@ -230,7 +230,7 @@ export default function AdminApp() {
       <button className="mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><span /><span /><span /></button>
       {menuOpen && <button className="sidebar-scrim" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
       <aside className={menuOpen ? "sidebar open" : "sidebar"}>
-        <div className="sidebar-brand"><img src={logo} alt="RAVA Studio 3D" /><small>Gestão</small></div>
+        <div className="sidebar-brand"><img src={logo} alt="RAVA Studio 3D" /></div>
         <nav>
           {baseNavigation.map(([id, icon, label]) => (
             <a

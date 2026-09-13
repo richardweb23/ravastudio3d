@@ -1218,6 +1218,10 @@ td {
 .finance-form-aside > strong { display: block; margin-top: 20px; font-size: 24px; }
 .finance-list-title { align-items: center; gap: 18px; }
 .finance-filters { display: flex; gap: 8px; }
+.finance-accounts-filter { margin-bottom: 24px; }
+.finance-accounts-filter label { display: grid; gap: 8px; min-width: 180px; color: #625e57; font-size: 12px; font-weight: 700; }
+.finance-accounts-filter-note { margin: -8px 0 24px; color: #777168; font-size: 13px; line-height: 1.6; }
+.finance-accounts-projections { margin-top: 24px; }
 .finance-filters input, .finance-filters select, .finance-filter-grid input, .finance-filter-grid select { min-width: 0; padding: 9px 10px; border: 1px solid var(--admin-line); background: white; }
 .finance-filter-grid { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
 .finance-filter-grid label { display: grid; gap: 6px; color: #625e57; font-size: 11px; font-weight: 700; }
