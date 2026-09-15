@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { supabase } from "../supabase.js";
 import Header from "./Header.jsx";
-import Empty from "./Empty.jsx";
+import RegistrationTables from "./consignacao/RegistrationTables.jsx";
 
-export default function Cadastros({ locais, vendedores, onSaved, show }) {
+
+export default function Cadastros({ locais, vendedores, onSaved, show, onNavigate }) {
   const emptyLocal = {
     nome: "",
     tipo: "vendedor",
@@ -12,12 +13,17 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
     email: "",
     url: "",
     endereco: "",
+    observacoes: "",
+    ativo: true,
   };
   const [local, setLocal] = useState(emptyLocal);
   const [editingLocalId, setEditingLocalId] = useState(null);
-  const [vendedor, setVendedor] = useState({ nome: "", telefone: "" });
+  const emptySeller = { nome: "", telefone: "", endereco: "", observacoes: "", ativo: true };
+  const [editingSeller, setEditingSeller] = useState(null);
+  const [vendedor, setVendedor] = useState(emptySeller);
   async function addLocal(e) {
     e.preventDefault();
+    if (editingLocalId && !local.ativo && locais.find(item => item.id === editingLocalId)?.ativo && !window.confirm("Desativar este local? O histórico será mantido.")) return;
     const request = editingLocalId
       ? supabase.from("locais_estoque").update(local).eq("id", editingLocalId)
       : supabase.from("locais_estoque").insert(local);
@@ -38,6 +44,8 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
       email: item.email || "",
       url: item.url || "",
       endereco: item.endereco || "",
+      observacoes: item.observacoes || "",
+      ativo: item.ativo,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -64,12 +72,19 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
     show("Local excluído.");
     onSaved();
   }
+  function editSeller(item) {
+    setEditingSeller(item.id);
+    setVendedor({ nome: item.nome, telefone: item.telefone || "", endereco: item.endereco || "", observacoes: item.observacoes || "", ativo: item.ativo });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   async function addVendedor(e) {
     e.preventDefault();
-    const { error } = await supabase.from("vendedores").insert(vendedor);
+    if (editingSeller && !vendedor.ativo && vendedores.find(item => item.id === editingSeller)?.ativo && !window.confirm("Desativar este vendedor? O histórico será mantido.")) return;
+    const { error } = await (editingSeller ? supabase.from("vendedores").update(vendedor).eq("id", editingSeller) : supabase.from("vendedores").insert(vendedor));
     if (error) return show(error.message, "error");
-    show("Vendedor cadastrado.");
-    setVendedor({ nome: "", telefone: "" });
+    show(editingSeller ? "Vendedor atualizado." : "Vendedor cadastrado.");
+    setVendedor(emptySeller);
+    setEditingSeller(null);
     onSaved();
   }
   return (
@@ -146,6 +161,8 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
               onChange={(e) => setLocal({ ...local, endereco: e.target.value })}
             />
           </label>
+          <label>Observações<textarea value={local.observacoes} onChange={event => setLocal({ ...local, observacoes: event.target.value })} /></label>
+          <label className="checkbox-line"><input type="checkbox" checked={local.ativo} onChange={event => setLocal({ ...local, ativo: event.target.checked })} />Local ativo</label>
           <div className="actions">
             <button className="primary">
               {editingLocalId ? "Salvar alterações" : "Cadastrar local"}
@@ -164,7 +181,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
           </div>
         </form>
         <form className="panel form" onSubmit={addVendedor}>
-          <h2>Novo vendedor</h2>
+          <h2>{editingSeller ? "Editar vendedor" : "Novo vendedor"}</h2>
           <label>
             Nome
             <input
@@ -184,45 +201,13 @@ export default function Cadastros({ locais, vendedores, onSaved, show }) {
               }
             />
           </label>
-          <button className="primary">Cadastrar vendedor</button>
-          <div className="simple-list">
-            {vendedores.map((item) => (
-              <span key={item.id}>
-                {item.nome}
-                {item.telefone ? ` · ${item.telefone}` : ""}
-              </span>
-            ))}
-          </div>
+          <label>Endereço<input value={vendedor.endereco} onChange={event => setVendedor({ ...vendedor, endereco: event.target.value })} /></label>
+          <label>Observações<textarea value={vendedor.observacoes} onChange={event => setVendedor({ ...vendedor, observacoes: event.target.value })} /></label>
+          <label className="checkbox-line"><input type="checkbox" checked={vendedor.ativo} onChange={event => setVendedor({ ...vendedor, ativo: event.target.checked })} />Vendedor ativo</label>
+          <div className="actions"><button className="primary">{editingSeller ? "Salvar alterações" : "Cadastrar vendedor"}</button>{editingSeller && <button type="button" onClick={() => { setEditingSeller(null); setVendedor(emptySeller); }}>Cancelar</button>}</div>
         </form>
       </div>
-      <section className="panel">
-        <h2>Locais cadastrados</h2>
-        <div className="simple-list">
-          {locais.map((item) => (
-            <span className="local-list-item" key={item.id}>
-              <span className="local-list-actions">
-                <button
-                  type="button"
-                  className="link"
-                  onClick={() => editLocal(item)}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  className="danger-text"
-                  onClick={() => removeLocal(item)}
-                >
-                  Excluir
-                </button>
-              </span>
-              <strong>{item.nome}</strong> · {item.tipo}
-              {item.responsavel ? ` · ${item.responsavel}` : ""}
-            </span>
-          ))}
-          {!locais.length && <Empty text="Nenhum local cadastrado." />}
-        </div>
-      </section>
+      <RegistrationTables locais={locais} vendedores={vendedores} onNavigate={onNavigate} onEditLocal={editLocal} onEditSeller={editSeller} onRemoveLocal={removeLocal} />
     </>
   );
 }

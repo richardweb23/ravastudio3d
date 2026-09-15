@@ -18,6 +18,8 @@ import CalculadoraEscala from "./components/CalculadoraEscala.jsx";
 import EstimativaImpressao from "./components/EstimativaImpressao.jsx";
 import FinanceiroModule from "./components/financeiro/FinanceiroModule.jsx";
 
+import LocalDetails from "./components/consignacao/LocalDetails.jsx";
+import { parseLocalDetailsPage } from "./lib/consignacao.js";
 import TasksPage from "./components/tarefas/TasksPage.jsx";
 
 function Icon({ name }) {
@@ -86,7 +88,7 @@ export default function AdminApp() {
   const [notice, setNotice] = useState(null);
   const [data, setData] = useState({
     materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
-    pagamentos: [], locais: [], vendedores: [], estoqueLocal: [],
+    pagamentos: [], locais: [], vendedores: [], locaisTodos: [], vendedoresTodos: [], estoqueLocal: [],
   });
 
   const show = useCallback((message, type = "success") => {
@@ -117,9 +119,9 @@ export default function AdminApp() {
     else { setTarefas([]); setTaskError(null); }
   }, [profile?.id, refreshTasks]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (silent = false) => {
     if (!supabase || !session?.user?.id) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const results = await Promise.all([
       supabase.from("materiais").select("*").order("nome"),
       supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false }).limit(50),
@@ -127,8 +129,8 @@ export default function AdminApp() {
       supabase.from("pedidos").select("*").order("data_pedido", { ascending: false }),
       supabase.from("pedido_itens").select("*, materiais(nome)"),
       supabase.from("pedido_pagamentos").select("*").order("data", { ascending: false }),
-      supabase.from("locais_estoque").select("*").eq("ativo", true).order("nome"),
-      supabase.from("vendedores").select("*").eq("ativo", true).order("nome"),
+      supabase.from("locais_estoque").select("*").order("nome"),
+      supabase.from("vendedores").select("*").order("nome"),
       supabase.from("estoque_por_local").select("*, locais_estoque(nome, tipo)"),
     ]);
     const firstError = results.find((result) => result.error)?.error;
@@ -139,7 +141,8 @@ export default function AdminApp() {
         materiais: materiais.data || [], compras: compras.data || [],
         vendas: vendas.data || [], pedidos: pedidos.data || [],
         pedidoItens: pedidoItens.data || [], pagamentos: pagamentos.data || [],
-        locais: locais.data || [], vendedores: vendedores.data || [],
+        locais: (locais.data || []).filter(row => row.ativo), vendedores: (vendedores.data || []).filter(row => row.ativo),
+        locaisTodos: locais.data || [], vendedoresTodos: vendedores.data || [],
         estoqueLocal: estoqueLocal.data || [],
       });
     }
@@ -233,6 +236,7 @@ export default function AdminApp() {
   }
 
   const taskProps = { tarefas, error: taskError, onNavigate: navigate, onSaved: refreshTasks, onStatusChange: changeTaskStatus, show };
+  const detailRoute = parseLocalDetailsPage(page);
   const pages = {
     tarefas: <TasksPage key="tarefas" initialOpen={taskCreateRequested} {...taskProps} />,
     dashboard: <Dashboard tarefas={tarefas} taskError={taskError} onTaskStatusChange={changeTaskStatus} data={data} onNavigate={navigate} onItemStatusChange={async (item, concluido) => {
@@ -244,7 +248,7 @@ export default function AdminApp() {
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} onSaved={refresh} show={show} />,
     vendas: <VendasComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
     pedidos: <PedidosComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
-    cadastros: <Cadastros locais={data.locais} vendedores={data.vendedores} onSaved={refresh} show={show} />,
+    cadastros: <Cadastros locais={data.locaisTodos} vendedores={data.vendedoresTodos} onNavigate={navigate} onSaved={refresh} show={show} />,
     calculadora: <CalculadoraCustos materiais={data.materiais} show={show} />,
     calculadoraEscala: <CalculadoraEscala />,
     estimativaImpressao: <EstimativaImpressao />,
@@ -289,14 +293,14 @@ export default function AdminApp() {
             </a>
           ))}
           <div className="nav-group">
-            <div className={productNavigation.some(([id]) => id === page) ? "nav-group-title active" : "nav-group-title"}>
+            <div className={productNavigation.some(([id]) => id === page || (id === "cadastros" && detailRoute)) ? "nav-group-title active" : "nav-group-title"}>
               <span><Icon name="products" /></span>Produtos
             </div>
             <div className="nav-subitems">
               {productNavigation.map(([id, label]) => (
                 <a
                   key={id}
-                  className={page === id ? "nav-subitem active" : "nav-subitem"}
+                  className={page === id || (id === "cadastros" && detailRoute) ? "nav-subitem active" : "nav-subitem"}
                   href={getAdminPageHref(id)}
                   onClick={(event) => {
                     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -312,7 +316,7 @@ export default function AdminApp() {
               <span><Icon name="orders" /></span>Organização
             </div>
             <div className="nav-subitems">
-              {organizationNavigation.map(([id, label]) => <a key={id} className={page === id ? "nav-subitem active" : "nav-subitem"} href={getAdminPageHref(id)} onClick={event => {
+              {organizationNavigation.map(([id, label]) => <a key={id} className={page === id || (id === "cadastros" && detailRoute) ? "nav-subitem active" : "nav-subitem"} href={getAdminPageHref(id)} onClick={event => {
                 if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
                 event.preventDefault(); navigate(id);
               }}>{label}</a>)}
@@ -326,7 +330,7 @@ export default function AdminApp() {
               {utilityNavigation.map(([id, label]) => (
                 <a
                   key={id}
-                  className={page === id ? "nav-subitem active" : "nav-subitem"}
+                  className={page === id || (id === "cadastros" && detailRoute) ? "nav-subitem active" : "nav-subitem"}
                   href={getAdminPageHref(id)}
                   onClick={(event) => {
                     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -353,7 +357,7 @@ export default function AdminApp() {
               {financeNavigation.map(([id, label]) => (
                 <a
                   key={id}
-                  className={page === id ? "nav-subitem active" : "nav-subitem"}
+                  className={page === id || (id === "cadastros" && detailRoute) ? "nav-subitem active" : "nav-subitem"}
                   href={getAdminPageHref(id)}
                   onClick={(event) => {
                     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -373,7 +377,7 @@ export default function AdminApp() {
       </aside>
       <main className="content">
         {notice && <div className={`notice ${notice.type}`} role="status">{notice.message}</div>}
-        {loading ? <div className="loading">Atualizando dados…</div> : pages[page] || pages.dashboard}
+        {loading ? <div className="loading">Atualizando dados…</div> : detailRoute ? <LocalDetails key={page} {...detailRoute} onNavigate={navigate} onSaved={() => refresh(true)} show={show} /> : pages[page] || pages.dashboard}
       </main>
     </div>
   );

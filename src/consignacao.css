@@ -1,0 +1,65 @@
+.consignment-page { display: grid; gap: 22px; }
+.consignment-page > .link { justify-self: start; }
+.consignment-page .page-header { margin-bottom: 0; }
+.consignment-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+.consignment-info div { display: grid; align-content: start; gap: 6px; min-width: 0; }
+.consignment-info span { color: #797168; font-size: 12px; }
+.consignment-info strong, .consignment-info p { margin: 0; font-size: 14px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.consignment-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.consignment-metrics .metric { height: 100%; min-width: 0; }
+.consignment-metrics .metric strong { font-size: clamp(19px, 2vw, 29px); overflow-wrap: anywhere; }
+.consignment-pending .metric { border: 1px solid #bb8b48; background: #fbf0df; }
+.consignment-due { color: #92601d; font-weight: 700; }
+.consignment-product { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.consignment-product img { width: 44px; height: 44px; object-fit: cover; border-radius: 7px; }
+.consignment-actions { display: flex; flex-wrap: wrap; gap: 8px 12px; min-width: 200px; }
+.consignment-search { display: grid; gap: 7px; font-size: 12px; color: #625a4f; width: min(100%, 300px); }
+.consignment-filters { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; margin: 18px 0; }
+.consignment-filters > label { display: grid; gap: 7px; font-size: 12px; }
+.consignment-payment-summary { display: flex; flex-wrap: wrap; gap: 28px; margin: 20px 0; }
+.consignment-payment-summary span { display: grid; gap: 7px; color: #797168; font-size: 12px; }
+.consignment-payment-summary strong { font-size: 24px; }
+.consignment-status-pendente { color: #92601d; background: #fbefd9; }
+.consignment-status-pago { color: #32724e; background: #edf6ef; }
+.consignment-modal { width: min(640px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 12px; overflow-y: auto; background: var(--admin-paper); }
+.consignment-modal::backdrop { background: #17171488; }
+.consignment-modal .panel { margin: 0; border: 0; }
+.consignment-modal fieldset { min-width: 0; padding: 0; margin: 0; border: 0; }
+.consignment-modal .modal-heading { align-items: start; }
+.consignment-preview { display: grid; gap: 12px; padding: 16px; margin: 16px 0; border-radius: 9px; background: #f2e8db; }
+.consignment-preview span { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.consignment-payment-options { display: grid; gap: 10px; max-height: 300px; overflow-y: auto; }
+.consignment-payment-options .checkbox-line { padding: 12px; border: 1px solid var(--admin-line); border-radius: 8px; }
+.consignment-payment-options span { flex: 1; display: grid; gap: 5px; }
+.consignment-payment-options small { font-weight: 400; }
+@media(max-width: 1100px) { .consignment-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media(max-width: 650px) {
+  .consignment-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .consignment-pending { grid-column: span 2; grid-row: 1; }
+  .consignment-page .panel-title { align-items: stretch; flex-direction: column; gap: 14px; }
+  .consignment-search { width: 100%; }
+  .consignment-filters > label { flex: 1 1 130px; min-width: 0; }
+  .consignment-page .page-header { flex-wrap: wrap; gap: 16px; }
+}
+
+.seller-list-item { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 0; border-top: 1px solid var(--admin-line); }
+.seller-list-item > div:first-child { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.simple-list .local-list-item { flex-wrap: wrap; gap: 8px 12px; }
+.simple-list .local-list-actions { flex-wrap: wrap; border: 0; padding: 0; }
+@media(max-width: 650px) { .simple-list .local-list-actions { flex-basis: 100%; margin-left: 0; padding-top: 8px; } }
+
+.registration-tables { display: grid; gap: 24px; }
+.registration-tables .row-actions { display: flex; flex-wrap: wrap; gap: 10px; min-width: 150px; }
+
+.registration-tables .row-actions { min-width: 0; flex-wrap: nowrap; gap: 6px; }
+:is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 8px; border: 1px solid #ddd6cb; border-radius: 8px; background: #fff; color: #8f6d4e; }
+.registration-icon-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+:is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button:hover:not(:disabled) { background: #f2e9dc; border-color: #bda384; }
+.registration-tables .row-actions .registration-icon-danger { color: #b3423b; }
+.registration-tables .row-actions .registration-icon-danger:hover { background: #fff0ed; border-color: #d9aaa4; }
+.registration-icon-button:focus-visible { outline: 2px solid var(--admin-gold); outline-offset: 3px; }
+@media (pointer: coarse) { :is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button { flex-basis: 44px; width: 44px; height: 44px; } }
+
+.consignment-actions { display: grid; grid-template-columns: repeat(3, 36px); gap: 6px; min-width: 120px; }
+.consignment-actions .registration-icon-button:disabled { cursor: not-allowed; opacity: .4; }
+@media (pointer: coarse) { .consignment-actions { grid-template-columns: repeat(3, 44px); min-width: 144px; } }

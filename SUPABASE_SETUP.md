@@ -113,3 +113,52 @@ A migração `202609150002_titulo_tarefas.sql` adiciona o título obrigatório d
 tarefas. Os registros existentes recebem os primeiros 150 caracteres da
 descrição como título, que pode ser ajustado em Editar. Aplique as duas
 migrações de tarefas em ordem antes de usar o novo formulário.
+
+
+## Consignação: detalhes de locais e vendedores
+
+Aplique a migração `202609150003_consignacao.sql` após as anteriores, pelo
+SQL Editor do Supabase ou por `npx supabase db push` em um ambiente vinculado.
+A migração foi preparada no repositório; sua aplicação em produção é separada.
+
+- Acesso: **Locais e vendedores → Detalhes**. As rotas seguem
+  `/gestao/#/locais-vendedores/local/:id` e
+  `/gestao/#/locais-vendedores/vendedor/:id`.
+- Vendedores podem vincular um local existente ou criar um exclusivo. O vínculo
+  é único e permanente para preservar o histórico; registros podem ser desativados.
+- Adicionar produtos transfere unidades de um estoque de origem. Cadastre o
+  saldo na origem antes de enviar. Retiradas devolvem unidades ao destino escolhido.
+- Ajustes exigem motivo e registram uma variação positiva ou negativa.
+- Preço sugerido e repasse são acordos por produto/local, em centavos. As vendas
+  gravam os valores vigentes e também entram na tabela de vendas já utilizada.
+- Vendas feitas nas telas existentes e nas entregas de pedidos também capturam
+  o acordo do local no momento da venda.
+- Cada pagamento quita integralmente as vendas selecionadas, com data, valor e
+  vínculo permanente. Não há pagamento parcial de uma mesma venda nesta versão.
+- Valores e históricos financeiros não podem ser editados ou apagados pela aplicação.
+- Estoques anteriores entram como **saldo inicial**. A coluna Enviada contabiliza
+  os novos envios registrados; o saldo inicial aparece separado, sem inventar envios.
+- Vendas anteriores ficam marcadas como **Sem acordo registrado**. Não é calculado
+  repasse retroativo com base em preços configurados posteriormente.
+- A imagem do produto aparece quando `materiais.imagem_url` possui uma URL HTTP(S).
+
+Validação: `npm run check` inclui testes de cálculos e rotas, PostgreSQL isolado
+via PGlite, lint e build. O banco de teste existe apenas em memória; simula o
+esquema de autenticação e aplica as migrações reais. Não acessa dados de produção.
+
+
+### Se a migração de consignação apresentar deadlock (40P01)
+
+Use a versão atualizada de `202609150003_consignacao.sql`, sempre completa.
+Ela reserva os bloqueios antes das alterações, com `NOWAIT` e até 20 tentativas
+curtas. Em cada tentativa malsucedida, libera os bloqueios já obtidos antes de
+aguardar. Se o banco continuar ocupado, interrompe sem aplicar a migração.
+
+1. Aguarde operações em andamento e evite executar a migração simultaneamente
+   em mais de uma aba. Pause o uso das telas da gestão durante a aplicação.
+2. Se o SQL Editor mantiver a transação abortada, execute `ROLLBACK;`.
+3. Execute o arquivo atualizado inteiro, de `begin;` até `commit;`.
+
+O erro em uma execução integral impede o commit da migração. Se você executou
+apenas trechos, confira o que já foi criado antes de tentar executar tudo novamente.
+Não é necessário apagar tabelas ou encerrar conexões de outros usuários.

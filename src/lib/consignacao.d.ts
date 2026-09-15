@@ -1,0 +1,4 @@
+export interface ConsignmentAgreement { local_id: string; material_id: string; preco_centavos: number; repasse_centavos: number; }
+export interface ConsignmentSale { id: string; local_id: string; material_id: string; quantidade: number; preco_unitario_centavos: number; total_centavos: number; repasse_unitario_centavos: number; repasse_total_centavos: number; data: string; acordo_registrado: boolean; pagamento_id: string | null; created_at: string; }
+export interface ConsignmentMovement { id: string; local_id: string; material_id: string; tipo: 'entrada' | 'venda' | 'retirada' | 'ajuste' | 'saldo_inicial'; quantidade: number; saldo_apos: number; observacoes: string | null; created_at: string; }
+export interface ConsignmentPayment { id: string; local_id: string; valor_centavos: number; data_pagamento: string; observacoes: string | null; created_at: string; }

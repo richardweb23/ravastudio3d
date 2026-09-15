@@ -1,3 +1,5 @@
+import { localDetailsPage, parseLocalDetailsPage } from "./consignacao.js";
+
 export const adminPageRoutes = Object.freeze({
   dashboard: "",
   estoque: "produtos",
@@ -29,6 +31,15 @@ const routePages = Object.fromEntries(
 // Links antigos do cadastro agora levam ao quadro de tarefas.
 routePages["tarefas/cadastrar"] = "tarefas";
 
+function resolveRoute(route) {
+  const detail = /^locais-vendedores\/(local|vendedor)\/([0-9a-f-]+)$/i.exec(route);
+  if (detail) {
+    const page = localDetailsPage(detail[1].toLowerCase(), detail[2]);
+    return parseLocalDetailsPage(page) ? page : "dashboard";
+  }
+  return routePages[route] || "dashboard";
+}
+
 function asUrl(location) {
   if (typeof location === "string") return new URL(location, "https://local.invalid");
   if (location?.href) return new URL(location.href);
@@ -43,7 +54,7 @@ export function getAdminPage(location = window.location) {
   const hashRoute = url.hash.startsWith("#/")
     ? decodeURIComponent(url.hash.slice(2)).replace(/^\/+|\/+$/g, "")
     : null;
-  if (hashRoute !== null) return routePages[hashRoute] || "dashboard";
+  if (hashRoute !== null) return resolveRoute(hashRoute);
 
   const legacyPage = url.searchParams.get("pagina");
   if (legacyPage === "cadastrarTarefas") return "tarefas";
@@ -57,7 +68,7 @@ export function getAdminPage(location = window.location) {
     .slice(markerIndex + marker.length)
     .replace(/^\/+|\/+$/g, "");
 
-  return routePages[route] || "dashboard";
+  return resolveRoute(route);
 }
 
 export function getAdminPageHref(page, location = window.location) {
@@ -67,7 +78,8 @@ export function getAdminPageHref(page, location = window.location) {
   const managementRoot = markerIndex === -1
     ? "/gestao/"
     : url.pathname.slice(0, markerIndex + marker.length);
-  const route = adminPageRoutes[page] ?? adminPageRoutes.dashboard;
+  const detail = parseLocalDetailsPage(page);
+  const route = detail ? `locais-vendedores/${detail.type}/${detail.id}` : adminPageRoutes[page] ?? adminPageRoutes.dashboard;
 
   return `${managementRoot}#/${route}`;
 }
