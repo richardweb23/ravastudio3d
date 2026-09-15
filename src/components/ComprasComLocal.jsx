@@ -42,7 +42,7 @@ export default function ComprasComLocal({
   return (
     <>
       <Header
-        title="Entradas de produtos"
+        title="Cadastro de estoque"
         subtitle="Registre produtos prontos e o local onde foram guardados."
       />
       <div className="split">
