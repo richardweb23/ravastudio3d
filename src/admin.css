@@ -2254,3 +2254,58 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
     padding: 82px 20px 36px;
   }
 }
+
+.task-card strong { white-space: pre-wrap; overflow-wrap: anywhere; }
+.task-card small { overflow-wrap: anywhere; }
+.task-actions { display: flex; align-items: end; gap: 12px; padding: 0 12px 12px; }
+.task-actions label { flex: 1; min-width: 0; font-size: 11px; }
+.task-actions select { width: 100%; margin-top: 4px; }
+.task-form { max-width: 720px; }
+.task-form textarea { resize: vertical; min-height: 120px; }
+.task-form-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.task-description { white-space: pre-wrap; }
+
+.task-dialog { width: min(720px, calc(100% - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 0; border-radius: 12px; overflow-y: auto; background: white; }
+.task-dialog::backdrop { background: rgb(20 25 35 / 55%); }
+.task-dialog .task-form { margin: 0; width: 100%; box-sizing: border-box; }
+.task-dialog .task-form h2 { padding-right: 40px; }
+.task-dialog-close { position: absolute; top: 16px; right: 16px; }
+
+.task-history-description { min-width: 220px; max-width: 420px; white-space: normal; overflow-wrap: anywhere; }
+.task-history-description summary { margin-top: 6px; cursor: pointer; }
+.task-history-description p { white-space: pre-wrap; }
+
+.task-history-filters { display: grid; gap: 16px; margin: 22px 0 18px; padding: 18px; border: 1px solid var(--admin-line); border-radius: 12px; background: #faf9f6; }
+.task-status-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.task-status-filter { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 42px; padding: 9px 14px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #68665f; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.task-status-filter:hover { background: #f0ece5; }
+.task-status-filter.selected { color: #765638; border-color: #d9c5ae; background: #fff; box-shadow: 0 2px 5px #30251708; }
+.task-filter-count { min-width: 24px; padding: 2px 6px; border-radius: 6px; background: #eeeae4; font-size: 11px; text-align: center; }
+.task-status-filter.selected .task-filter-count { background: #f3e8da; }
+.task-status-dot { width: 7px; height: 7px; border-radius: 50%; background: #88847c; flex-shrink: 0; }
+.task-status-dot.pendente { background: #c28a22; }
+.task-status-dot.fazendo { background: #517ba8; }
+.task-status-dot.terminado { background: #39855c; }
+.task-search-row { display: flex; align-items: center; gap: 14px; }
+.task-search-field { display: flex; align-items: center; flex: 1; min-width: 0; gap: 10px; padding: 0 13px; border: 1px solid #dedbd4; border-radius: 9px; background: white; }
+.task-search-field svg { width: 19px; height: 19px; flex-shrink: 0; color: #8c877e; }
+.task-search-field input { width: 100%; min-width: 0; height: 44px; padding: 0; border: 0; border-radius: 0; outline: none; background: transparent; color: var(--admin-ink); font: inherit; font-size: 13px; box-shadow: none; }
+.task-search-field:focus-within { border-color: #ad8960; box-shadow: 0 0 0 3px #ad89601c; }
+.task-clear-filters { min-height: 44px; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: #765638; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.task-clear-filters:hover:not(:disabled) { background: #eee8df; }
+.task-clear-filters:disabled { opacity: .45; cursor: default; }
+.task-status-filter:focus-visible, .task-clear-filters:focus-visible { outline: 2px solid #ad8960; outline-offset: 3px; }
+.task-status-badge { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: 999px; background: #f3efe7; color: #856318; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.task-status-badge.fazendo { color: #43698e; background: #edf3fa; }
+.task-status-badge.terminado { color: #32724e; background: #edf6ef; }
+@media (max-width: 600px) {
+  .task-history-filters { padding: 12px; }
+  .task-status-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .task-status-filter { padding: 9px; font-size: 12px; }
+  .task-search-row { flex-wrap: wrap; gap: 4px; }
+  .task-search-field { flex-basis: 100%; }
+  .task-clear-filters { margin-left: auto; }
+}
+
+.stock-location-balances { margin-top: 24px; }

@@ -18,6 +18,8 @@ import CalculadoraEscala from "./components/CalculadoraEscala.jsx";
 import EstimativaImpressao from "./components/EstimativaImpressao.jsx";
 import FinanceiroModule from "./components/financeiro/FinanceiroModule.jsx";
 
+import TasksPage from "./components/tarefas/TasksPage.jsx";
+
 function Icon({ name }) {
   const paths = {
     dashboard: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></>,
@@ -45,6 +47,8 @@ const productNavigation = [
   ["estoque", "Novo produto"],
   ["cadastros", "Locais e vendedores"],
 ];
+
+const organizationNavigation = [["tarefas", "Tarefas"]];
 
 const utilityNavigation = [
   ["calculadora", "Calculadora de custos"],
@@ -74,8 +78,11 @@ export default function AdminApp() {
   const [profile, setProfile] = useState(null);
   const [page, setPage] = useState(() => getAdminPage(window.location));
   const [loading, setLoading] = useState(true);
+  const [taskCreateRequested, setTaskCreateRequested] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(initialPasswordMode);
+  const [tarefas, setTarefas] = useState([]);
+  const [taskError, setTaskError] = useState(null);
   const [notice, setNotice] = useState(null);
   const [data, setData] = useState({
     materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
@@ -86,6 +93,29 @@ export default function AdminApp() {
     setNotice({ message, type });
     window.setTimeout(() => setNotice(null), 4500);
   }, []);
+
+  const refreshTasks = useCallback(async () => {
+    if (!supabase || !session?.user?.id) return;
+    try {
+      const tasks = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data: batch, error } = await supabase.from("tarefas").select("*")
+          .order("previsao_entrega").order("id").range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        tasks.push(...(batch || []));
+        if (!batch || batch.length < pageSize) break;
+      }
+      const error = null;
+      setTaskError(error);
+      if (!error) setTarefas(tasks || []);
+    } catch (error) { setTaskError(error); }
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (profile?.id) refreshTasks();
+    else { setTarefas([]); setTaskError(null); }
+  }, [profile?.id, refreshTasks]);
 
   const refresh = useCallback(async () => {
     if (!supabase || !session?.user?.id) return;
@@ -193,8 +223,19 @@ export default function AdminApp() {
     }
   }
 
+  async function changeTaskStatus(task, status) {
+    try {
+      const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).select("id").single();
+      if (error) throw error;
+      await refreshTasks();
+      show("Etapa da tarefa atualizada.");
+    } catch (error) { show(error.message || "Não foi possível atualizar a tarefa.", "error"); }
+  }
+
+  const taskProps = { tarefas, error: taskError, onNavigate: navigate, onSaved: refreshTasks, onStatusChange: changeTaskStatus, show };
   const pages = {
-    dashboard: <Dashboard data={data} onNavigate={navigate} onItemStatusChange={async (item, concluido) => {
+    tarefas: <TasksPage key="tarefas" initialOpen={taskCreateRequested} {...taskProps} />,
+    dashboard: <Dashboard tarefas={tarefas} taskError={taskError} onTaskStatusChange={changeTaskStatus} data={data} onNavigate={navigate} onItemStatusChange={async (item, concluido) => {
       const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) show(error.message, "error"); else refresh();
     }} onStatusChange={changeOrderStatus} />,
@@ -217,7 +258,8 @@ export default function AdminApp() {
     financeiroCategorias: <FinanceiroModule page="financeiroCategorias" onNavigate={navigate} show={show} />,
   };
 
-  function navigate(target) {
+  function navigate(target, options = {}) {
+    setTaskCreateRequested(Boolean(options.createTask));
     const href = getAdminPageHref(target);
     window.history.pushState({ page: target }, "", href);
     setPage(target);
@@ -263,6 +305,17 @@ export default function AdminApp() {
                   }}
                 >{label}</a>
               ))}
+            </div>
+          </div>
+          <div className="nav-group">
+            <div className={organizationNavigation.some(([id]) => id === page) ? "nav-group-title active" : "nav-group-title"}>
+              <span><Icon name="orders" /></span>Organização
+            </div>
+            <div className="nav-subitems">
+              {organizationNavigation.map(([id, label]) => <a key={id} className={page === id ? "nav-subitem active" : "nav-subitem"} href={getAdminPageHref(id)} onClick={event => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault(); navigate(id);
+              }}>{label}</a>)}
             </div>
           </div>
           <div className="nav-group">

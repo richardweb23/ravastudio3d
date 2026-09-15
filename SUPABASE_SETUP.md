@@ -97,3 +97,19 @@ Ao final, valide o site público em
 
 Nunca edite uma migração já aplicada em produção. Crie outra migração para
 cada alteração posterior.
+
+## Tarefas e organização
+
+A migração `supabase/migrations/202609150001_tarefas.sql` cria a tabela de
+ tarefas, os índices e as permissões para usuários ativos. Aplique-a com
+`npx supabase db push` em um ambiente vinculado ao projeto, ou execute o conteúdo
+ desse arquivo no SQL Editor do Supabase depois das migrações anteriores.
+
+Após aplicar, use Organização → Tarefas → Cadastrar tarefas para abrir o modal e informar a pessoa
+ encarregada, a descrição e a previsão de entrega. O quadro aparece em
+Organização → Tarefas e abaixo de Pedidos em andamento na Visão geral.
+
+A migração `202609150002_titulo_tarefas.sql` adiciona o título obrigatório das
+tarefas. Os registros existentes recebem os primeiros 150 caracteres da
+descrição como título, que pode ser ajustado em Editar. Aplique as duas
+migrações de tarefas em ordem antes de usar o novo formulário.

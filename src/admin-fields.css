@@ -1,0 +1,95 @@
+/* Shared field design for every administrative page and dialog. */
+:root {
+  --field-border: #dcd5cb;
+  --field-focus: #a78158;
+  --field-muted: #79736a;
+  --field-radius: 9px;
+}
+#root :is(input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"])), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background-color: #fff;
+  color: var(--admin-ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px #30251704;
+  transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+#root :is(input, select, textarea):hover:not(:disabled):not(:focus) { border-color: #b9a995; }
+#root :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--field-focus);
+  outline-offset: 2px;
+  border-color: var(--field-focus);
+  box-shadow: 0 0 0 3px #ad896018;
+}
+#root :is(input, textarea)::placeholder { color: #89837b; opacity: 1; }
+#root :is(input, select, textarea):disabled { color: #827c73; background-color: #f0ede7; border-color: #e0dbd3; cursor: not-allowed; opacity: .8; }
+#root :is(input, textarea)[readonly] { background-color: #f7f4ef; color: #625d55; }
+#root :is(input, select, textarea)[aria-invalid="true"] { border-color: #ba4b45; background-color: #fff8f7; }
+#root :is(input, select, textarea)[aria-invalid="true"]:focus-visible { outline-color: #ba4b45; }
+#root textarea { width: 100%; min-height: 100px; resize: vertical; }
+#root select:not([multiple]):not([size]) {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%238f765b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+  cursor: pointer;
+}
+#root select:disabled { cursor: not-allowed; }
+#root select[multiple] { min-height: 120px; }
+#root input:is([type="date"], [type="datetime-local"], [type="month"], [type="time"]) { color-scheme: light; }
+#root input::-webkit-calendar-picker-indicator { padding: 4px; opacity: .65; cursor: pointer; }
+#root input:is([type="checkbox"], [type="radio"]) { width: 18px; height: 18px; min-height: 18px; flex-shrink: 0; margin: 0; padding: 0; accent-color: #98734c; cursor: pointer; }
+#root input[type="range"] { accent-color: #98734c; }
+#root :is(.form, .calculator-field, .history-filter-grid, .finance-filter-grid, .local-stock-controls, .auth-card) label { min-width: 0; }
+#root :is(.form > label, .form-grid > label, .calculator-field, .history-filter-grid label, .finance-filter-grid label, .local-stock-controls label, .auth-card label) { gap: 8px; color: #625a4f; font-size: 12px; font-weight: 600; }
+#root :is(.form, .calculator-field, .auth-card) label:focus-within { color: #805e39; }
+#root .form label.checkbox-line { display: flex; align-items: center; gap: 10px; }
+#root :is(.history-filter-grid, .finance-filter-grid) { gap: 16px; }
+#root :is(.finance-filter-grid, .finance-filters, .local-stock-filter, .date-filter) { padding: 14px; border: 1px solid var(--admin-line); border-radius: 12px; background: #faf8f4; }
+#root .finance-filters { flex-wrap: wrap; align-items: center; gap: 10px; }
+#root .finance-filters > :is(input, select) { flex: 1 1 170px; }
+#root :is(.history-filters, .local-stock-controls) { border-radius: 12px; }
+#root .calculator-input input { padding-right: 48px; }
+#root .calculator-input small { top: 50%; transform: translateY(-50%); right: 13px; }
+#root .print-input-suffix input { padding-right: 52px; }
+#root .task-search-field input { min-height: 44px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#root .task-search-field input:focus-visible { outline: none; box-shadow: none; }
+#root input[type="search"]:not(.task-search-field input) {
+  padding-left: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238f8578' stroke-width='1.8'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m16 16 4 4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 13px center;
+  background-size: 18px;
+}
+.field-filter { min-width: 0; display: grid; gap: 8px; }
+.field-filter-label { color: #625a4f; font-size: 12px; font-weight: 600; }
+.field-filter-options { display: flex; flex-wrap: wrap; gap: 6px; }
+#root .field-filter-option { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 9px 12px; border: 1px solid #ddd6cb; border-radius: 9px; background: #fff; color: #746b60; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+#root .field-filter-option:hover { background: #f2ece3; }
+#root .field-filter-option[aria-pressed="true"] { border-color: #b39672; background: #f0e5d6; color: #765638; box-shadow: 0 1px 3px #30251708; }
+#root .field-filter-option:focus-visible { outline: 2px solid var(--field-focus); outline-offset: 2px; }
+.field-filter-option svg { width: 14px; height: 14px; flex-shrink: 0; }
+.finance-filter-grid > .field-filter { grid-column: span 2; }
+@media (max-width: 600px) {
+  #root :is(input, select, textarea) { font-size: 16px; }
+  #root :is(.finance-filter-grid, .history-filter-grid) { grid-template-columns: minmax(0, 1fr); }
+  .finance-filter-grid > .field-filter { grid-column: auto; }
+  .field-filter-option { flex: 1 1 auto; }
+  #root .task-search-field input { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #root :is(input, select, textarea) { transition: none; }
+}
+@media (forced-colors: active) {
+  #root select:not([multiple]):not([size]) { appearance: auto; background-image: none; }
+  #root .field-filter-option[aria-pressed="true"] { outline: 2px solid Highlight; }
+}

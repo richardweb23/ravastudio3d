@@ -305,7 +305,7 @@ export default function EstoqueComLocais({
           empty="Nenhum produto cadastrado."
         />
       </section>
-      <section className="panel table-panel">
+      <section className="panel table-panel stock-location-balances">
         <h2>Saldo por local</h2>
         <DataTable
           heads={["Produto", "Local atual", "Tipo", "Quantidade"]}

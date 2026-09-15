@@ -6,6 +6,7 @@ export const adminPageRoutes = Object.freeze({
   vendas: "vendas",
   pedidos: "pedidos",
   cadastros: "cadastros",
+  tarefas: "tarefas",
   calculadora: "calculadora-custos",
   calculadoraEscala: "calculadora-escala",
   estimativaImpressao: "estimativa-impressao",
@@ -25,6 +26,9 @@ const routePages = Object.fromEntries(
   Object.entries(adminPageRoutes).map(([page, route]) => [route, page]),
 );
 
+// Links antigos do cadastro agora levam ao quadro de tarefas.
+routePages["tarefas/cadastrar"] = "tarefas";
+
 function asUrl(location) {
   if (typeof location === "string") return new URL(location, "https://local.invalid");
   if (location?.href) return new URL(location.href);
@@ -42,6 +46,7 @@ export function getAdminPage(location = window.location) {
   if (hashRoute !== null) return routePages[hashRoute] || "dashboard";
 
   const legacyPage = url.searchParams.get("pagina");
+  if (legacyPage === "cadastrarTarefas") return "tarefas";
   if (adminPageIds.has(legacyPage)) return legacyPage;
 
   const marker = "/gestao/";

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
+import TaskBoard from "../tarefas/TaskBoard.jsx";
 import Header from "../Header.jsx";
 import Metric from "../Metric.jsx";
 import Empty from "../Empty.jsx";
@@ -22,6 +23,7 @@ export default function DashboardBoard({
   onNavigate,
   onStatusChange,
   onItemStatusChange,
+  tarefas, taskError, onTaskStatusChange,
 }) {
   const { materiais, vendas, pedidos } = data;
   const [dragged, setDragged] = useState(null);
@@ -160,6 +162,7 @@ export default function DashboardBoard({
           })}
         </div>
       </section>
+      <TaskBoard tarefas={tarefas} error={taskError} onStatusChange={onTaskStatusChange} onCreate={() => onNavigate("tarefas", { createTask: true })} />
       {detailOrder && (
         <div className="modal-backdrop" role="presentation">
           <section className="panel modal-card production-detail" role="dialog" aria-modal="true" aria-labelledby="production-detail-title">

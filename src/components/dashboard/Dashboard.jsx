@@ -1,10 +1,11 @@
+import { deliveryAlert } from "../../lib/deliveryAlert.js";
 import DashboardBoard from "./DashboardBoard.jsx";
 import { useEffect } from "react";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 
-export default function Dashboard({ data, onNavigate, onStatusChange, onItemStatusChange }) {
+export default function Dashboard({ data, onNavigate, onStatusChange, onItemStatusChange, tarefas, taskError, onTaskStatusChange }) {
   useEffect(() => {
-    const cards = document.querySelectorAll(".kanban-card");
+    const cards = document.querySelectorAll(".kanban-card:not(.task-card)");
     cards.forEach((card) => {
       const order = data.pedidos.find((item) =>
         card.textContent.includes(item.cliente),
@@ -30,17 +31,16 @@ export default function Dashboard({ data, onNavigate, onStatusChange, onItemStat
             ? "Pagamento parcial"
             : "Sem pagamentos";
       card.title = `Cliente: ${order.cliente}\nTotal: ${fmtMoney(total)}\nPagamento: ${paymentStatus}\nValor pago: ${fmtMoney(paid)}\nSaldo pendente: ${fmtMoney(balance)}\n\nItens:\n${items || "Nenhum item"}`;
-      if (order.status === "pronto" || !order.previsao_entrega) return;
-      const days = Math.ceil(
-        (new Date(`${order.previsao_entrega}T12:00:00`) - new Date()) /
-          86400000,
-      );
-      if (days < 0) card.classList.add("overdue");
-      else if (days <= 1) card.classList.add("due-soon");
+      card.classList.remove("overdue", "due-soon");
+      const alert = deliveryAlert(order.previsao_entrega, order.status === "pronto");
+      if (alert) card.classList.add(alert);
     });
   }, [data]);
   return (
     <DashboardBoard
+      tarefas={tarefas}
+      taskError={taskError}
+      onTaskStatusChange={onTaskStatusChange}
       data={data}
       onNavigate={onNavigate}
       onStatusChange={onStatusChange}
