@@ -1,3 +1,4 @@
+import { saleTotal, saleQuantity } from "../../lib/vendas.js";
 import { useMemo, useState } from "react";
 import Header from "../Header.jsx";
 import Empty from "../Empty.jsx";
@@ -41,11 +42,11 @@ export default function HistoricoPage({
   );
   const total = filteredSales.reduce(
     (sum, sale) =>
-      sum + Number(sale.quantidade || 0) * Number(sale.preco_unitario || 0),
+      sum + saleTotal(sale),
     0,
   );
   const units = filteredSales.reduce(
-    (sum, sale) => sum + Number(sale.quantidade || 0),
+    (sum, sale) => sum + saleQuantity(sale),
     0,
   );
 
@@ -170,13 +171,12 @@ export default function HistoricoPage({
                         ?.nome ||
                       "Estoque principal"}
                   </td>
-                  <td>{formatNumber(sale.quantidade)}</td>
+                  <td>{formatNumber(sale.quantidade)}{sale.devolvida_em && <small>Devolvida</small>}</td>
                   <td>{formatMoney(sale.preco_unitario)}</td>
                   <td>
                     <strong>
                       {formatMoney(
-                        Number(sale.quantidade || 0) *
-                          Number(sale.preco_unitario || 0),
+                        saleTotal(sale),
                       )}
                     </strong>
                   </td>

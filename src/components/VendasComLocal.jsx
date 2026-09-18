@@ -1,3 +1,5 @@
+import VendaActionModal from "./VendaActionModal.jsx";
+import { saleTotal } from "../lib/vendas.js";
 import { useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../lib/formatters.js";
@@ -8,12 +10,24 @@ import DataTable from "./DataTable.jsx";
 
 export default function VendasComLocal({
   materiais,
+  locais,
   vendedores,
   estoqueLocal,
   vendas,
   onSaved,
   show,
 }) {
+  const [action, setAction] = useState(null);
+  const [filters, setFilters] = useState({ inicio: "", fim: "", produto: "", local: "", vendedor: "" });
+  const updateFilter = (event) => setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
+  const invalidPeriod = filters.inicio && filters.fim && filters.inicio > filters.fim;
+  const filteredSales = invalidPeriod ? [] : vendas.filter(sale =>
+    (!filters.inicio || sale.data >= filters.inicio) &&
+    (!filters.fim || sale.data <= filters.fim) &&
+    (!filters.produto || sale.material_id === filters.produto) &&
+    (!filters.local || sale.local_estoque_id === filters.local) &&
+    (!filters.vendedor || (filters.vendedor === "sem-vendedor" ? !sale.vendedor_id : sale.vendedor_id === filters.vendedor))
+  );
   const [form, setForm] = useState({
     material_id: "",
     local_estoque_id: "",
@@ -88,7 +102,7 @@ export default function VendasComLocal({
               }
             >
               <option value="">Não informado</option>
-              {vendedores.map((vendedor) => (
+              {vendedores.filter(vendedor => vendedor.ativo !== false).map((vendedor) => (
                 <option key={vendedor.id} value={vendedor.id}>
                   {vendedor.nome}
                 </option>
@@ -140,10 +154,20 @@ export default function VendasComLocal({
         />
       </div>
       <section className="panel table-panel">
-        <h2>Últimas vendas</h2>
+        <h2>Vendas</h2>
+        <div className="sales-filters">
+          <label>De<input type="date" name="inicio" value={filters.inicio} onChange={updateFilter} /></label>
+          <label>Até<input type="date" name="fim" value={filters.fim} onChange={updateFilter} /></label>
+          <label>Produto<select name="produto" value={filters.produto} onChange={updateFilter}><option value="">Todos os produtos</option>{materiais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label>Local<select name="local" value={filters.local} onChange={updateFilter}><option value="">Todos os locais</option>{locais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label>Vendedor<select name="vendedor" value={filters.vendedor} onChange={updateFilter}><option value="">Todos os vendedores</option><option value="sem-vendedor">Não informado</option>{vendedores.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
+        </div>
+        {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
+        <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
         <DataTable
-          heads={["Data", "Produto", "Local", "Vendedor", "Total"]}
-          rows={vendas.map((item) => (
+          heads={["Data", "Produto", "Local", "Vendedor", "Quantidade", "Total", "Status", "Ações"]}
+          rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
                 {new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR")}
@@ -151,16 +175,23 @@ export default function VendasComLocal({
               <td>{item.materiais?.nome}</td>
               <td>{item.locais_estoque?.nome || "—"}</td>
               <td>{item.vendedores?.nome || "—"}</td>
+              <td>{fmtNumber(item.quantidade)}</td>
               <td>
                 {fmtMoney(
-                  Number(item.quantidade) * Number(item.preco_unitario),
+                  saleTotal(item),
                 )}
               </td>
+              <td>{item.devolvida_em ? <><span className="status">Devolvida</span><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : "Ativa"}</td>
+              <td><div className="product-table-actions">
+                <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : item.pedido_id ? "Venda vinculada a pedido" : "Editar venda"} aria-label={"Editar venda de " + item.materiais?.nome} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id || item.pedido_id)} onClick={() => setAction({ sale: item, mode: "edicao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg></button>
+                <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda já devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : "Retornar venda ao estoque"} aria-label={"Retornar venda de " + item.materiais?.nome + " ao estoque"} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id)} onClick={() => setAction({ sale: item, mode: "devolucao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12" /></svg></button>
+              </div></td>
             </tr>
           ))}
-          empty="Nenhuma venda registrada."
+          empty="Nenhuma venda encontrada para os filtros selecionados."
         />
       </section>
+      {action && <VendaActionModal {...action} locais={locais} vendedores={vendedores} onClose={() => setAction(null)} onSaved={onSaved} show={show} />}
     </>
   );
 }

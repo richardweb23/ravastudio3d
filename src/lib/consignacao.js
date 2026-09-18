@@ -1,4 +1,4 @@
-export const movementLabels = { entrada: "Entrada", venda: "Venda", retirada: "Retirada / devolução", ajuste: "Ajuste", saldo_inicial: "Saldo inicial" };
+export const movementLabels = { devolucao: "Devolução de venda", entrada: "Entrada", venda: "Venda", retirada: "Retirada / devolução", ajuste: "Ajuste", saldo_inicial: "Saldo inicial" };
 
 export function moneyInputCents(value) {
   const text = String(value ?? "").trim().replace(/^R\$\s*/, "");
@@ -22,12 +22,14 @@ function sumCents(values) {
   return total;
 }
 export function repasseStatus(sale) {
+  if (sale.devolvida_em) return "devolvida";
   if (!sale.acordo_registrado) return "sem_acordo";
   if (Number(sale.repasse_total_centavos) === 0) return "sem_repasse";
   return sale.pagamento_id ? "pago" : "pendente";
 }
-export const repasseLabels = { pendente: "Pendente", pago: "Pago", sem_repasse: "Sem repasse", sem_acordo: "Sem acordo registrado" };
+export const repasseLabels = { devolvida: "Devolvida", pendente: "Pendente", pago: "Pago", sem_repasse: "Sem repasse", sem_acordo: "Sem acordo registrado" };
 export function summarizeConsignment({ materiais = [], estoque = [], acordos = [], vendas = [], movimentos = [] }) {
+  vendas = vendas.filter(sale => !sale.devolvida_em);
   const ids = new Set([...estoque, ...acordos, ...vendas, ...movimentos].map(row => row.material_id));
   const products = [...ids].map(id => {
     const product = materiais.find(row => row.id === id) || { id, nome: "Produto indisponível" };

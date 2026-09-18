@@ -162,3 +162,19 @@ aguardar. Se o banco continuar ocupado, interrompe sem aplicar a migração.
 O erro em uma execução integral impede o commit da migração. Se você executou
 apenas trechos, confira o que já foi criado antes de tentar executar tudo novamente.
 Não é necessário apagar tabelas ou encerrar conexões de outros usuários.
+
+### Devolução e edição de vendas
+
+Antes de publicar esta versão, execute integralmente no SQL Editor a migração
+`supabase/migrations/202609180001_vendas_devolucao_edicao.sql`, após a migração de consignação.
+Ela adiciona as RPCs de edição e devolução, os campos de estorno e uma auditoria
+com os valores anteriores, novos valores, motivo e usuário. Não apaga vendas.
+
+A devolução é integral, admite um local de destino ativo diferente da origem e
+retira a venda dos totais líquidos e dos repasses pendentes. O histórico mantém
+o valor original. A edição permite preço, data e vendedor de vendas avulsas;
+produto, quantidade, origem e repasse por unidade permanecem registrados como antes.
+Vendas com repasse pago não admitem edição/devolução. A devolução de uma venda de
+pedido não altera o pedido nem seus pagamentos e não realiza reembolso.
+
+Validar com `npm run check`. Os testes usam PostgreSQL isolado em memória.

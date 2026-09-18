@@ -1,3 +1,4 @@
+import { loadSales } from "./services/vendas.js";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
 import logo from "../logo.svg";
@@ -129,7 +130,7 @@ export default function AdminApp() {
     const results = await Promise.all([
       supabase.from("materiais").select("*").order("nome"),
       supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false }).limit(50),
-      supabase.from("vendas").select("*, materiais(nome), locais_estoque(nome), vendedores(nome)").order("data", { ascending: false }),
+      loadSales(),
       supabase.from("pedidos").select("*").order("data_pedido", { ascending: false }),
       supabase.from("pedido_itens").select("*, materiais(nome)"),
       supabase.from("pedido_pagamentos").select("*").order("data", { ascending: false }),
@@ -250,7 +251,7 @@ export default function AdminApp() {
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
-    vendas: <VendasComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
+    vendas: <VendasComLocal materiais={data.materiais} locais={data.locaisTodos} vendedores={data.vendedoresTodos} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
     pedidos: <PedidosComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
     cadastros: <Cadastros locais={data.locaisTodos} vendedores={data.vendedoresTodos} onNavigate={navigate} onSaved={refresh} show={show} />,
     calculadora: <CalculadoraCustos materiais={data.materiais} show={show} />,

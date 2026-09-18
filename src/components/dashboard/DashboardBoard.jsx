@@ -1,3 +1,4 @@
+import { saleTotal } from "../../lib/vendas.js";
 import { useEffect, useState } from "react";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
@@ -50,7 +51,7 @@ export default function DashboardBoard({
     .filter((item) => item.data?.startsWith(month))
     .reduce(
       (sum, item) =>
-        sum + Number(item.quantidade) * Number(item.preco_unitario),
+        sum + saleTotal(item),
       0,
     );
   const open = byDelivery(pedidos.filter((item) => item.status !== "entregue"));
