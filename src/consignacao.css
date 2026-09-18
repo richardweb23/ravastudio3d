@@ -52,14 +52,29 @@
 .registration-tables .row-actions { display: flex; flex-wrap: wrap; gap: 10px; min-width: 150px; }
 
 .registration-tables .row-actions { min-width: 0; flex-wrap: nowrap; gap: 6px; }
-:is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 8px; border: 1px solid #ddd6cb; border-radius: 8px; background: #fff; color: #8f6d4e; }
+:is(.registration-tables .row-actions, .consignment-actions, .order-table-actions, .product-table-actions) .registration-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 8px; border: 1px solid #ddd6cb; border-radius: 8px; background: #fff; color: #8f6d4e; }
 .registration-icon-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-:is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button:hover:not(:disabled) { background: #f2e9dc; border-color: #bda384; }
-.registration-tables .row-actions .registration-icon-danger { color: #b3423b; }
-.registration-tables .row-actions .registration-icon-danger:hover { background: #fff0ed; border-color: #d9aaa4; }
+:is(.registration-tables .row-actions, .consignment-actions, .order-table-actions, .product-table-actions) .registration-icon-button:hover:not(:disabled) { background: #f2e9dc; border-color: #bda384; }
+:is(.registration-tables .row-actions, .order-table-actions, .product-table-actions) .registration-icon-danger { color: #b3423b; }
+:is(.registration-tables .row-actions, .order-table-actions, .product-table-actions) .registration-icon-danger:hover { background: #fff0ed; border-color: #d9aaa4; }
 .registration-icon-button:focus-visible { outline: 2px solid var(--admin-gold); outline-offset: 3px; }
-@media (pointer: coarse) { :is(.registration-tables .row-actions, .consignment-actions) .registration-icon-button { flex-basis: 44px; width: 44px; height: 44px; } }
+@media (pointer: coarse) { :is(.registration-tables .row-actions, .consignment-actions, .order-table-actions, .product-table-actions) .registration-icon-button { flex-basis: 44px; width: 44px; height: 44px; } }
 
 .consignment-actions { display: grid; grid-template-columns: repeat(3, 36px); gap: 6px; min-width: 120px; }
 .consignment-actions .registration-icon-button:disabled { cursor: not-allowed; opacity: .4; }
 @media (pointer: coarse) { .consignment-actions { grid-template-columns: repeat(3, 44px); min-width: 144px; } }
+
+/* Tabela de pedidos */
+.order-table-actions, .product-table-actions { display: flex; flex-wrap: nowrap; gap: 6px; }
+.orders-table .order-description { min-width: 200px; max-width: 340px; white-space: normal; overflow-wrap: anywhere; }
+.orders-table .order-description small { display: block; margin-top: 5px; color: #777168; }
+.orders-table .order-note { margin: 8px 0 0; }
+.order-table-status { display: grid; justify-items: start; gap: 8px; }
+.order-table-status select { min-width: 140px; }
+.orders-table .order-money, .orders-table .order-date { white-space: nowrap; }
+.orders-table .financial-status { display: inline-block; white-space: nowrap; }
+
+.registration-toolbar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
+.registration-dialog { padding: 0; border: 0; border-radius: 12px; background: var(--admin-paper); }
+.registration-dialog::backdrop { background: #18213a80; }
+.registration-dialog .panel { margin: 0; }

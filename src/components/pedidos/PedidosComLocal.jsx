@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../../lib/formatters.js";
 import Header from "../Header.jsx";
-import Empty from "../Empty.jsx";
+import DataTable from "../DataTable.jsx";
 import Status from "../Status.jsx";
 import PedidoEditor from "./PedidoEditor.jsx";
 
@@ -225,89 +225,64 @@ export default function PedidosComLocal({
           </form>
         </div>
       )}
-      <section className="panel orders">
+      <section className="panel table-panel orders-table">
         <div className="panel-title">
           <h2>Pedidos em aberto</h2>
         </div>
-        {visible.map((order) => {
+        <DataTable heads={["Cliente / itens", "Entrega", "Status", "Total", "Pagamento", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
           const info = financial(order);
           return (
-            <article className="order-card" key={order.id}>
-              <div>
-                <div className="order-top">
-                  <strong>{order.cliente}</strong>
+            <tr key={order.id}>
+              <td className="order-description">
+                <strong>{order.cliente}</strong>
+                {itens.filter((item) => item.pedido_id === order.id).map((item) => (
+                  <small key={item.id}>
+                    {item.materiais?.nome}{item.subtitulo ? ` — ${item.subtitulo}` : ""}: {fmtNumber(item.quantidade)}
+                  </small>
+                ))}
+                {order.observacao && <p className="order-note">{order.observacao}</p>}
+              </td>
+              <td className="order-date">
+                {order.previsao_entrega ? new Date(order.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR") : "Não informada"}
+              </td>
+              <td>
+                <div className="order-table-status">
                   <Status value={order.status} />
-                  <span className={`financial-status ${info.status}`}>
-                    {info.status === "pago"
-                      ? "Quitado"
-                      : info.status === "parcial"
-                        ? "Parcial"
-                        : "Pendente"}
-                  </span>
+                  <select className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
+                    <option value="recebido">Recebido</option>
+                    <option value="em_producao">Em produção</option>
+                    <option value="pronto">Pronto</option>
+                    <option value="entregue">Entregue</option>
+                  </select>
                 </div>
-                <small>
-                  Entrega:{" "}
-                  {order.previsao_entrega
-                    ? new Date(
-                        order.previsao_entrega + "T12:00:00",
-                      ).toLocaleDateString("pt-BR")
-                    : "não informada"}
-                </small>
-                {order.observacao && (
-                  <p className="order-note">{order.observacao}</p>
-                )}
-                <div className="order-items">
-                  {itens
-                    .filter((item) => item.pedido_id === order.id)
-                    .map((item) => (
-                      <span key={item.id}>
-                        {item.materiais?.nome}
-                        {item.subtitulo ? ` — ${item.subtitulo}` : ""}:{" "}
-                        {fmtNumber(item.quantidade)}
-                      </span>
-                    ))}
-                </div>
+              </td>
+              <td className="order-money"><strong>{fmtMoney(order.valor_total)}</strong></td>
+              <td className="order-money">
+                <span className={`financial-status ${info.status}`}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</span>
                 <div className="payment-summary">
-                  Pago: <strong>{fmtMoney(info.paid)}</strong> · Restante:{" "}
-                  <strong className={info.balance ? "negative" : ""}>
-                    {fmtMoney(info.balance)}
-                  </strong>
+                  <div>Pago: <strong>{fmtMoney(info.paid)}</strong></div>
+                  <div>Restante: <strong className={info.balance ? "negative" : ""}>{fmtMoney(info.balance)}</strong></div>
                 </div>
-              </div>
-              <div className="order-side">
-                <strong>{fmtMoney(order.valor_total)}</strong>
-                {order.status !== "entregue" && (
-                  <>
-                    <button onClick={() => setEditor(order)}>Editar</button>
-                    <button
-                      onClick={() => removeOrder(order)}
-                      className="delete-order"
-                    >
-                      Excluir
+              </td>
+              <td>
+                <div className="row-actions order-table-actions">
+                  {order.status !== "entregue" && <>
+                    <button type="button" className="registration-icon-button" title="Editar pedido" aria-label={`Editar pedido de ${order.cliente}`} onClick={() => setEditor(order)}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg>
                     </button>
-                  </>
-                )}
-                {info.balance > 0 && (
-                  <button onClick={() => setPaymentOrder(order)}>
-                    Pagamento
-                  </button>
-                )}
-                <select
-                  aria-label="Alterar status"
-                  value={order.status}
-                  disabled={order.status === "entregue"}
-                  onChange={(e) => changeStatus(order, e.target.value)}
-                >
-                  <option value="recebido">Recebido</option>
-                  <option value="em_producao">Em produção</option>
-                  <option value="pronto">Pronto</option>
-                  <option value="entregue">Entregue</option>
-                </select>
-              </div>
-            </article>
+                    <button type="button" className="registration-icon-button registration-icon-danger" title="Excluir pedido" aria-label={`Excluir pedido de ${order.cliente}`} onClick={() => removeOrder(order)}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
+                    </button>
+                  </>}
+                  {info.balance > 0 && <button type="button" className="registration-icon-button" title="Registrar pagamento" aria-label={`Registrar pagamento do pedido de ${order.cliente}`} onClick={() => setPaymentOrder(order)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M2 9h20M6 15h4M17 12v6M14 15h6" /></svg>
+                  </button>}
+                  {order.status === "entregue" && info.balance === 0 && <span aria-label="Nenhuma ação disponível">—</span>}
+                </div>
+              </td>
+            </tr>
           );
-        })}
-        {!visible.length && <Empty text="Nenhum pedido neste filtro." />}
+        })} />
       </section>
     </>
   );

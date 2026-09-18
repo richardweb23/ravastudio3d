@@ -2308,4 +2308,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
   .task-clear-filters { margin-left: auto; }
 }
 
-.stock-location-balances { margin-top: 24px; }
+.stock-location-balances,
+.stock-products-table { margin-top: 24px; }

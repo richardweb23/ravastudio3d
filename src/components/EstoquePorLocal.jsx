@@ -7,16 +7,9 @@ import Metric from "./Metric.jsx";
 const ALL_LOCATIONS = "__all__";
 
 export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
-  const [localId, setLocalId] = useState("");
+  const [localId, setLocalId] = useState(ALL_LOCATIONS);
   const [materialId, setMaterialId] = useState("");
-  const defaultLocal =
-    locais.find((local) => local.tipo === "principal") ||
-    locais.find((local) => local.nome.toLowerCase() === "estoque principal") ||
-    locais[0];
-  const activeLocalId =
-    localId === ALL_LOCATIONS || locais.some((local) => local.id === localId)
-    ? localId
-    : defaultLocal?.id || "";
+  const activeLocalId = localId;
 
   const localRows = useMemo(
     () =>
@@ -32,6 +25,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
         }))
         .filter((item) => item.material)
         .sort((a, b) =>
+          Number(b.quantidade || 0) - Number(a.quantidade || 0) ||
           a.material.nome.localeCompare(b.material.nome) ||
           (a.local?.nome || "").localeCompare(b.local?.nome || ""),
         ),
@@ -42,11 +36,11 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
     ? localRows.filter((item) => item.material_id === materialId)
     : localRows;
 
-  const totalItems = localRows.reduce(
+  const totalItems = rows.reduce(
     (sum, item) => sum + Number(item.quantidade || 0),
     0,
   );
-  const totalValue = localRows.reduce(
+  const totalValue = rows.reduce(
     (sum, item) =>
       sum + Number(item.quantidade || 0) * Number(item.material.custo_medio || 0),
     0,
@@ -56,7 +50,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
   return (
     <>
       <Header
-        title="Estoque por local"
+        title="Saldo por local"
         subtitle="Consulte os produtos disponíveis em cada local de armazenamento."
       />
       <section className="location-stock-metrics">
@@ -64,7 +58,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
           label="Local selecionado"
           value={selectedLocal?.nome || "Todos os locais"}
         />
-        <Metric label="Produtos diferentes" value={formatNumber(localRows.length)} />
+        <Metric label="Produtos diferentes" value={formatNumber(new Set(rows.map(item => item.material_id)).size)} />
         <Metric label="Unidades no local" value={formatNumber(totalItems)} />
         <Metric label="Valor em estoque" value={formatMoney(totalValue)} />
       </section>
@@ -75,10 +69,10 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
             value={activeLocalId}
             onChange={(event) => {
               setLocalId(event.target.value);
-              setMaterialId("");
+
             }}
           >
-            <option value="">Selecione um local</option>
+
             <option value={ALL_LOCATIONS}>Todos os locais</option>
             {locais.map((local) => (
               <option key={local.id} value={local.id}>{local.nome}</option>
@@ -89,28 +83,29 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
           Produto
           <select value={materialId} onChange={(event) => setMaterialId(event.target.value)}>
             <option value="">Todos os produtos</option>
-            {localRows.map((item) => (
-              <option key={item.material_id} value={item.material_id}>
-                {item.material.nome}
+            {materiais.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.nome}
               </option>
             ))}
           </select>
         </label>
       </section>
       <section className="panel table-panel">
-        <h2>{selectedLocal ? `Produtos em ${selectedLocal.nome}` : "Produtos por local"}</h2>
+        <h2>Saldo por local</h2>
+        <p>Quantidade: do maior para o menor.</p>
         <DataTable
-          heads={["Produto", "Local atual", "Custo", "Quantidade", "Valor"]}
+          heads={["Produto", "Local atual", "Tipo", "Quantidade"]}
           rows={rows.map((item) => (
             <tr key={`${item.material_id}-${item.local_id}`}>
               <td><strong>{item.material.nome}</strong></td>
               <td>{item.local?.nome || item.locais_estoque?.nome || "—"}</td>
-              <td>{formatMoney(item.material.custo_medio)}</td>
+              <td>{item.local?.tipo || item.locais_estoque?.tipo || "—"}</td>
               <td>{formatNumber(item.quantidade)}</td>
-              <td>{formatMoney(Number(item.quantidade) * Number(item.material.custo_medio || 0))}</td>
+
             </tr>
           ))}
-          empty={activeLocalId ? "Nenhum produto com saldo neste local." : "Selecione um local para visualizar o estoque."}
+          empty="Nenhum saldo encontrado para os filtros selecionados."
         />
       </section>
     </>

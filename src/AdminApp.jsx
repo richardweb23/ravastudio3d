@@ -45,9 +45,13 @@ const baseNavigation = [
 const productNavigation = [
   ["vendas", "Cadastrar venda"],
   ["pedidos", "Novo pedido"],
-  ["compras", "Cadastro de estoque"],
-  ["estoque", "Novo produto"],
+];
+
+const stockNavigation = [
+  ["estoque", "Criar novo produto"],
+  ["compras", "Entrada de produto"],
   ["cadastros", "Locais e vendedores"],
+  ["estoquePorLocal", "Saldo por local"],
 ];
 
 const organizationNavigation = [["tarefas", "Tarefas"]];
@@ -244,8 +248,8 @@ export default function AdminApp() {
       if (error) show(error.message, "error"); else refresh();
     }} onStatusChange={changeOrderStatus} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
-    estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} />,
-    compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} onSaved={refresh} show={show} />,
+    estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
+    compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     vendas: <VendasComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
     pedidos: <PedidosComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
     cadastros: <Cadastros locais={data.locaisTodos} vendedores={data.vendedoresTodos} onNavigate={navigate} onSaved={refresh} show={show} />,
@@ -293,11 +297,30 @@ export default function AdminApp() {
             </a>
           ))}
           <div className="nav-group">
-            <div className={productNavigation.some(([id]) => id === page || (id === "cadastros" && detailRoute)) ? "nav-group-title active" : "nav-group-title"}>
+            <div className={productNavigation.some(([id]) => id === page) ? "nav-group-title active" : "nav-group-title"}>
               <span><Icon name="products" /></span>Produtos
             </div>
             <div className="nav-subitems">
               {productNavigation.map(([id, label]) => (
+                <a
+                  key={id}
+                  className={page === id ? "nav-subitem active" : "nav-subitem"}
+                  href={getAdminPageHref(id)}
+                  onClick={(event) => {
+                    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault();
+                    navigate(id);
+                  }}
+                >{label}</a>
+              ))}
+            </div>
+          </div>
+          <div className="nav-group">
+            <div className={stockNavigation.some(([id]) => id === page || (id === "cadastros" && detailRoute)) ? "nav-group-title active" : "nav-group-title"}>
+              <span><Icon name="warehouse" /></span>Estoque
+            </div>
+            <div className="nav-subitems">
+              {stockNavigation.map(([id, label]) => (
                 <a
                   key={id}
                   className={page === id || (id === "cadastros" && detailRoute) ? "nav-subitem active" : "nav-subitem"}

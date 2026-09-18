@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase.js";
+
+
 import Header from "./Header.jsx";
 import RegistrationTables from "./consignacao/RegistrationTables.jsx";
 
@@ -17,8 +19,20 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
     ativo: true,
   };
   const [local, setLocal] = useState(emptyLocal);
+  const [localOpen, setLocalOpen] = useState(false);
+  const localDialog = useRef(null);
+  useEffect(() => {
+    if (localOpen) localDialog.current?.showModal();
+    else localDialog.current?.close();
+  }, [localOpen]);
   const [editingLocalId, setEditingLocalId] = useState(null);
   const emptySeller = { nome: "", telefone: "", endereco: "", observacoes: "", ativo: true };
+  const [sellerOpen, setSellerOpen] = useState(false);
+  const sellerDialog = useRef(null);
+  useEffect(() => {
+    if (sellerOpen) sellerDialog.current?.showModal();
+    else sellerDialog.current?.close();
+  }, [sellerOpen]);
   const [editingSeller, setEditingSeller] = useState(null);
   const [vendedor, setVendedor] = useState(emptySeller);
   async function addLocal(e) {
@@ -32,6 +46,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
     show(editingLocalId ? "Local atualizado." : "Local cadastrado.");
     setLocal(emptyLocal);
     setEditingLocalId(null);
+    setLocalOpen(false);
     onSaved();
   }
   function editLocal(item) {
@@ -47,7 +62,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
       observacoes: item.observacoes || "",
       ativo: item.ativo,
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setLocalOpen(true);
   }
   async function removeLocal(item) {
     if (
@@ -75,7 +90,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
   function editSeller(item) {
     setEditingSeller(item.id);
     setVendedor({ nome: item.nome, telefone: item.telefone || "", endereco: item.endereco || "", observacoes: item.observacoes || "", ativo: item.ativo });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setSellerOpen(true);
   }
   async function addVendedor(e) {
     e.preventDefault();
@@ -85,6 +100,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
     show(editingSeller ? "Vendedor atualizado." : "Vendedor cadastrado.");
     setVendedor(emptySeller);
     setEditingSeller(null);
+    setSellerOpen(false);
     onSaved();
   }
   return (
@@ -93,12 +109,20 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
         title="Locais e vendedores"
         subtitle="Cadastre onde os produtos ficam e quem realiza as vendas."
       />
-      <div className="split">
+      <div className="registration-toolbar">
+        <button type="button" className="primary" onClick={() => { setEditingLocalId(null); setLocal(emptyLocal); setLocalOpen(true); }}>Novo local</button>
+        <button type="button" className="primary" onClick={() => { setEditingSeller(null); setVendedor(emptySeller); setSellerOpen(true); }}>Novo vendedor</button>
+      </div>
+      <dialog ref={localDialog} className="modal-card registration-dialog" aria-labelledby="local-dialog-title" onClose={() => setLocalOpen(false)}>
         <form className="panel form" onSubmit={addLocal}>
-          <h2>{editingLocalId ? "Editar local" : "Novo local"}</h2>
+          <div className="modal-heading">
+            <h2 id="local-dialog-title">{editingLocalId ? "Editar local" : "Novo local"}</h2>
+            <button type="button" className="close-modal" aria-label="Fechar" onClick={() => setLocalOpen(false)}>×</button>
+          </div>
           <label>
             Nome
             <input
+              autoFocus
               placeholder="Ex.: Loja Parceira Centro"
               value={local.nome}
               onChange={(e) => setLocal({ ...local, nome: e.target.value })}
@@ -167,24 +191,17 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
             <button className="primary">
               {editingLocalId ? "Salvar alterações" : "Cadastrar local"}
             </button>
-            {editingLocalId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingLocalId(null);
-                  setLocal(emptyLocal);
-                }}
-              >
-                Cancelar
-              </button>
-            )}
+            <button type="button" onClick={() => setLocalOpen(false)}>Cancelar</button>
           </div>
         </form>
+      </dialog>
+      <dialog ref={sellerDialog} className="modal-card registration-dialog" aria-labelledby="seller-dialog-title" onClose={() => setSellerOpen(false)}>
         <form className="panel form" onSubmit={addVendedor}>
-          <h2>{editingSeller ? "Editar vendedor" : "Novo vendedor"}</h2>
+          <div className="modal-heading"><h2 id="seller-dialog-title">{editingSeller ? "Editar vendedor" : "Novo vendedor"}</h2><button type="button" className="close-modal" aria-label="Fechar" onClick={() => setSellerOpen(false)}>×</button></div>
           <label>
             Nome
             <input
+              autoFocus
               value={vendedor.nome}
               onChange={(e) =>
                 setVendedor({ ...vendedor, nome: e.target.value })
@@ -204,9 +221,9 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
           <label>Endereço<input value={vendedor.endereco} onChange={event => setVendedor({ ...vendedor, endereco: event.target.value })} /></label>
           <label>Observações<textarea value={vendedor.observacoes} onChange={event => setVendedor({ ...vendedor, observacoes: event.target.value })} /></label>
           <label className="checkbox-line"><input type="checkbox" checked={vendedor.ativo} onChange={event => setVendedor({ ...vendedor, ativo: event.target.checked })} />Vendedor ativo</label>
-          <div className="actions"><button className="primary">{editingSeller ? "Salvar alterações" : "Cadastrar vendedor"}</button>{editingSeller && <button type="button" onClick={() => { setEditingSeller(null); setVendedor(emptySeller); }}>Cancelar</button>}</div>
+          <div className="actions"><button className="primary">{editingSeller ? "Salvar alterações" : "Cadastrar vendedor"}</button><button type="button" onClick={() => setSellerOpen(false)}>Cancelar</button></div>
         </form>
-      </div>
+      </dialog>
       <RegistrationTables locais={locais} vendedores={vendedores} onNavigate={onNavigate} onEditLocal={editLocal} onEditSeller={editSeller} onRemoveLocal={removeLocal} />
     </>
   );
