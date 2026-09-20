@@ -1,4 +1,4 @@
-import { saleTotal } from "../../lib/vendas.js";
+import { saleTotal, salesByBox, SALES_BOXES } from "../../lib/vendas.js";
 import { useEffect, useState } from "react";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
@@ -54,6 +54,7 @@ export default function DashboardBoard({
         sum + saleTotal(item),
       0,
     );
+  const caixaTotals = salesByBox(vendas, month);
   const open = byDelivery(pedidos.filter((item) => item.status !== "entregue"));
   const low = materiais.filter((item) => Number(item.quantidade_atual) <= 0);
   async function drop(status) {
@@ -92,6 +93,9 @@ export default function DashboardBoard({
           danger={low.length > 0}
         />
       </div>
+      <section className="sales-box-metrics" aria-label="Vendas do mês por caixa">
+        {SALES_BOXES.map(caixa => <Metric key={caixa} label={caixa + " · vendas no mês"} value={fmtMoney(caixaTotals[caixa])} />)}
+      </section>
       <section className="panel kanban">
         <div className="panel-title">
           <h2>Pedidos em andamento</h2>

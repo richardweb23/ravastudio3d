@@ -190,9 +190,41 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await db.query("select public.devolver_venda($1,$2,'Pedido devolvido',0)",[orderSale,source]);
     assert.equal(await stock(source),before+1);
   });
+  await t.test('caixas migram vendas antigas, classificam vendas novas e permitem reclassificar repasse pago', async () => {
+    assert.equal((await one('select caixa from public.vendas where id=$1',[legacySale])).caixa,'Rivoxel');
+    const before=await stock(source);
+    const id=(await one("select public.registrar_venda($1,$2,null,1,10,current_date,'Bonecos') as id",[product,source])).id;
+    assert.equal((await one('select caixa from public.vendas where id=$1',[id])).caixa,'Bonecos');
+    await db.query("select public.editar_venda($1,12,current_date,null,'Nova caixa',0,'Rava')",[id]);
+    assert.equal((await one('select caixa from public.vendas where id=$1',[id])).caixa,'Rava');
+    assert.equal(await stock(source),before-1);
+    const snapshot=await one('select * from public.consignacao_vendas where id=$1',[sale]);
+    await db.query("select public.alterar_caixa_venda($1,'Bonecos',0)",[sale]);
+    assert.deepEqual(await one('select * from public.consignacao_vendas where id=$1',[sale]),snapshot);
+    assert.equal((await one('select caixa from public.vendas where id=$1',[sale])).caixa,'Bonecos');
+    const audit=await one('select * from public.vendas_alteracoes where venda_id=$1 order by created_at desc limit 1',[sale]);
+    assert.equal(audit.antes.caixa,'Rivoxel'); assert.equal(audit.depois.caixa,'Bonecos');
+    await assert.rejects(db.query("select public.alterar_caixa_venda($1,'Rava',0)",[sale]),/alterada/i);
+    await assert.rejects(db.query("select public.alterar_caixa_venda($1,'Outra',1)",[sale]),/caixa/i);
+    await assert.rejects(db.query("select public.registrar_venda($1,$2,null,1,10,current_date,null)",[product,source]),/caixa/i);
+    const legacy=(await one('select public.registrar_venda($1,$2,null,1,10,current_date) as id',[product,source])).id;
+    assert.equal((await one('select caixa from public.vendas where id=$1',[legacy])).caixa,'Rivoxel');
+  });
+  await t.test('consignação e entrega de pedido capturam a caixa escolhida', async () => {
+    const id=(await one("select public.vender_consignacao($1,$2,1,1500,current_date,'Rava') as id",[source,product])).id;
+    assert.equal((await one('select caixa from public.vendas where id=$1',[id])).caixa,'Rava');
+    const order=(await one("insert into public.pedidos(cliente,local_estoque_id) values('Pedido caixa',$1) returning id",[source])).id;
+    await db.query('insert into public.pedido_itens(pedido_id,material_id,quantidade,preco_unitario) values($1,$2,1,15)',[order,product]);
+    await db.query("select public.alterar_status_pedido($1,'entregue','Bonecos')",[order]);
+    const line=await one('select * from public.vendas where pedido_id=$1',[order]);
+    assert.equal(line.caixa,'Bonecos');
+    await db.query("select public.alterar_caixa_venda($1,'Rava',0)",[line.id]);
+    assert.equal((await one('select caixa from public.vendas where id=$1',[line.id])).caixa,'Rava');
+  });
   await t.test('usuário inativo não lê histórico e não executa pagamento', async () => {
     await db.exec('RESET ROLE'); await db.query('update public.profiles set ativo=false where id=$1',[user]); await db.exec('SET ROLE authenticated');
     assert.equal((await db.query('select * from public.consignacao_vendas')).rows.length,0);
+    await assert.rejects(db.query("select public.alterar_caixa_venda($1,'Rava',1)",[sale]), /autorizado/i);
     await assert.rejects(db.query("select public.devolver_venda($1,$2,'Teste',0)",[sale,source]), /autorizado/i);
     await assert.rejects(db.query("select public.editar_venda($1,15,current_date,null,'Teste',0)",[sale]), /autorizado/i);
     await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[sale]]), /autorizado/i);

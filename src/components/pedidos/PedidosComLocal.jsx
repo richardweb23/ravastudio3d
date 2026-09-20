@@ -1,3 +1,5 @@
+import useCaixaPedido from "../../hooks/useCaixaPedido.js";
+import CaixaPedidoModal from "../CaixaPedidoModal.jsx";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../../lib/formatters.js";
@@ -16,6 +18,7 @@ export default function PedidosComLocal({
   onSaved,
   show,
 }) {
+  const { open: caixaOpen, requestCaixa, finishCaixa } = useCaixaPedido();
   const [editor, setEditor] = useState(null);
   const [paymentOrder, setPaymentOrder] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -68,9 +71,12 @@ export default function PedidosComLocal({
         return;
       if (!window.confirm("Confirmar entrega e baixa de estoque?")) return;
     }
+    const caixa = status === "entregue" ? await requestCaixa() : null;
+    if (status === "entregue" && !caixa) return;
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
       p_status: status,
+      ...(caixa ? { p_caixa: caixa } : {}),
     });
     if (error) show(error.message, "error");
     else {
@@ -119,6 +125,7 @@ export default function PedidosComLocal({
 
   return (
     <>
+      {caixaOpen && <CaixaPedidoModal onDone={finishCaixa} />}
       <Header
         title="Pedidos"
         subtitle="Encomendas, descontos, personalizações e pagamentos."

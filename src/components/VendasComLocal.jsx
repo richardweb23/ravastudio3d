@@ -1,3 +1,4 @@
+import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
 import { saleTotal } from "../lib/vendas.js";
 import { useState } from "react";
@@ -29,6 +30,7 @@ export default function VendasComLocal({
     (!filters.vendedor || (filters.vendedor === "sem-vendedor" ? !sale.vendedor_id : sale.vendedor_id === filters.vendedor))
   );
   const [form, setForm] = useState({
+    caixa: "",
     material_id: "",
     local_estoque_id: "",
     vendedor_id: "",
@@ -39,6 +41,7 @@ export default function VendasComLocal({
   async function save(e) {
     e.preventDefault();
     const { error } = await supabase.rpc("registrar_venda", {
+      p_caixa: form.caixa,
       p_material_id: form.material_id,
       p_local_id: form.local_estoque_id,
       p_vendedor_id: form.vendedor_id || null,
@@ -49,7 +52,7 @@ export default function VendasComLocal({
     if (error) return show(error.message, "error");
     show("Venda registrada com vendedor e local.");
     setForm({
-      material_id: "", local_estoque_id: "", vendedor_id: "",
+      caixa: "", material_id: "", local_estoque_id: "", vendedor_id: "",
       quantidade: "", preco_unitario: "", data: today(),
     });
     onSaved();
@@ -63,6 +66,7 @@ export default function VendasComLocal({
       <div className="split">
         <form className="panel form" onSubmit={save}>
           <h2>Nova venda</h2>
+          <CaixaSelect value={form.caixa} onChange={event => setForm({ ...form, caixa: event.target.value })} />
           <MaterialSelect
             materiais={materiais}
             value={form.material_id}
@@ -166,7 +170,7 @@ export default function VendasComLocal({
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
         <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
         <DataTable
-          heads={["Data", "Produto", "Local", "Vendedor", "Quantidade", "Total", "Status", "Ações"]}
+          heads={["Data", "Produto", "Local", "Vendedor", "Quantidade", "Total", "Caixa", "Status", "Ações"]}
           rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
@@ -181,6 +185,7 @@ export default function VendasComLocal({
                   saleTotal(item),
                 )}
               </td>
+              <td><button type="button" className="link" title="Alterar caixa da venda" aria-label={"Alterar caixa da venda de " + item.materiais?.nome} onClick={() => setAction({ sale: item, mode: "caixa" })}>{item.caixa || "Rivoxel"} ✎</button></td>
               <td>{item.devolvida_em ? <><span className="status">Devolvida</span><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : "Ativa"}</td>
               <td><div className="product-table-actions">
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : item.pedido_id ? "Venda vinculada a pedido" : "Editar venda"} aria-label={"Editar venda de " + item.materiais?.nome} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id || item.pedido_id)} onClick={() => setAction({ sale: item, mode: "edicao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg></button>

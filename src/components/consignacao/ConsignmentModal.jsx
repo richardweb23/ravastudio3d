@@ -1,3 +1,4 @@
+import CaixaSelect from "../CaixaSelect.jsx";
 import { useEffect, useRef, useState } from "react";
 import { consignmentAction } from "../../services/consignacao.js";
 import { moneyInputCents, repasseStatus, validQuantity } from "../../lib/consignacao.js";
@@ -9,7 +10,7 @@ function localToday() { const date = new Date(); return [date.getFullYear(), Str
 function preview(value, count = 1) { try { return money(moneyInputCents(value) * Number(count || 0)); } catch { return "—"; } }
 
 export default function ConsignmentModal({ mode, product, data, onClose, onSaved, show }) {
-  const [form, setForm] = useState({ material_id: product?.id || "", quantidade: "1", outro_local_id: "", preco: centsToInput(product?.acordo?.preco_centavos || 0), repasse: centsToInput(product?.acordo?.repasse_centavos || 0), data: localToday(), observacoes: "", local_id: "" });
+  const [form, setForm] = useState({ caixa: "", material_id: product?.id || "", quantidade: "1", outro_local_id: "", preco: centsToInput(product?.acordo?.preco_centavos || 0), repasse: centsToInput(product?.acordo?.repasse_centavos || 0), data: localToday(), observacoes: "", local_id: "" });
   const [selected, setSelected] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -58,7 +59,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
           const qty = validQuantity(form.quantidade, available);
           if (!agreement) throw new Error("Configure o preço e repasse antes de registrar a venda.");
           name = "vender_consignacao";
-          params = { ...common, p_quantidade: qty, p_preco_centavos: moneyInputCents(form.preco), p_data: form.data };
+          params = { ...common, p_caixa: form.caixa, p_quantidade: qty, p_preco_centavos: moneyInputCents(form.preco), p_data: form.data };
           confirmation = "Registrar " + qty + " unidade(s), no total de " + money(params.p_preco_centavos * qty) + ", e baixar o estoque? Repasse: " + money(Number(agreement.repasse_centavos) * qty) + ".";
         } else {
           const qty = validQuantity(form.quantidade, mode === "entrada" ? Infinity : available, mode === "ajuste");
@@ -84,6 +85,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
       <div className="modal-heading"><h2 id="consignment-modal-title">{titles[mode]}</h2><button type="button" className="close-modal" aria-label="Fechar" disabled={busy} onClick={onClose}>×</button></div>
       <p>{data.entity.nome}</p>
       <fieldset disabled={busy}>
+        {mode === "venda" && <CaixaSelect value={form.caixa} onChange={update} />}
         {mode === "vinculo" ? <>
           <p>Escolha um local já cadastrado ou crie um local exclusivo para este vendedor. Isso evita misturar o estoque de pessoas diferentes.</p>
           <label>Local<select name="local_id" value={form.local_id} onChange={update}><option value="">Criar local exclusivo para este vendedor</option>{data.locais.filter(row => row.ativo && !partnerLocations.has(row.id)).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>

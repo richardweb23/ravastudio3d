@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { saleTotal, saleQuantity } from "./vendas.js";
+import { saleTotal, saleQuantity, salesByBox } from "./vendas.js";
 import { summarizeConsignment, summarizeLocations, repasseStatus } from "./consignacao.js";
 
 test("devolução zera receita e unidades líquidas sem apagar valores originais", () => {
@@ -20,4 +20,18 @@ test("resumos de consignação removem receita, quantidade vendida e repasse das
   assert.equal(report.products[0].vendida,2);
   assert.equal(repasseStatus(returned),"devolvida");
   assert.deepEqual(summarizeLocations({ vendas:[returned] }).l, { unidades:0,vendido:0,pendente:0 });
+});
+
+test('totais por caixa respeitam mês, devoluções e padrão das vendas antigas', () => {
+ const sales=[
+  {data:'2026-09-01',quantidade:2,preco_unitario:10},
+  {data:'2026-09-02',caixa:'Rava',quantidade:3,preco_unitario:10},
+  {data:'2026-09-03',caixa:'Bonecos',quantidade:1,preco_unitario:15},
+  {data:'2026-09-04',caixa:'Rava',quantidade:5,preco_unitario:10,devolvida_em:'2026-09-05'},
+  {data:'2026-08-01',caixa:'Bonecos',quantidade:8,preco_unitario:10}
+ ];
+ assert.deepEqual(salesByBox(sales,'2026-09'),{Rivoxel:20,Rava:30,Bonecos:15});
+ sales[0].caixa='Bonecos';
+ assert.deepEqual(salesByBox(sales,'2026-09'),{Rivoxel:0,Rava:30,Bonecos:35});
+ assert.deepEqual(salesByBox([],'2026-09'),{Rivoxel:0,Rava:0,Bonecos:0});
 });

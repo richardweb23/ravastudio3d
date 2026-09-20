@@ -178,3 +178,9 @@ Vendas com repasse pago não admitem edição/devolução. A devolução de uma 
 pedido não altera o pedido nem seus pagamentos e não realiza reembolso.
 
 Validar com `npm run check`. Os testes usam PostgreSQL isolado em memória.
+
+### Caixas de vendas
+
+Execute a migração completa `supabase/migrations/202609190001_caixas_vendas.sql` após a de edição/devolução e antes de publicar o frontend. Todas as vendas existentes recebem Rivoxel. As novas telas exigem selecionar Rivoxel, Rava ou Bonecos; os endpoints antigos continuam compatíveis, usando Rivoxel.
+
+A visão geral mostra os totais líquidos do mês atual por caixa. Na tabela Vendas, clique na caixa do item para reclassificá-lo, inclusive vendas de pedidos ou com repasse pago. A alteração preserva estoque, pagamentos e repasses e registra os valores anteriores e posteriores na auditoria. Ao entregar um pedido, a caixa selecionada vale para todos os seus itens; cada venda pode ser reclassificada depois.

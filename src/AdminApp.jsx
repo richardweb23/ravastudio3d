@@ -1,3 +1,5 @@
+import useCaixaPedido from "./hooks/useCaixaPedido.js";
+import CaixaPedidoModal from "./components/CaixaPedidoModal.jsx";
 import { loadSales } from "./services/vendas.js";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
@@ -81,6 +83,7 @@ function initialPasswordMode() {
 }
 
 export default function AdminApp() {
+  const { open: caixaOpen, requestCaixa, finishCaixa } = useCaixaPedido();
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [page, setPage] = useState(() => getAdminPage(window.location));
@@ -220,9 +223,12 @@ export default function AdminApp() {
   if (!profile) return <div className="app-loading">Validando acesso…</div>;
 
   async function changeOrderStatus(order, status) {
+    const caixa = status === "entregue" ? await requestCaixa() : null;
+    if (status === "entregue" && !caixa) return;
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
       p_status: status,
+      ...(caixa ? { p_caixa: caixa } : {}),
     });
     if (error) show(error.message, "error");
     else {
@@ -278,6 +284,7 @@ export default function AdminApp() {
 
   return (
     <div className="app-shell">
+      {caixaOpen && <CaixaPedidoModal onDone={finishCaixa} />}
       <button className="mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><span /><span /><span /></button>
       {menuOpen && <button className="sidebar-scrim" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
       <aside className={menuOpen ? "sidebar open" : "sidebar"}>
