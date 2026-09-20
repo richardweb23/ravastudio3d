@@ -36,12 +36,13 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
       <section className="panel table-panel stock-products-table">
         <h2>Produtos cadastrados</h2>
         <DataTable
-          heads={["Produto", "Custo", "Saldo total", "Ações"]}
+          heads={["Produto", "Categoria", "Custo", "Saldo total", "Ações"]}
           rows={materiais.map((item) => (
             <tr key={item.id}>
               <td>
                 <strong>{item.nome}</strong>
               </td>
+              <td>{item.categoria || "Rivoxel"}</td>
               <td>{fmtMoney(item.custo_medio)}</td>
               <td>{fmtNumber(item.quantidade_atual)}</td>
               <td>

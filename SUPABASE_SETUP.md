@@ -184,3 +184,9 @@ Validar com `npm run check`. Os testes usam PostgreSQL isolado em memória.
 Execute a migração completa `supabase/migrations/202609190001_caixas_vendas.sql` após a de edição/devolução e antes de publicar o frontend. Todas as vendas existentes recebem Rivoxel. As novas telas exigem selecionar Rivoxel, Rava ou Bonecos; os endpoints antigos continuam compatíveis, usando Rivoxel.
 
 A visão geral mostra os totais líquidos do mês atual por caixa. Na tabela Vendas, clique na caixa do item para reclassificá-lo, inclusive vendas de pedidos ou com repasse pago. A alteração preserva estoque, pagamentos e repasses e registra os valores anteriores e posteriores na auditoria. Ao entregar um pedido, a caixa selecionada vale para todos os seus itens; cada venda pode ser reclassificada depois.
+
+### Categorias de produtos
+
+Execute integralmente `supabase/migrations/202609200001_categorias_produtos.sql` antes de publicar esta versão. Todos os produtos existentes recebem Rivoxel; a categoria pode ser alterada no formulário Editar produto. As opções são Rivoxel, Rava e Bonecos.
+
+O filtro Categoria do produto em Vendas consulta a categoria atual do cadastro, inclusive para vendas antigas. Alterar a categoria do produto não altera a caixa financeira da venda nem os totais por caixa da visão geral.

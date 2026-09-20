@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
 import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
 import { saleTotal } from "../lib/vendas.js";
@@ -19,10 +20,11 @@ export default function VendasComLocal({
   show,
 }) {
   const [action, setAction] = useState(null);
-  const [filters, setFilters] = useState({ inicio: "", fim: "", produto: "", local: "", vendedor: "" });
+  const [filters, setFilters] = useState({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" });
   const updateFilter = (event) => setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
   const invalidPeriod = filters.inicio && filters.fim && filters.inicio > filters.fim;
   const filteredSales = invalidPeriod ? [] : vendas.filter(sale =>
+    matchesProductCategory(sale, filters.categoria) &&
     (!filters.inicio || sale.data >= filters.inicio) &&
     (!filters.fim || sale.data <= filters.fim) &&
     (!filters.produto || sale.material_id === filters.produto) &&
@@ -160,23 +162,25 @@ export default function VendasComLocal({
       <section className="panel table-panel">
         <h2>Vendas</h2>
         <div className="sales-filters">
+          <label>Categoria do produto<select name="categoria" value={filters.categoria} onChange={updateFilter}><option value="">Todas as categorias</option>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
           <label>De<input type="date" name="inicio" value={filters.inicio} onChange={updateFilter} /></label>
           <label>Até<input type="date" name="fim" value={filters.fim} onChange={updateFilter} /></label>
           <label>Produto<select name="produto" value={filters.produto} onChange={updateFilter}><option value="">Todos os produtos</option>{materiais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Local<select name="local" value={filters.local} onChange={updateFilter}><option value="">Todos os locais</option>{locais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Vendedor<select name="vendedor" value={filters.vendedor} onChange={updateFilter}><option value="">Todos os vendedores</option><option value="sem-vendedor">Não informado</option>{vendedores.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-          <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
+          <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
         </div>
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
         <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
         <DataTable
-          heads={["Data", "Produto", "Local", "Vendedor", "Quantidade", "Total", "Caixa", "Status", "Ações"]}
+          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Total", "Caixa", "Status", "Ações"]}
           rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
                 {new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR")}
               </td>
               <td>{item.materiais?.nome}</td>
+              <td>{saleProductCategory(item)}</td>
               <td>{item.locais_estoque?.nome || "—"}</td>
               <td>{item.vendedores?.nome || "—"}</td>
               <td>{fmtNumber(item.quantidade)}</td>

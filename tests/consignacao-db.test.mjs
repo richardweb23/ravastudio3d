@@ -221,9 +221,28 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await db.query("select public.alterar_caixa_venda($1,'Rava',0)",[line.id]);
     assert.equal((await one('select caixa from public.vendas where id=$1',[line.id])).caixa,'Rava');
   });
+  await t.test('categoria de produto migra legado, salva edição sem alterar estoque e valida opções', async () => {
+    assert.equal((await one('select categoria from public.materiais where id=$1',[legacyProduct])).categoria,'Rivoxel');
+    const id=(await one("select public.salvar_material(null,'Produto categoria',2,4,$1,'Bonecos') as id",[source])).id;
+    assert.equal((await one('select categoria from public.materiais where id=$1',[id])).categoria,'Bonecos');
+    const saleId=(await one("select public.registrar_venda($1,$2,null,1,10,current_date,'Rivoxel') as id",[id,source])).id;
+    await db.query("select public.salvar_material($1,'Produto categoria',2,3,null,'Rava')",[id]);
+    const row=await one('select categoria,quantidade_atual from public.materiais where id=$1',[id]);
+    assert.equal(row.categoria,'Rava'); assert.equal(Number(row.quantidade_atual),3);
+    assert.equal((await one('select caixa from public.vendas where id=$1',[saleId])).caixa,'Rivoxel');
+    assert.equal((await one('select m.categoria from public.vendas v join public.materiais m on m.id=v.material_id where v.id=$1',[saleId])).categoria,'Rava');
+    await db.query("select public.salvar_material($1,'Produto categoria',2,3,null)",[id]);
+    assert.equal((await one('select categoria from public.materiais where id=$1',[id])).categoria,'Rava');
+    for(const category of ['Outra',null,'']) {
+      await assert.rejects(db.query("select public.salvar_material($1,'Mudança inválida',9,3,null,$2)",[id,category]),/categoria/i);
+    }
+    assert.equal((await one('select nome from public.materiais where id=$1',[id])).nome,'Produto categoria');
+    await assert.rejects(db.query("update public.materiais set categoria='Outra' where id=$1",[id]),/check constraint/i);
+  });
   await t.test('usuário inativo não lê histórico e não executa pagamento', async () => {
     await db.exec('RESET ROLE'); await db.query('update public.profiles set ativo=false where id=$1',[user]); await db.exec('SET ROLE authenticated');
     assert.equal((await db.query('select * from public.consignacao_vendas')).rows.length,0);
+    await assert.rejects(db.query("select public.salvar_material(null,'Sem acesso',1,1,$1,'Rava')",[source]),/autorizado/i);
     await assert.rejects(db.query("select public.alterar_caixa_venda($1,'Rava',1)",[sale]), /autorizado/i);
     await assert.rejects(db.query("select public.devolver_venda($1,$2,'Teste',0)",[sale,source]), /autorizado/i);
     await assert.rejects(db.query("select public.editar_venda($1,15,current_date,null,'Teste',0)",[sale]), /autorizado/i);

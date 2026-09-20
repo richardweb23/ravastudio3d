@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 import { useState } from "react";
 import { supabase } from "../supabase.js";
 
@@ -8,23 +9,25 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
     const preferredStock = productStock.find(item => item.quantidade > 0) || productStock[0];
     return produto ? {
       nome: produto.nome,
+      categoria: produto.categoria || "Rivoxel",
       custo_medio: produto.custo_medio,
       quantidade: String(produto.quantidade_atual ?? 0),
       local_id: preferredStock?.local_id || "",
-    } : { nome: "", custo_medio: "", quantidade: "", local_id: "" };
+    } : { nome: "", categoria: "Rivoxel", custo_medio: "", quantidade: "", local_id: "" };
   });
   async function addMaterial(e) {
     e.preventDefault();
     const { error } = await supabase.rpc("salvar_material", {
       p_material_id: editing || null,
       p_nome: form.nome,
+      p_categoria: form.categoria,
       p_custo_medio: Number(form.custo_medio || 0),
       p_quantidade: Number(form.quantidade || 0),
       p_local_id: form.local_id || null,
     });
     if (error) return show(error.message, "error");
     show(editing ? "Produto atualizado." : "Produto cadastrado no local selecionado.");
-    setForm({ nome: "", custo_medio: "", quantidade: "", local_id: "" });
+    setForm({ nome: "", categoria: "Rivoxel", custo_medio: "", quantidade: "", local_id: "" });
     onSaved();
   }
   return (
@@ -39,6 +42,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
               required
             />
           </label>
+          <label>Categoria do produto<select value={form.categoria} onChange={event => setForm({ ...form, categoria: event.target.value })} required>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
           <div>
             <label>
               Custo de produção (R$)
