@@ -131,8 +131,8 @@ button:disabled {
   display: flex;
 }
 .sidebar {
-  width: 246px;
-  flex: 0 0 246px;
+  width: 220px;
+  flex: 0 0 220px;
   background: #171714;
   color: #eef0f8;
   padding: 26px 14px 18px;
@@ -205,9 +205,11 @@ button:disabled {
   font-size: 13px;
 }
 .content {
-  width: min(1280px, calc(100vw - 246px));
-  padding: 42px clamp(24px, 4vw, 60px);
-  margin: 0 auto;
+  flex: 1;
+  min-width: 0;
+  width: calc(100% - 220px);
+  padding: 20px;
+  margin: 0;
   position: relative;
 }
 .page-header {
@@ -677,7 +679,7 @@ td {
   }
   .content {
     width: calc(100vw - 72px);
-    padding: 30px 22px;
+    padding: 20px;
   }
   .metrics {
     grid-template-columns: repeat(2, 1fr);
@@ -2251,7 +2253,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
   .content {
     width: 100%;
     margin: 0;
-    padding: 82px 20px 36px;
+    padding: 82px 20px 20px;
   }
 }
 
