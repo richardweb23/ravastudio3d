@@ -2317,3 +2317,6 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 
 .sales-box-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
 @media (max-width: 650px) { .sales-box-metrics { grid-template-columns: 1fr; } }
+
+.task-status-dot.concluido { background: #39855c; }
+.task-status-badge.concluido { color: #32724e; background: #edf6ef; }

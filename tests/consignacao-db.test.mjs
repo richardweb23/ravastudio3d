@@ -239,6 +239,34 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     assert.equal((await one('select nome from public.materiais where id=$1',[id])).nome,'Produto categoria');
     await assert.rejects(db.query("update public.materiais set categoria='Outra' where id=$1",[id]),/check constraint/i);
   });
+  await t.test('tarefa só pode ser concluída após Terminado e permanece editável no histórico', async () => {
+    const task=(await one("insert into public.tarefas(titulo,responsavel,descricao,previsao_entrega) values('Teste conclusão','Ana','Descrição',current_date) returning id")).id;
+    await assert.rejects(db.query("update public.tarefas set status='concluido' where id=$1",[task]),/Terminado/i);
+    await db.query("update public.tarefas set status='fazendo' where id=$1",[task]);
+    await assert.rejects(db.query("update public.tarefas set status='concluido' where id=$1",[task]),/Terminado/i);
+    await db.query("update public.tarefas set status='terminado' where id=$1",[task]);
+    await db.query("update public.tarefas set status='concluido' where id=$1",[task]);
+    assert.equal((await one('select status from public.tarefas where id=$1',[task])).status,'concluido');
+    await db.query("update public.tarefas set titulo='Título corrigido' where id=$1",[task]);
+    assert.equal((await one('select titulo from public.tarefas where id=$1',[task])).titulo,'Título corrigido');
+    await assert.rejects(db.query("update public.tarefas set status='pendente' where id=$1",[task]),/histórico/i);
+  });
+  await t.test('pessoa encarregada é opcional, enum valida opções e preserva o responsável antigo', async () => {
+    const id=(await one("insert into public.tarefas(titulo,descricao,previsao_entrega) values('Sem pessoa','Teste',current_date) returning id")).id;
+    assert.equal((await one('select pessoa_encarregada from public.tarefas where id=$1',[id])).pessoa_encarregada,null);
+    for(const person of ['Richard','Xandy','Ambos']) {
+      await db.query('update public.tarefas set pessoa_encarregada=$1 where id=$2',[person,id]);
+      assert.equal((await one('select responsavel from public.tarefas where id=$1',[id])).responsavel,person);
+    }
+    await assert.rejects(db.query("update public.tarefas set pessoa_encarregada='Outra' where id=$1",[id]),/enum/i);
+    await db.query('update public.tarefas set pessoa_encarregada=null where id=$1',[id]);
+    assert.equal((await one('select responsavel from public.tarefas where id=$1',[id])).responsavel,null);
+    const legacy=(await one("insert into public.tarefas(titulo,responsavel,descricao,previsao_entrega) values('Antiga','Nome antigo','Teste',current_date) returning id")).id;
+    await db.query("update public.tarefas set titulo='Editada',pessoa_encarregada=null where id=$1",[legacy]);
+    assert.equal((await one('select responsavel from public.tarefas where id=$1',[legacy])).responsavel,'Nome antigo');
+    await db.query("update public.tarefas set pessoa_encarregada='Richard' where id=$1",[legacy]);
+    assert.equal((await one('select responsavel from public.tarefas where id=$1',[legacy])).responsavel,'Richard');
+  });
   await t.test('usuário inativo não lê histórico e não executa pagamento', async () => {
     await db.exec('RESET ROLE'); await db.query('update public.profiles set ativo=false where id=$1',[user]); await db.exec('SET ROLE authenticated');
     assert.equal((await db.query('select * from public.consignacao_vendas')).rows.length,0);

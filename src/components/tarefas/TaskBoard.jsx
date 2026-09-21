@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { deliveryAlert } from "../../lib/deliveryAlert.js";
 
-import { taskStatuses } from "../../lib/tasks.js";
+import { taskStatuses, taskAssigneeLabel } from "../../lib/tasks.js";
 
 export default function TaskBoard({ tarefas = [], error, onStatusChange, onCreate, onEdit }) {
   const [dragged, setDragged] = useState(null);
@@ -31,7 +31,7 @@ export default function TaskBoard({ tarefas = [], error, onStatusChange, onCreat
             return <article key={task.id} className={"kanban-card task-card " + alert + (dragged?.id === task.id ? " dragging" : "")} draggable={!busy}
               onDragStart={event => { event.dataTransfer.setData("text/plain", task.id); event.dataTransfer.effectAllowed = "move"; setDragged(task); }} onDragEnd={() => setDragged(null)}>
               <div className="kanban-card-main">
-                <strong>{task.responsavel}</strong>
+                <strong>{taskAssigneeLabel(task)}</strong>
                 <strong>{task.titulo || task.descricao?.slice(0, 150)}</strong>
                 <small className="task-description">{task.descricao}</small>
                 <small>Entrega: {new Date(task.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR")}</small>
@@ -40,6 +40,7 @@ export default function TaskBoard({ tarefas = [], error, onStatusChange, onCreat
               <div className="task-actions"><label>Etapa<select value={task.status} disabled={busy} onChange={event => move(task, event.target.value)}>{taskStatuses.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>
                 {onEdit && <button className="link" disabled={busy} onClick={() => onEdit(task)}>Editar</button>}
               </div>
+                {status === "terminado" && <button type="button" className="deliver-button" disabled={busy} onClick={() => move(task, "concluido")}>Concluir</button>}
             </article>;
           })}
           {!cards.length && <p className="kanban-empty">Nenhuma tarefa nesta etapa.</p>}

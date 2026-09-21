@@ -239,10 +239,10 @@ export default function AdminApp() {
 
   async function changeTaskStatus(task, status) {
     try {
-      const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).select("id").single();
+      const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
       if (error) throw error;
       await refreshTasks();
-      show("Etapa da tarefa atualizada.");
+      show(status === "concluido" ? "Tarefa concluída. Disponível no histórico de tarefas." : "Etapa da tarefa atualizada.");
     } catch (error) { show(error.message || "Não foi possível atualizar a tarefa.", "error"); }
   }
 

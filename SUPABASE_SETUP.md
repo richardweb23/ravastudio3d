@@ -190,3 +190,11 @@ A visão geral mostra os totais líquidos do mês atual por caixa. Na tabela Ven
 Execute integralmente `supabase/migrations/202609200001_categorias_produtos.sql` antes de publicar esta versão. Todos os produtos existentes recebem Rivoxel; a categoria pode ser alterada no formulário Editar produto. As opções são Rivoxel, Rava e Bonecos.
 
 O filtro Categoria do produto em Vendas consulta a categoria atual do cadastro, inclusive para vendas antigas. Alterar a categoria do produto não altera a caixa financeira da venda nem os totais por caixa da visão geral.
+
+### Conclusão de tarefas
+
+Execute `supabase/migrations/202609210001_concluir_tarefas.sql` antes de publicar o frontend. Tarefas em Terminado recebem o botão Concluir. A conclusão muda o status para concluido, retira a tarefa dos quadros e mantém o registro no Histórico de tarefas, filtro Concluídas. Tarefas antigas permanecem nas etapas atuais até serem concluídas explicitamente.
+
+### Pessoa encarregada das tarefas
+
+Execute `supabase/migrations/202609210002_encarregado_tarefas.sql` antes de publicar. O campo opcional pessoa_encarregada usa enum Richard, Xandy ou Ambos e possui índice para consultas futuras. Responsáveis antigos permanecem no campo textual e continuam visíveis e pesquisáveis; editar outros campos não exige reclassificação. Selecionar uma pessoa substitui o nome antigo; remover uma seleção estruturada deixa a tarefa sem pessoa informada.
