@@ -267,11 +267,33 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await db.query("update public.tarefas set pessoa_encarregada='Richard' where id=$1",[legacy]);
     assert.equal((await one('select responsavel from public.tarefas where id=$1',[legacy])).responsavel,'Richard');
   });
+  await t.test('recebimento é explícito, auditado e não movimenta estoque', async () => {
+    assert.equal((await one('select pago from public.vendas where id=$1',[legacySale])).pago,false);
+    const ownProduct=(await one("select public.salvar_material(null,'Teste recebimento',2,5,$1) as id",[source])).id;
+    const id=(await one("select public.registrar_venda($1,$2,null,1,110,current_date,'Bonecos',false) as id",[ownProduct,source])).id;
+    const balance=async()=>Number((await one('select quantidade from public.estoque_por_local where material_id=$1 and local_id=$2',[ownProduct,source])).quantidade);
+    assert.equal(await balance(),4);
+    await db.query('select public.alterar_pagamento_venda($1,true,0)',[id]);
+    let row=await one('select * from public.vendas where id=$1',[id]);
+    assert.equal(row.pago,true); assert.equal(row.versao,1); assert.equal(await balance(),4);
+    const audit=await one('select antes,depois from public.vendas_alteracoes where venda_id=$1',[id]);
+    assert.equal(audit.antes.pago,false); assert.equal(audit.depois.pago,true);
+    await assert.rejects(db.query('select public.alterar_pagamento_venda($1,false,0)',[id]),/alterada/i);
+    await assert.rejects(db.query('select public.alterar_pagamento_venda($1,null,1)',[id]),/status/i);
+    await db.query('select public.alterar_pagamento_venda($1,false,1)',[id]);
+    assert.equal((await one('select pago from public.vendas where id=$1',[id])).pago,false);
+    const paid=(await one("select public.registrar_venda($1,$2,null,1,110,current_date,'Bonecos',true) as id",[ownProduct,source])).id;
+    assert.equal((await one('select pago from public.vendas where id=$1',[paid])).pago,true);
+    await db.query("select public.devolver_venda($1,$2,'Teste',1)",[paid,source]);
+    await assert.rejects(db.query('select public.alterar_pagamento_venda($1,true,2)',[paid]),/devolvida/i);
+    await assert.rejects(db.query('update public.vendas set pago=true where id=$1',[id]),/permanente|permission/i);
+  });
   await t.test('usuário inativo não lê histórico e não executa pagamento', async () => {
     await db.exec('RESET ROLE'); await db.query('update public.profiles set ativo=false where id=$1',[user]); await db.exec('SET ROLE authenticated');
     assert.equal((await db.query('select * from public.consignacao_vendas')).rows.length,0);
     await assert.rejects(db.query("select public.salvar_material(null,'Sem acesso',1,1,$1,'Rava')",[source]),/autorizado/i);
     await assert.rejects(db.query("select public.alterar_caixa_venda($1,'Rava',1)",[sale]), /autorizado/i);
+    await assert.rejects(db.query('select public.alterar_pagamento_venda($1,true,1)',[sale]), /autorizado/i);
     await assert.rejects(db.query("select public.devolver_venda($1,$2,'Teste',0)",[sale,source]), /autorizado/i);
     await assert.rejects(db.query("select public.editar_venda($1,15,current_date,null,'Teste',0)",[sale]), /autorizado/i);
     await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[sale]]), /autorizado/i);

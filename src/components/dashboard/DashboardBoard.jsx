@@ -93,8 +93,8 @@ export default function DashboardBoard({
           danger={low.length > 0}
         />
       </div>
-      <section className="sales-box-metrics" aria-label="Vendas do mês por caixa">
-        {SALES_BOXES.map(caixa => <Metric key={caixa} label={caixa + " · vendas no mês"} value={fmtMoney(caixaTotals[caixa])} />)}
+      <section className="sales-box-metrics" aria-label="Vendas pagas do mês por caixa">
+        {SALES_BOXES.map(caixa => <Metric key={caixa} label={caixa + " · vendas pagas no mês"} value={fmtMoney(caixaTotals[caixa])} />)}
       </section>
       <section className="panel kanban">
         <div className="panel-title">

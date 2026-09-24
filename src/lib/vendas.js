@@ -9,6 +9,7 @@ export const SALES_BOXES = ['Rivoxel', 'Rava', 'Bonecos'];
 export function salesByBox(sales, month) {
   const totals = Object.fromEntries(SALES_BOXES.map(box => [box, 0]));
   for (const sale of sales) {
+    if (sale.pago !== true) continue;
     if (month && !sale.data?.startsWith(month)) continue;
     const box = sale.caixa || 'Rivoxel';
     if (Object.hasOwn(totals, box)) totals[box] += saleTotal(sale);

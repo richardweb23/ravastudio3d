@@ -198,3 +198,9 @@ Execute `supabase/migrations/202609210001_concluir_tarefas.sql` antes de publica
 ### Pessoa encarregada das tarefas
 
 Execute `supabase/migrations/202609210002_encarregado_tarefas.sql` antes de publicar. O campo opcional pessoa_encarregada usa enum Richard, Xandy ou Ambos e possui índice para consultas futuras. Responsáveis antigos permanecem no campo textual e continuam visíveis e pesquisáveis; editar outros campos não exige reclassificação. Selecionar uma pessoa substitui o nome antigo; remover uma seleção estruturada deixa a tarefa sem pessoa informada.
+
+### Pagamento de vendas
+
+Execute integralmente a migração `supabase/migrations/202609230001_pagamento_vendas.sql` antes de publicar o frontend. Vendas antigas e novas geradas por pedidos/consignação iniciam pendentes: confirme o recebimento em Vendas, na coluna Pagamento. O cadastro de venda avulsa permite escolher Pago ou Pendente. Esse status é a confirmação de recebimento da venda e não altera pagamentos de pedidos nem repasses de consignação.
+
+Somente vendas explicitamente pagas e não devolvidas somam nos caixas. O filtro mensal continua usando a data da venda. O total vendido continua incluindo vendas pendentes. Alterações de pagamento têm controle de versão e auditoria, sem movimentar estoque.
