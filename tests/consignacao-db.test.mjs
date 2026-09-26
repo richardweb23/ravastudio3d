@@ -29,7 +29,9 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     }
   }
   await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+  await db.query("update public.profiles set perfil='administrador' where id=$1",[user]);
   await db.exec('SET ROLE authenticated');
+  await db.query("select public.financeiro_operar('abertura',jsonb_build_object('data',current_date-365,'saldos',jsonb_build_object('Rava',1000000,'Rivoxel',1000000,'Bonecos',1000000)),gen_random_uuid())");
   const one = async (sql, args = []) => (await db.query(sql,args)).rows[0];
   const source = (await one("select id from public.locais_estoque where tipo='principal' limit 1")).id;
   const local = (await one("insert into public.locais_estoque(nome,tipo) values('Academia RAVA Fitness','estabelecimento') returning id")).id;
@@ -63,10 +65,10 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     assert.equal(await stock(local),3);
   });
   await t.test('pagamento vincula a venda, preserva valor e bloqueia pagamento duplicado', async () => {
-    payment=(await one('select public.pagar_repasses_consignacao($1,$2,current_date,$3) as id',[local,[sale],'Pix confirmado'])).id;
+    payment=(await one('select public.pagar_repasses_consignacao($1,$2,current_date,$3,$4) as id',[local,[sale],'Pix confirmado','Rava'])).id;
     assert.equal((await one('select pagamento_id from public.consignacao_vendas where id=$1',[sale])).pagamento_id,payment);
     assert.equal(Number((await one('select valor_centavos from public.consignacao_pagamentos where id=$1',[payment])).valor_centavos),600);
-    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[sale]]), /inválida/i);
+    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,[sale],'Rava']), /inválida/i);
     assert.equal(Number((await one('select count(*) as n from public.consignacao_pagamentos')).n),1);
   });
   await t.test('novo envio e devolução preservam venda, pagamento e estoque total', async () => {
@@ -81,7 +83,7 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await db.query("select public.movimentar_consignacao($1,$2,'entrada',2,$3,null,1500,400)",[other,product,source]);
     const id=(await one('select public.vender_consignacao($1,$2,1,1500,current_date) as id',[other,product])).id;
     assert.equal(Number((await one('select repasse_total_centavos from public.consignacao_vendas where id=$1',[id])).repasse_total_centavos),400);
-    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[id]]), /inválida/i);
+    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,[id],'Rava']), /inválida/i);
   });
   await t.test('venda pela tela existente também captura o acordo atual e a movimentação', async () => {
     const id=(await one('select public.registrar_venda($1,$2,null,1,15,current_date) as id',[product,local])).id;
@@ -116,9 +118,9 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
   });
   await t.test('pagamento em lote rejeita duplicatas e datas incompatíveis', async () => {
     const unpaid=(await db.query('select id from public.consignacao_vendas where local_id=$1 and pagamento_id is null',[local])).rows.map(row=>row.id);
-    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[unpaid[0],unpaid[0]]]), /repetidas/i);
-    await assert.rejects(db.query("select public.pagar_repasses_consignacao($1,$2,current_date-1,null)",[local,unpaid]), /inválida/i);
-    await db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,unpaid]);
+    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,[unpaid[0],unpaid[0]],'Rava']), /repetidas/i);
+    await assert.rejects(db.query("select public.pagar_repasses_consignacao($1,$2,current_date-1,null,$3)",[local,unpaid,'Rava']), /inválida/i);
+    await db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,unpaid,'Rava']);
     assert.equal(Number((await one('select count(*) as n from public.consignacao_vendas where local_id=$1 and pagamento_id is null',[local])).n),0);
   });
   await t.test('vínculo permanente e vendedor inativo preservam histórico', async () => {
@@ -172,7 +174,7 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await assert.rejects(db.query("select public.editar_venda($1,10,current_date,null,'Edição',1)",[id]), /já devolvida/i);
     assert.equal(await stock(other),target+1);
     const payments=Number((await one('select count(*) as n from public.consignacao_pagamentos')).n);
-    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[id]]), /devolvida/i);
+    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,[id],'Rava']), /devolvida/i);
     assert.equal(Number((await one('select count(*) as n from public.consignacao_pagamentos')).n),payments);
   });
   await t.test('destino inválido e repasse pago bloqueiam operações sem alterar estoque ou histórico', async () => {
@@ -296,6 +298,6 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await assert.rejects(db.query('select public.alterar_pagamento_venda($1,true,1)',[sale]), /autorizado/i);
     await assert.rejects(db.query("select public.devolver_venda($1,$2,'Teste',0)",[sale,source]), /autorizado/i);
     await assert.rejects(db.query("select public.editar_venda($1,15,current_date,null,'Teste',0)",[sale]), /autorizado/i);
-    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null)',[local,[sale]]), /autorizado/i);
+    await assert.rejects(db.query('select public.pagar_repasses_consignacao($1,$2,current_date,null,$3)',[local,[sale],'Rava']), /autorizado/i);
   });
 });

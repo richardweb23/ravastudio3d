@@ -2,7 +2,7 @@ import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from 
 import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
 import { saleTotal } from "../lib/vendas.js";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../lib/formatters.js";
 import Header from "./Header.jsx";
@@ -19,6 +19,8 @@ export default function VendasComLocal({
   onSaved,
   show,
 }) {
+  const request=useRef(null);
+  const [saving,setSaving]=useState(false);
   const [action, setAction] = useState(null);
   const [filters, setFilters] = useState({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" });
   const updateFilter = (event) => setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
@@ -42,9 +44,15 @@ export default function VendasComLocal({
   });
   async function save(e) {
     e.preventDefault();
+    if(saving)return;
+    const signature=JSON.stringify(form);
+    if(request.current?.signature!==signature)request.current={signature,id:crypto.randomUUID()};
+    setSaving(true);
     const { error } = await supabase.rpc("registrar_venda", {
+      p_requisicao: request.current.id,
       p_caixa: form.caixa,
       p_pago: form.pago === "true",
+      p_data_recebimento: form.data_recebimento || today(),
       p_material_id: form.material_id,
       p_local_id: form.local_estoque_id,
       p_vendedor_id: form.vendedor_id || null,
@@ -52,7 +60,9 @@ export default function VendasComLocal({
       p_preco_unitario: Number(form.preco_unitario),
       p_data: form.data,
     });
+    setSaving(false);
     if (error) return show(error.message, "error");
+    request.current=null;
     show("Venda registrada com vendedor e local.");
     setForm({
       pago: "false", caixa: "", material_id: "", local_estoque_id: "", vendedor_id: "",
@@ -70,7 +80,8 @@ export default function VendasComLocal({
         <form className="panel form" onSubmit={save}>
           <h2>Nova venda</h2>
           <label>Status do pagamento<select value={form.pago} onChange={event => setForm({ ...form, pago: event.target.value })}><option value="false">Pendente</option><option value="true">Pago</option></select></label>
-          <p>Apenas vendas pagas entram no caixa.</p>
+          <p>Apenas vendas pagas entram no caixa. Em pedidos, use os recebimentos do pedido.</p>
+          {form.pago === "true" && <label>Data do recebimento<input type="date" value={form.data_recebimento || today()} min={form.data} max={today()} onChange={e=>setForm({...form,data_recebimento:e.target.value})} required /></label>}
           <CaixaSelect value={form.caixa} onChange={event => setForm({ ...form, caixa: event.target.value })} />
           <MaterialSelect
             materiais={materiais}
@@ -155,7 +166,7 @@ export default function VendasComLocal({
               required
             />
           </label>
-          <button className="primary">Registrar venda</button>
+          <button className="primary" disabled={saving}>{saving?"Registrando…":"Registrar venda"}</button>
         </form>
         <Info
           title="Pedidos entregues"
@@ -193,7 +204,7 @@ export default function VendasComLocal({
                 )}
               </td>
               <td><button type="button" className="link" title="Alterar caixa da venda" aria-label={"Alterar caixa da venda de " + item.materiais?.nome} onClick={() => setAction({ sale: item, mode: "caixa" })}>{item.caixa || "Rivoxel"} ✎</button></td>
-              <td><button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}>{item.pago === true ? "Pago" : "Pendente"} ✎</button></td>
+              <td>{item.pedido_id ? <a href="#/pedidos">{{pago:"Pago",parcial:"Parcial",pendente:"Pendente"}[item.pagamento_pedido] || "Pendente"} · ver pedido</a> : <button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}>{item.pago === true ? "Pago" : "Pendente"} ✎</button>}</td>
               <td>{item.devolvida_em ? <><span className="status">Devolvida</span><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : "Ativa"}</td>
               <td><div className="product-table-actions">
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : item.pedido_id ? "Venda vinculada a pedido" : "Editar venda"} aria-label={"Editar venda de " + item.materiais?.nome} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id || item.pedido_id)} onClick={() => setAction({ sale: item, mode: "edicao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg></button>

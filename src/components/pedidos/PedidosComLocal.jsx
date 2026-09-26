@@ -1,6 +1,7 @@
+import CaixaSelect from "../CaixaSelect.jsx";
 import useCaixaPedido from "../../hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "../CaixaPedidoModal.jsx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../../lib/formatters.js";
 import Header from "../Header.jsx";
@@ -20,9 +21,12 @@ export default function PedidosComLocal({
 }) {
   const { open: caixaOpen, requestCaixa, finishCaixa } = useCaixaPedido();
   const [editor, setEditor] = useState(null);
+  const paymentRequest=useRef(null);
+  const [paying,setPaying]=useState(false);
   const [paymentOrder, setPaymentOrder] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todos");
   const [payment, setPayment] = useState({
+    caixa: "",
     valor: "",
     data: today(),
     metodo: "pix",
@@ -38,7 +42,7 @@ export default function PedidosComLocal({
 
   const financial = (order) => {
     const paid = pagamentos
-      .filter((item) => item.pedido_id === order.id)
+      .filter((item) => item.pedido_id === order.id && !item.estornado_em)
       .reduce((sum, item) => sum + Number(item.valor), 0);
     const balance = Math.max(0, Number(order.valor_total || 0) - paid);
     return {
@@ -105,21 +109,28 @@ export default function PedidosComLocal({
   }
   async function savePayment(event) {
     event.preventDefault();
+    if(paying)return;
+    const signature=JSON.stringify({payment,order:paymentOrder.id});
+    if(paymentRequest.current?.signature!==signature)paymentRequest.current={signature,id:crypto.randomUUID()};
     const info = financial(paymentOrder),
       value = Number(payment.valor);
     if (!value || value > info.balance)
       return show("Informe um valor válido, até o saldo pendente.", "error");
-    const { error } = await supabase.from("pedido_pagamentos").insert({
+    setPaying(true);
+    const { error } = await supabase.rpc("financeiro_operar", { p_acao: "receber_pedido", p_requisicao: paymentRequest.current.id, p_dados: {
       pedido_id: paymentOrder.id,
-      valor: value,
+      valor_centavos: Math.round(value * 100),
+      caixa: payment.caixa,
       data: payment.data,
       metodo: payment.metodo,
-      observacao: payment.observacao || null,
-    });
+      descricao: payment.observacao || "Recebimento de pedido",
+    }});
+    setPaying(false);
     if (error) return show(error.message, "error");
+    paymentRequest.current=null;
     show("Pagamento registrado.");
     setPaymentOrder(null);
-    setPayment({ valor: "", data: today(), metodo: "pix", observacao: "" });
+    setPayment({ caixa: "", valor: "", data: today(), metodo: "pix", observacao: "" });
     onSaved();
   }
 
@@ -161,6 +172,7 @@ export default function PedidosComLocal({
       {paymentOrder && (
         <div className="modal-backdrop" role="presentation">
           <form className="panel form modal-card" onSubmit={savePayment}>
+            <CaixaSelect label="Caixa do recebimento" value={payment.caixa} onChange={e=>setPayment({...payment,caixa:e.target.value})} />
             <div className="modal-heading">
               <h2>Registrar pagamento</h2>
               <button
@@ -281,7 +293,7 @@ export default function PedidosComLocal({
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
                     </button>
                   </>}
-                  {info.balance > 0 && <button type="button" className="registration-icon-button" title="Registrar pagamento" aria-label={`Registrar pagamento do pedido de ${order.cliente}`} onClick={() => setPaymentOrder(order)}>
+                  {info.balance > 0 && <button type="button" className="registration-icon-button" title="Registrar pagamento" aria-label={`Registrar pagamento do pedido de ${order.cliente}`} onClick={() => { setPayment(p=>({...p,requestId:crypto.randomUUID()})); setPaymentOrder(order); }}>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M2 9h20M6 15h4M17 12v6M14 15h6" /></svg>
                   </button>}
                   {order.status === "entregue" && info.balance === 0 && <span aria-label="Nenhuma ação disponível">—</span>}

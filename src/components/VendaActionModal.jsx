@@ -8,7 +8,7 @@ export default function VendaActionModal({ sale, mode, locais, vendedores, onClo
   const submitting = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ pago: String(sale.pago === true), caixa: sale.caixa || "Rivoxel", local_id: "", preco_unitario: String(sale.preco_unitario), data: sale.data, vendedor_id: sale.vendedor_id || "", motivo: "" });
+  const [form, setForm] = useState({ pago: String(sale.pago === true), data_recebimento: sale.data_recebimento || today(), caixa: sale.caixa || "Rivoxel", local_id: "", preco_unitario: String(sale.preco_unitario), data: sale.data, vendedor_id: sale.vendedor_id || "", motivo: "" });
   const paymentOnly = mode === "pagamento";
   const categoryOnly = mode === "caixa";
   const returning = mode === "devolucao";
@@ -33,7 +33,7 @@ export default function VendaActionModal({ sale, mode, locais, vendedores, onClo
     try {
       const common = { p_venda_id: sale.id, p_motivo: form.motivo.trim(), p_versao: sale.versao || 0 };
       const { error: failure } = await supabase.rpc(paymentOnly ? "alterar_pagamento_venda" : categoryOnly ? "alterar_caixa_venda" : returning ? "devolver_venda" : "editar_venda", paymentOnly
-        ? { p_venda_id: sale.id, p_pago: form.pago === "true", p_versao: sale.versao || 0 } : categoryOnly
+        ? { p_venda_id: sale.id, p_pago: form.pago === "true", p_data_recebimento: form.data_recebimento, p_versao: sale.versao || 0 } : categoryOnly
         ? { p_venda_id: sale.id, p_caixa: form.caixa, p_versao: sale.versao || 0 } : returning
         ? { ...common, p_local_id: form.local_id }
         : { ...common, p_caixa: form.caixa, p_preco_unitario: Number(form.preco_unitario), p_data: form.data, p_vendedor_id: form.vendedor_id || null });
@@ -50,7 +50,8 @@ export default function VendaActionModal({ sale, mode, locais, vendedores, onClo
       <div className="modal-heading"><h2 id="sale-action-title">{paymentOnly ? "Status do pagamento" : categoryOnly ? "Alterar caixa da venda" : returning ? "Retornar venda ao estoque" : "Editar venda"}</h2><button type="button" className="close-modal" aria-label="Fechar" disabled={busy} onClick={onClose}>×</button></div>
       <p><strong>{sale.materiais?.nome}</strong> · {formatNumber(sale.quantidade)} un.</p>
       <fieldset disabled={busy}>
-        {paymentOnly ? <label>Status do pagamento<select name="pago" value={form.pago} onChange={update}><option value="false">Pendente</option><option value="true">Pago</option></select><small>Apenas vendas pagas entram no caixa.</small></label> : categoryOnly ? <CaixaSelect value={form.caixa} onChange={update} /> : returning ? <>
+        {paymentOnly && form.pago === "true" && <label>Data do recebimento<input type="date" name="data_recebimento" value={form.data_recebimento} min={sale.data} max={today()} onChange={update} required /></label>}
+        {paymentOnly ? <label>Status do pagamento<select name="pago" value={form.pago} onChange={update}><option value="false">Pendente</option><option value="true">Pago</option></select><small>Marcar Pendente corrige um recebimento lançado por engano. Para devolver dinheiro ao cliente, use Caixa e extrato.</small></label> : categoryOnly ? <CaixaSelect value={form.caixa} onChange={update} /> : returning ? <>
           <label>Retornar para<select name="local_id" value={form.local_id} onChange={update} required autoFocus><option value="">Selecione o estoque de destino</option>{locais.filter(item => item.ativo !== false).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <p>A devolução é integral. A venda permanecerá no histórico como devolvida e deixará de somar nos totais e no repasse pendente.</p>
           {sale.pedido_id && <p>O pedido e seus pagamentos permanecem no histórico. Esta ação não realiza reembolso ao cliente.</p>}

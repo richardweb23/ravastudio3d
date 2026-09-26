@@ -14,6 +14,8 @@ export const adminPageRoutes = Object.freeze({
   estimativaImpressao: "estimativa-impressao",
   historico: "historico",
   financeiro: "financeiro",
+  financeiroCaixa: "financeiro/caixa",
+  financeiroReembolsos: "financeiro/reembolsos",
   financeiroContas: "financeiro/contas-a-pagar",
   financeiroDespesas: "financeiro/despesas",
   financeiroParcelas: "financeiro/parcelas",

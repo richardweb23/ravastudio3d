@@ -46,7 +46,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
       } else if (mode === "pagamento") {
         if (!selected.length || total <= 0) throw new Error("Selecione pelo menos uma venda pendente.");
         name = "pagar_repasses_consignacao";
-        params = { p_local_id: data.localId, p_vendas_ids: selected, p_data: form.data, p_observacoes: form.observacoes };
+        params = { p_local_id: data.localId, p_vendas_ids: selected, p_data: form.data, p_observacoes: form.observacoes, p_caixa: form.caixa };
         confirmation = "Confirmar o pagamento de " + money(total) + " para " + data.entity.nome + "?";
       } else {
         if (!form.material_id) throw new Error("Selecione um produto.");
@@ -85,7 +85,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
       <div className="modal-heading"><h2 id="consignment-modal-title">{titles[mode]}</h2><button type="button" className="close-modal" aria-label="Fechar" disabled={busy} onClick={onClose}>×</button></div>
       <p>{data.entity.nome}</p>
       <fieldset disabled={busy}>
-        {mode === "venda" && <CaixaSelect value={form.caixa} onChange={update} />}
+        {["venda", "pagamento"].includes(mode) && <CaixaSelect label={mode === "pagamento" ? "Caixa do repasse" : "Caixa da venda"} value={form.caixa} onChange={update} />}
         {mode === "vinculo" ? <>
           <p>Escolha um local já cadastrado ou crie um local exclusivo para este vendedor. Isso evita misturar o estoque de pessoas diferentes.</p>
           <label>Local<select name="local_id" value={form.local_id} onChange={update}><option value="">Criar local exclusivo para este vendedor</option>{data.locais.filter(row => row.ativo && !partnerLocations.has(row.id)).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>

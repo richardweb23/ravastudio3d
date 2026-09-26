@@ -1,4 +1,5 @@
-import { saleTotal, salesByBox, SALES_BOXES } from "../../lib/vendas.js";
+import { saleTotal } from "../../lib/vendas.js";
+import { CashBalances } from "../financeiro/CashPanel.jsx";
 import { useEffect, useState } from "react";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
@@ -54,7 +55,7 @@ export default function DashboardBoard({
         sum + saleTotal(item),
       0,
     );
-  const caixaTotals = salesByBox(vendas, month);
+
   const open = byDelivery(pedidos.filter((item) => item.status !== "entregue"));
   const low = materiais.filter((item) => Number(item.quantidade_atual) <= 0);
   async function drop(status) {
@@ -93,9 +94,7 @@ export default function DashboardBoard({
           danger={low.length > 0}
         />
       </div>
-      <section className="sales-box-metrics" aria-label="Vendas pagas do mês por caixa">
-        {SALES_BOXES.map(caixa => <Metric key={caixa} label={caixa + " · vendas pagas no mês"} value={fmtMoney(caixaTotals[caixa])} />)}
-      </section>
+      <CashBalances refreshKey={data} />
       <section className="panel kanban">
         <div className="panel-title">
           <h2>Pedidos em andamento</h2>
@@ -185,28 +184,6 @@ export default function DashboardBoard({
           </section>
         </div>
       )}
-      <section className="panel products-overview">
-        <div className="panel-title">
-          <h2>Produtos em estoque</h2>
-          <button className="link" onClick={() => onNavigate("estoque")}>
-            Gerenciar
-          </button>
-        </div>
-        {materiais.slice(0, 5).map((item) => (
-          <div className="list-row" key={item.id}>
-            <div>
-              <strong>{item.nome}</strong>
-              <small>
-                {fmtMoney(item.custo_medio)}
-              </small>
-            </div>
-            <b className={Number(item.quantidade_atual) <= 0 ? "negative" : ""}>
-              {fmtNumber(item.quantidade_atual)}
-            </b>
-          </div>
-        ))}
-        {!materiais.length && <Empty text="Cadastre seu primeiro produto." />}
-      </section>
       <section className="panel shortcut">
         <h2>Atalhos</h2>
         <button onClick={() => onNavigate("compras")}>Registrar entrada</button>

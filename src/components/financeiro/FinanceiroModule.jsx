@@ -1,3 +1,5 @@
+import CashPanel from "./CashPanel.jsx";
+import CaixaSelect from "../CaixaSelect.jsx";
 import FilterButtons from "../ui/FilterButtons.jsx";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -13,7 +15,6 @@ import {
   monthKey,
   monthLabel,
   reaisToCents,
-  settlementSuggestion,
   shiftMonth,
   expenseResponsibilities,
   installmentResponsibilities,
@@ -23,6 +24,8 @@ import {
 
 const pageTitles = {
   financeiro: ["Financeiro", "Visão geral da saúde financeira da RAVA."],
+  financeiroCaixa: ["Caixa e extrato", "Entradas, saídas e saldo disponível da empresa."],
+  financeiroReembolsos: ["Reembolsos aos sócios", "Adiantamentos, devoluções e saldo a receber."],
   financeiroContas: ["Contas a pagar", "Veja quanto a RAVA e cada sócio precisam pagar no mês."],
   financeiroDespesas: ["Compras e despesas", "Cadastre compras à vista ou parceladas sem misturar com entradas de estoque."],
   financeiroParcelas: ["Parcelas", "Consulte vencimentos e registre quem realizou cada pagamento."],
@@ -125,35 +128,7 @@ function MonthPicker({ value, onChange }) {
   );
 }
 
-function PartnerSummary({ summary }) {
-  const settlement = settlementSuggestion(summary);
-  return (
-    <section className="panel finance-partners">
-      <div className="panel-title"><h2>Resumo dos sócios</h2><span>Responsabilidade × pagamento</span></div>
-      <div className="partner-grid">
-        {summary.responsibilities.map((partner) => {
-          const paid = summary.paidByPartner[partner.id] || 0;
-          const balance = paid - partner.valor_centavos;
-          return (
-            <article key={partner.id}>
-              <h3>{partner.nome}</h3>
-              <dl>
-                <div><dt>Deveria pagar</dt><dd>{formatBRLCents(partner.valor_centavos)}</dd></div>
-                <div><dt>Pagou</dt><dd>{formatBRLCents(paid)}</dd></div>
-                <div className={balance >= 0 ? "positive" : "negative"}>
-                  <dt>{balance >= 0 ? "Crédito" : "Falta"}</dt><dd>{balance > 0 ? "+" : ""}{formatBRLCents(balance)}</dd>
-                </div>
-              </dl>
-            </article>
-          );
-        })}
-      </div>
-      {settlement && (
-        <div className="settlement"><strong>Acerto sugerido</strong><span>{settlement.debtor.nome} deve {formatBRLCents(settlement.amount)} para {settlement.creditor.nome}.</span><small>Nenhum pagamento é criado automaticamente.</small></div>
-      )}
-    </section>
-  );
-}
+function PartnerSummary({ onNavigate }) { return <CashPanel view="partners" onNavigate={onNavigate} />; }
 
 function AccountsTable({ items, socios, onPay }) {
   return (
@@ -181,31 +156,31 @@ function Overview({ data, socios, onNavigate }) {
   const current = currentMonthKey();
   const summary = summarizeInstallments(data.parcelas, socios, current);
   const next = summarizeInstallments(data.parcelas, socios, shiftMonth(current, 1));
-  const purchased = data.despesas.reduce((sum, item) => sum + Number(item.valor_total_centavos), 0);
-  const paid = data.parcelas.filter((item) => item.pago).reduce((sum, item) => sum + Number(item.valor_centavos), 0);
   const overdue = data.parcelas.filter((item) => installmentStatus(item) === "vencido").reduce((sum, item) => sum + Number(item.valor_centavos), 0);
   return (
     <>
-      <div className="metrics finance-metrics five">
-        <MetricCard label="Total comprado" value={purchased} />
-        <MetricCard label="Total pago" value={paid} tone="success" />
-        <MetricCard label="Total pendente" value={purchased - paid} />
-        <MetricCard label="Total vencido" value={overdue} tone="danger" />
-        <MetricCard label="Contas deste mês" value={summary.total} note={monthLabel(current)} />
-      </div>
-      <div className="two-columns finance-highlight-grid">
-        <section className="panel finance-highlight">
-          <div className="panel-title"><h2>Total do mês</h2><button className="link" onClick={() => onNavigate("financeiroContas")}>Ver contas</button></div>
-          <SplitValues total={summary.total} socios={socios} responsibilities={summary.responsibilities} />
-          <div className="finance-paid-line"><span>Já pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Ainda a pagar</span><strong>{formatBRLCents(summary.pending)}</strong></div>
-        </section>
-        <section className="panel finance-highlight">
-          <div className="panel-title"><h2>Próximo mês</h2><span>{monthLabel(shiftMonth(current, 1))}</span></div>
-          <SplitValues total={next.total} socios={socios} responsibilities={next.responsibilities} />
-          <div className="finance-paid-line"><span>Previsto</span><strong>{formatBRLCents(next.total)}</strong></div>
-        </section>
-      </div>
-      <PartnerSummary summary={summary} />
+      <CashPanel view="overview" onNavigate={onNavigate} />
+      <section className="finance-overview-section">
+        <div className="finance-overview-heading"><div><span className="eyebrow">Compromissos</span><h2>Contas a pagar</h2></div><button className="link" onClick={() => onNavigate("financeiroContas")}>Ver todas as contas</button></div>
+        <div className="metrics finance-metrics four">
+          <MetricCard label="Contas deste mês" value={summary.total} note={monthLabel(current)} />
+          <MetricCard label="Já pago no mês" value={summary.paid} tone="success" />
+          <MetricCard label="Ainda a pagar" value={summary.pending} />
+          <MetricCard label="Vencido" value={overdue} tone="danger" />
+        </div>
+        <div className="two-columns finance-highlight-grid">
+          <section className="panel finance-highlight">
+            <div className="panel-title"><h2>Total do mês</h2><button className="link" onClick={() => onNavigate("financeiroContas")}>Ver contas</button></div>
+            <SplitValues total={summary.total} socios={socios} responsibilities={summary.responsibilities} />
+            <div className="finance-paid-line"><span>Já pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Ainda a pagar</span><strong>{formatBRLCents(summary.pending)}</strong></div>
+          </section>
+          <section className="panel finance-highlight">
+            <div className="panel-title"><h2>Próximo mês</h2><span>{monthLabel(shiftMonth(current, 1))}</span></div>
+            <SplitValues total={next.total} socios={socios} responsibilities={next.responsibilities} />
+            <div className="finance-paid-line"><span>Previsto</span><strong>{formatBRLCents(next.total)}</strong></div>
+          </section>
+        </div>
+      </section>
     </>
   );
 }
@@ -339,6 +314,8 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
     ]),
   ));
   const [cashAmount, setCashAmount] = useState("");
+  const [caixa, setCaixa] = useState("");
+  const [saving, setSaving] = useState(false);
   const [otherAmount, setOtherAmount] = useState("");
   const partnerTotal = socios.reduce(
     (sum, partner) => sum + reaisToCents(partnerAmounts[partner.id]),
@@ -348,7 +325,8 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
 
   async function save(event) {
     event.preventDefault();
-    let requests;
+    if (saving) return;
+    let entries;
     if (singleInstallment) {
       if (allocated !== total) {
         return show("A soma dos pagamentos deve ser " + formatBRLCents(total) + ".", "error");
@@ -368,6 +346,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
           valor_centavos: reaisToCents(cashAmount),
           data_pagamento: paymentDate,
           pago_por_tipo: "caixa",
+          caixa,
           socio_id: null,
           observacao: null,
         },
@@ -379,10 +358,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
           observacao: note || null,
         },
       ].filter((payment) => payment.valor_centavos > 0);
-      requests = [supabase.rpc("salvar_pagamentos_parcela", {
-        p_parcela_id: installments[0].id,
-        p_pagamentos: payments,
-      })];
+      entries = [{ parcela_id: installments[0].id, pagamentos: payments }];
     } else {
       const partner = socios.find((item) => item.id === payer);
       const type = partner ? "socio" : payer;
@@ -390,19 +366,21 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
       if (type === "outro" && !note.trim()) {
         return show("Informe quem realizou o pagamento.", "error");
       }
-      requests = installments.map((item) => supabase.rpc("salvar_pagamentos_parcela", {
-        p_parcela_id: item.id,
-        p_pagamentos: [{
+      entries = installments.map((item) => ({
+        parcela_id: item.id,
+        pagamentos: [{
           valor_centavos: Number(item.valor_centavos),
           data_pagamento: paymentDate,
           pago_por_tipo: type,
+          caixa: type === "caixa" ? caixa : null,
           socio_id: partner?.id || null,
           observacao: note || null,
         }],
       }));
     }
-    const results = await Promise.all(requests);
-    const error = results.find((result) => result.error)?.error;
+    setSaving(true);
+    const {error} = await supabase.rpc("salvar_pagamentos_parcelas", {p_itens: entries});
+    setSaving(false);
     if (error) return show(error.message, "error");
     show(installments.length + " parcela(s) marcada(s) como paga(s)."); onSaved();
   }
@@ -440,7 +418,8 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
             {payer === "outro" && <label>Quem pagou / observação<input value={note} onChange={(e) => setNote(e.target.value)} required /></label>}
           </>
         )}
-        <div className="actions"><button className="primary">Confirmar pagamento</button><button type="button" onClick={onClose}>Cancelar</button></div>
+        {(reaisToCents(cashAmount)>0 || payer==="caixa") && <CaixaSelect label="Caixa de origem" value={caixa} onChange={e=>setCaixa(e.target.value)} />}
+        <div className="actions"><button className="primary" disabled={saving}>Confirmar pagamento</button><button type="button" onClick={onClose}>Cancelar</button></div>
       </form>
     </div>
   );
@@ -515,7 +494,7 @@ export default function FinanceiroModule({ page, onNavigate, show }) {
     ]);
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");
-    else setData({ socios: socios.data || [], categorias: categorias.data || [], cartoes: cartoes.data || [], despesas: despesas.data || [], parcelas: parcelas.data || [] });
+    else setData({ socios: socios.data || [], categorias: categorias.data || [], cartoes: cartoes.data || [], despesas: despesas.data || [], parcelas: (parcelas.data || []).map(p => ({...p, financeiro_pagamentos_parcela: (p.financeiro_pagamentos_parcela || []).filter(x=>!x.estornado_em)})) });
     setLoading(false);
   }, [show]);
   useEffect(() => { load(); }, [load]);
@@ -529,6 +508,7 @@ export default function FinanceiroModule({ page, onNavigate, show }) {
   let content;
   if (loading) content = <div className="loading">Atualizando financeiro…</div>;
   else if (!data.socios.length) content = <section className="panel"><Empty text="Nenhum sócio ativo configurado. Aplique a migration do Financeiro." /></section>;
+  else if (page === "financeiroCaixa" || page === "financeiroReembolsos") content = <CashPanel key={page} view={page === "financeiroReembolsos" ? "partners" : "cash"} onNavigate={onNavigate} />;
   else if (page === "financeiroContas") content = <Accounts data={data} socios={data.socios} onPay={handlePay} onNavigate={onNavigate} />;
   else if (page === "financeiroDespesas") content = <Expenses data={data} socios={data.socios} onReload={load} show={show} />;
   else if (page === "financeiroParcelas") content = <Installments data={data} onPay={handlePay} />;

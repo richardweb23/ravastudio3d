@@ -6,6 +6,7 @@ async function allRows(table, field, value) {
   const rows = [];
   for (let offset = 0; ; offset += 500) {
     let query = supabase.from(table).select("*");
+    if (table === "consignacao_pagamentos") query = query.is("estornado_em", null);
     if (field) query = query.eq(field, value);
     query = table === "estoque_por_local" ? query.order("material_id").order("local_id") : table === "consignacao_produtos" ? query.order("material_id").order("local_id") : query.order("id");
     const { data, error } = await query.range(offset, offset + 499);

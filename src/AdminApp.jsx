@@ -68,6 +68,8 @@ const utilityNavigation = [
 
 const financeNavigation = [
   ["financeiro", "Visão geral"],
+  ["financeiroCaixa", "Caixa e extrato"],
+  ["financeiroReembolsos", "Reembolsos aos sócios"],
   ["financeiroContas", "Contas a pagar"],
   ["financeiroDespesas", "Compras e despesas"],
   ["financeiroParcelas", "Parcelas"],
@@ -136,7 +138,7 @@ export default function AdminApp() {
       loadSales(),
       supabase.from("pedidos").select("*").order("data_pedido", { ascending: false }),
       supabase.from("pedido_itens").select("*, materiais(nome)"),
-      supabase.from("pedido_pagamentos").select("*").order("data", { ascending: false }),
+      supabase.from("pedido_pagamentos").select("*").is("estornado_em", null).order("data", { ascending: false }),
       supabase.from("locais_estoque").select("*").order("nome"),
       supabase.from("vendedores").select("*").order("nome"),
       supabase.from("estoque_por_local").select("*, locais_estoque(nome, tipo)"),
@@ -265,6 +267,8 @@ export default function AdminApp() {
     estimativaImpressao: <EstimativaImpressao />,
     historico: <HistoricoPage vendas={data.vendas} materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} />,
     financeiro: <FinanceiroModule page="financeiro" onNavigate={navigate} show={show} />,
+    financeiroCaixa: <FinanceiroModule page="financeiroCaixa" onNavigate={navigate} show={show} />,
+    financeiroReembolsos: <FinanceiroModule page="financeiroReembolsos" onNavigate={navigate} show={show} />,
     financeiroContas: <FinanceiroModule page="financeiroContas" onNavigate={navigate} show={show} />,
     financeiroDespesas: <FinanceiroModule page="financeiroDespesas" onNavigate={navigate} show={show} />,
     financeiroParcelas: <FinanceiroModule page="financeiroParcelas" onNavigate={navigate} show={show} />,

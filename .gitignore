@@ -22,3 +22,7 @@ Thumbs.db
 backups/
 
 .local-tools/
+
+# Estado da CLI local
+supabase/.temp/
+supabase/.branches/
