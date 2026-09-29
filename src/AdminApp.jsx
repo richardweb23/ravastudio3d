@@ -14,6 +14,7 @@ import EstoquePorLocal from "./components/EstoquePorLocal.jsx";
 import ComprasComLocal from "./components/ComprasComLocal.jsx";
 import VendasComLocal from "./components/VendasComLocal.jsx";
 import PedidosComLocal from "./components/pedidos/PedidosComLocal.jsx";
+import Filamentos from "./components/Filamentos.jsx";
 import Cadastros from "./components/Cadastros.jsx";
 import HistoricoPage from "./components/historico/HistoricoPage.jsx";
 import CalculadoraCustos from "./components/CalculadoraCustos.jsx";
@@ -57,7 +58,7 @@ const stockNavigation = [
   ["estoquePorLocal", "Saldo por local"],
 ];
 
-const organizationNavigation = [["tarefas", "Tarefas"]];
+const organizationNavigation = [["tarefas", "Tarefas"], ["filamentos", "Filamentos"]];
 
 const utilityNavigation = [
   ["calculadora", "Calculadora de custos"],
@@ -261,6 +262,7 @@ export default function AdminApp() {
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     vendas: <VendasComLocal materiais={data.materiais} locais={data.locaisTodos} vendedores={data.vendedoresTodos} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
     pedidos: <PedidosComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
+    filamentos: <Filamentos />,
     cadastros: <Cadastros locais={data.locaisTodos} vendedores={data.vendedoresTodos} onNavigate={navigate} onSaved={refresh} show={show} />,
     calculadora: <CalculadoraCustos materiais={data.materiais} show={show} />,
     calculadoraEscala: <CalculadoraEscala />,

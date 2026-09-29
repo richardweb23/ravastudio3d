@@ -1,0 +1,36 @@
+.cash-panel dialog.cash-details { box-sizing: border-box; width: min(760px, calc(100vw - 40px)); max-width: none; max-height: calc(100dvh - 40px); margin: auto; padding: 28px; border: 1px solid var(--admin-line, #ded5c9); border-radius: 16px; background: var(--admin-paper, #faf8f4); color: var(--admin-ink, #40392f); }
+.cash-details::backdrop { background: #18213a80; }
+.cash-details-heading { display: flex; justify-content: space-between; align-items: start; gap: 20px; margin-bottom: 24px; }
+.cash-details .cash-details-heading h2 { margin: 6px 0 0; font-size: 25px; line-height: 1.25; }
+.cash-details-eyebrow { color: #726858; font-size: 12px; font-weight: 600; }
+.cash-details-close { flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid #ded5c9; border-radius: 50%; background: #fff; color: #625a4f; font-size: 26px; cursor: pointer; }
+.cash-details-summary { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 22px; border: 1px solid #ded5c9; border-radius: 12px; background: #eee8df; }
+.cash-details-summary > div { display: grid; gap: 8px; min-width: 0; }
+.cash-details-summary span { font-size: 13px; color: #726858; }
+.cash-details-summary strong { font-size: 30px; overflow-wrap: anywhere; }
+.cash-details-summary .cash-details-date { text-align: right; }
+.cash-details-date strong { font-size: 15px; }
+.cash-details-section { padding: 22px 0; border-bottom: 1px solid #ded5c9; }
+.cash-details-section h3 { margin: 0 0 12px; font-size: 15px; overflow-wrap: anywhere; }
+.cash-details-section p { margin: 0; line-height: 1.7; white-space: pre-wrap; }
+.cash-details-grid, .cash-details-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 0; }
+.cash-details-grid > div, .cash-details-meta > div { min-width: 0; }
+.cash-details dt { margin-bottom: 7px; color: #726858; font-size: 12px; }
+.cash-panel .cash-details dd { text-align: left; line-height: 1.6; overflow-wrap: anywhere; font-size: 14px; }
+.cash-details-meta { padding-top: 22px; }
+.cash-details-meta dd { color: #726858; }
+.cash-details-items { list-style: none; margin: 0; padding: 0; }
+.cash-details-items li { display: flex; justify-content: space-between; gap: 18px; padding: 12px 0; }
+.cash-details-items span { overflow-wrap: anywhere; min-width: 0; }
+.cash-details-items strong { white-space: nowrap; }
+.cash-details-items small { display: block; color: #726858; margin-top: 6px; }
+.cash-details .cash-details-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 26px; padding-top: 20px; border-top: 1px solid #ded5c9; }
+.cash-details-footer button { min-height: 44px; padding: 12px 20px; border-radius: 8px; }
+@media(max-width: 640px) {
+ .cash-panel dialog.cash-details { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 20px; border-radius: 12px; }
+ .cash-details .cash-details-heading h2 { font-size: 22px; }
+ .cash-details-summary { align-items: stretch; flex-direction: column; gap: 18px; padding: 18px; }
+ .cash-details-summary .cash-details-date { text-align: left; }
+ .cash-details-grid, .cash-details-meta { grid-template-columns: minmax(0, 1fr); }
+ .cash-details .cash-details-footer { flex-direction: column-reverse; align-items: stretch; }
+}

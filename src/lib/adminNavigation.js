@@ -9,6 +9,7 @@ export const adminPageRoutes = Object.freeze({
   pedidos: "pedidos",
   cadastros: "cadastros",
   tarefas: "tarefas",
+  filamentos: "filamentos",
   calculadora: "calculadora-custos",
   calculadoraEscala: "calculadora-escala",
   estimativaImpressao: "estimativa-impressao",

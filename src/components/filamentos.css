@@ -1,0 +1,68 @@
+.filaments-page { display: grid; gap: 24px; min-width: 0; }
+.filament-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.filament-fields { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; min-width: 0; }
+.filament-fields label, .filament-filters label { display: grid; gap: 8px; min-width: 0; }
+.filament-fields input, .filament-fields select, .filament-filters input, .filament-filters select { width: 100%; min-width: 0; }
+.filament-wide { grid-column: 1 / -1; }
+.filament-brand-action { display: flex; align-items: end; }
+.filament-color { display: flex; align-items: center; gap: 12px; }
+.filament-color input[type=color] { width: 64px; height: 44px; padding: 4px; cursor: pointer; }
+.filament-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 20px 0; }
+.filament-swatch { display: inline-block; width: 18px; height: 18px; vertical-align: middle; border: 1px solid #a1a1aa; border-radius: 50%; margin-right: 8px; }
+.filaments-page td small { display: block; margin-top: 4px; }
+.filament-dialog { width: min(760px, calc(100vw - 32px)); max-height: 90vh; overflow: auto; }
+.filament-dialog > h2 { margin-top: 0; }
+@media (max-width: 640px) {
+ .filament-fields, .filament-filters, .filament-metrics { grid-template-columns: minmax(0, 1fr); }
+ .filaments-page .panel-title { flex-wrap: wrap; gap: 12px; }
+}
+.filaments-page > * { min-width: 0; }
+.filaments-page .filament-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.filaments-page .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.filaments-page .page-header button, .filaments-page .panel-title button, .filament-brand-action button { border: 1px solid #d8cfc2; border-radius: 8px; padding: 10px 14px; background: #fff; color: #40392f; cursor: pointer; }
+@media (max-width: 640px) {
+ .filaments-page .filament-metrics { grid-template-columns: minmax(0, 1fr); }
+ .filaments-page .table-panel, .filaments-page .table-wrap { min-width: 0; max-width: 100%; }
+}
+/* Override the shared registration dialog's zero padding and default width. */
+.filaments-page .filament-dialog {
+ box-sizing: border-box; width: min(760px, calc(100vw - 40px));
+ max-width: none; max-height: calc(100dvh - 40px); padding: 28px;
+ border-radius: 16px; color: #40392f;
+}
+.filaments-page .filament-dialog--historico { width: min(1080px, calc(100vw - 40px)); }
+.filament-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.filament-dialog-heading h2 { margin: 0; font-size: 24px; line-height: 1.25; }
+.filament-dialog-close { flex: 0 0 40px; width: 40px; height: 40px; border: 1px solid #ded5c9; border-radius: 50%; background: #fff; color: #625a4f; font-size: 26px; cursor: pointer; }
+.filament-dialog-summary { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; padding: 20px; background: #eee8df; border: 1px solid #ded5c9; border-radius: 12px; }
+.filament-dialog-summary > div { display: grid; gap: 8px; min-width: 0; overflow-wrap: anywhere; }
+.filament-dialog-summary strong { font-size: 17px; line-height: 1.4; }
+.filament-dialog-summary span { font-size: 13px; color: #726858; }
+.filament-dialog-eyebrow { font-weight: 600; }
+.filament-dialog-balance { flex-shrink: 0; text-align: right; }
+.filament-dialog-balance strong { font-size: 25px; color: #29261f; }
+.filament-withdrawal-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.filament-withdrawal-fields label { min-width: 0; }
+.filament-withdrawal-fields textarea { resize: vertical; min-height: 100px; width: 100%; box-sizing: border-box; }
+.filament-dialog .filament-dialog-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #ded5c9; }
+.filament-dialog-footer button { min-height: 44px; padding: 12px 20px; }
+.filament-history-table { min-width: 0; }
+.filament-history-table .table-wrap { max-height: 48dvh; overflow: auto; border: 1px solid #ded5c9; border-radius: 10px; }
+.filament-history-table table { width: 100%; min-width: 680px; }
+.filament-history-table th { position: sticky; top: 0; background: #f4f1eb; z-index: 1; }
+.filament-history-table th, .filament-history-table td { padding: 16px 18px; vertical-align: top; }
+.filament-history-table th:not(:last-child), .filament-history-table td:not(:last-child) { white-space: nowrap; }
+.filament-history-table th:last-child { width: 42%; }
+.filament-history-table td:last-child { min-width: 220px; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
+@media (max-width: 640px) {
+ .filaments-page .filament-dialog, .filaments-page .filament-dialog--historico { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 20px; border-radius: 12px; }
+ .filament-dialog-heading { gap: 12px; margin-bottom: 20px; }
+ .filament-dialog-heading h2 { font-size: 21px; }
+ .filament-dialog-summary { align-items: stretch; flex-direction: column; gap: 16px; padding: 16px; }
+ .filament-dialog-balance { text-align: left; border-top: 1px solid #d8cfc2; padding-top: 12px; }
+ .filament-withdrawal-fields { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+ .filament-dialog .filament-dialog-footer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ .filament-dialog-footer button { min-width: 0; }
+ .filament-dialog--historico .filament-dialog-footer { grid-template-columns: 1fr; }
+ .filament-history-table .table-wrap { max-height: 40dvh; }
+}
