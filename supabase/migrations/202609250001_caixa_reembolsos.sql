@@ -130,7 +130,6 @@ begin
  if v_data is null or v_data>current_date then raise exception 'Informe uma data até hoje'; end if;
  if p_acao='abertura' then
   if exists(select 1 from public.financeiro_abertura) then raise exception 'Abertura já registrada'; end if;
-  if not public.usuario_administrador() then raise exception 'Abertura exige administrador'; end if;
   -- The opening balance represents all prior history and activation never
   -- modifies existing receipts, expenses, or transfers.
   insert into public.financeiro_abertura(data,criado_por) values(v_data,auth.uid());

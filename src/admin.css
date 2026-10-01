@@ -2361,3 +2361,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .finance-overview-partner-list strong { color: var(--admin-ink); font-size: 12px; }
 @media (max-width: 900px) { .finance-metrics.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .finance-overview-heading { align-items: start; flex-direction: column; } .finance-metrics.four { grid-template-columns: 1fr; } .finance-overview-partners { align-items: start; flex-direction: column; } }
+.previous-month-payables-alert {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  border: 1px solid #efc36b;
+  border-left: 4px solid #b7791f;
+  border-radius: 10px;
+  background: #fff8e6;
+  color: #744210;
+  line-height: 1.5;
+}
+.previous-month-payables-alert span { font-size: 14px; }

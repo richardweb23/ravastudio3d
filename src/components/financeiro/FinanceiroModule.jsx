@@ -479,7 +479,7 @@ function Categories({ data, onReload, show }) {
   return <div className="split"><form className="panel form" onSubmit={save}><h2>{editing ? "Editar categoria" : "Nova categoria"}</h2><label>Nome<input value={name} onChange={(e) => setName(e.target.value)} required /></label><div className="actions"><button className="primary">{editing ? "Salvar" : "Cadastrar"}</button>{editing && <button type="button" onClick={() => { setEditing(null); setName(""); }}>Cancelar</button>}</div></form><section className="panel"><h2>Categorias</h2><div className="finance-category-list">{data.categorias.map((item) => <div key={item.id}><span><strong>{item.nome}</strong><small>{item.ativo ? "Disponível nos formulários" : "Desativada"}</small></span><button className="link" onClick={() => { setEditing(item.id); setName(item.nome); }}>Editar</button><button className={item.ativo ? "danger-text" : "link"} onClick={() => toggle(item)}>{item.ativo ? "Desativar" : "Ativar"}</button></div>)}</div></section></div>;
 }
 
-export default function FinanceiroModule({ page, onNavigate, show }) {
+export default function FinanceiroModule({ page, onNavigate, show, onDataChanged }) {
   const [data, setData] = useState({ socios: [], categorias: [], cartoes: [], despesas: [], parcelas: [] });
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState(null);
@@ -495,8 +495,9 @@ export default function FinanceiroModule({ page, onNavigate, show }) {
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");
     else setData({ socios: socios.data || [], categorias: categorias.data || [], cartoes: cartoes.data || [], despesas: despesas.data || [], parcelas: (parcelas.data || []).map(p => ({...p, financeiro_pagamentos_parcela: (p.financeiro_pagamentos_parcela || []).filter(x=>!x.estornado_em)})) });
+    if (!error) onDataChanged?.();
     setLoading(false);
-  }, [show]);
+  }, [show, onDataChanged]);
   useEffect(() => { load(); }, [load]);
   const title = pageTitles[page] || pageTitles.financeiro;
   async function handlePay(ids, isPaid = false) {

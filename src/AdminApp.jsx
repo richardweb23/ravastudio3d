@@ -21,6 +21,7 @@ import CalculadoraCustos from "./components/CalculadoraCustos.jsx";
 import CalculadoraEscala from "./components/CalculadoraEscala.jsx";
 import EstimativaImpressao from "./components/EstimativaImpressao.jsx";
 import FinanceiroModule from "./components/financeiro/FinanceiroModule.jsx";
+import PreviousMonthPayablesAlert from "./components/financeiro/PreviousMonthPayablesAlert.jsx";
 
 import LocalDetails from "./components/consignacao/LocalDetails.jsx";
 import { parseLocalDetailsPage } from "./lib/consignacao.js";
@@ -97,6 +98,8 @@ export default function AdminApp() {
   const [tarefas, setTarefas] = useState([]);
   const [taskError, setTaskError] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [financeRevision, setFinanceRevision] = useState(0);
+  const refreshPayablesAlert = useCallback(() => setFinanceRevision(value => value + 1), []);
   const [data, setData] = useState({
     materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
     pagamentos: [], locais: [], vendedores: [], locaisTodos: [], vendedoresTodos: [], estoqueLocal: [],
@@ -268,15 +271,15 @@ export default function AdminApp() {
     calculadoraEscala: <CalculadoraEscala />,
     estimativaImpressao: <EstimativaImpressao />,
     historico: <HistoricoPage vendas={data.vendas} materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} />,
-    financeiro: <FinanceiroModule page="financeiro" onNavigate={navigate} show={show} />,
-    financeiroCaixa: <FinanceiroModule page="financeiroCaixa" onNavigate={navigate} show={show} />,
-    financeiroReembolsos: <FinanceiroModule page="financeiroReembolsos" onNavigate={navigate} show={show} />,
-    financeiroContas: <FinanceiroModule page="financeiroContas" onNavigate={navigate} show={show} />,
-    financeiroDespesas: <FinanceiroModule page="financeiroDespesas" onNavigate={navigate} show={show} />,
-    financeiroParcelas: <FinanceiroModule page="financeiroParcelas" onNavigate={navigate} show={show} />,
-    financeiroFaturas: <FinanceiroModule page="financeiroFaturas" onNavigate={navigate} show={show} />,
-    financeiroCartoes: <FinanceiroModule page="financeiroCartoes" onNavigate={navigate} show={show} />,
-    financeiroCategorias: <FinanceiroModule page="financeiroCategorias" onNavigate={navigate} show={show} />,
+    financeiro: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiro" onNavigate={navigate} show={show} />,
+    financeiroCaixa: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroCaixa" onNavigate={navigate} show={show} />,
+    financeiroReembolsos: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroReembolsos" onNavigate={navigate} show={show} />,
+    financeiroContas: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroContas" onNavigate={navigate} show={show} />,
+    financeiroDespesas: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroDespesas" onNavigate={navigate} show={show} />,
+    financeiroParcelas: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroParcelas" onNavigate={navigate} show={show} />,
+    financeiroFaturas: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroFaturas" onNavigate={navigate} show={show} />,
+    financeiroCartoes: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroCartoes" onNavigate={navigate} show={show} />,
+    financeiroCategorias: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroCategorias" onNavigate={navigate} show={show} />,
   };
 
   function navigate(target, options = {}) {
@@ -413,6 +416,7 @@ export default function AdminApp() {
         </div>
       </aside>
       <main className="content">
+        <PreviousMonthPayablesAlert key={profile.id} page={page} revision={financeRevision} />
         {notice && <div className={`notice ${notice.type}`} role="status">{notice.message}</div>}
         {loading ? <div className="loading">Atualizando dados…</div> : detailRoute ? <LocalDetails key={page} {...detailRoute} onNavigate={navigate} onSaved={() => refresh(true)} show={show} /> : pages[page] || pages.dashboard}
       </main>
