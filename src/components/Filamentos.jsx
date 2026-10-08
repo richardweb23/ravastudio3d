@@ -38,7 +38,7 @@ export default function Filamentos() {
     setLoading(true);
     try {
       const [b, s] = await Promise.all([allRows('filamento_marcas', '*', 'nome'), allRows('filamento_estoque', '*,filamento_marcas(nome)', 'cor_nome')]);
-      setBrands(b); setStock(s); setError('');
+      setBrands(b); setStock(s); setError(''); return s;
     } catch (err) { setError(`Não foi possível carregar os filamentos: ${err.message}`); }
     finally { setLoading(false); }
   }, []);
@@ -97,6 +97,22 @@ export default function Filamentos() {
     } catch (err) { if (seq === historyRequest.current) setDialogError(err.message); }
     finally { if (seq === historyRequest.current) setHistoryLoading(false); }
   }
+  async function removeWithdrawal(movement) {
+    if (submitting.current) return;
+    if (!window.confirm(`Remover esta baixa de ${kg(movement.quantidade_gramas)}? A quantidade voltará ao estoque de ${modal.row.cor_nome} no caixa ${modal.row.caixa}.`)) return;
+    submitting.current = true; setBusy(true); setDialogError('');
+    try {
+      const { error } = await supabase.rpc('remover_baixa_filamento', { p_movimento_id: movement.id });
+      if (error) throw error;
+      const updated = await load();
+      if (!updated) throw new Error('Baixa removida, mas não foi possível atualizar a tela. Feche o histórico e clique em Atualizar.');
+      const fresh = updated.find(item => item.id === movement.estoque_id);
+      await showHistory(fresh || modal.row);
+      setNotice('Baixa removida. Quantidade devolvida ao estoque.');
+    } catch (err) { setDialogError(err.message); }
+    finally { submitting.current = false; setBusy(false); }
+  }
+  const reversedWithdrawals = new Set(history.filter(row => row.estorno_de).map(row => row.estorno_de));
   const filtered = stock.filter(row => {
     const query = `${row.cor_nome} ${row.filamento_marcas?.nome || ''}`.toLocaleLowerCase('pt-BR');
     return query.includes(filters.busca.trim().toLocaleLowerCase('pt-BR')) && (!filters.marca || row.marca_id === filters.marca) && (!filters.tipo || row.tipo === filters.tipo) && (!filters.categoria || row.categoria === filters.categoria) && (!filters.caixa || row.caixa === filters.caixa) && (!filters.saldo || (filters.saldo === 'disponivel' ? Number(row.quantidade_gramas) > 0 : Number(row.quantidade_gramas) === 0));
@@ -144,7 +160,7 @@ export default function Filamentos() {
       {dialogError && <p role="alert" className="negative">{dialogError}</p>}
       {modal.type === 'marca' && <form className="form" onSubmit={saveBrand}><label>Nome da marca<input value={brand.nome} onChange={e => setBrand(v => ({ ...v, nome: e.target.value }))} required maxLength={100} disabled={busy} /></label><label>Valor médio por kg (R$)<input type="number" value={brand.valor} min="0" max="1000000" step="0.01" onChange={e => setBrand(v => ({ ...v, valor: e.target.value }))} required disabled={busy} /></label><p>Valor sugerido nas próximas entradas. Você pode informar o preço efetivo de cada compra.</p><div className="actions"><button className="primary" disabled={busy}>Salvar marca</button><button type="button" onClick={close} disabled={busy}>Cancelar</button></div></form>}
       {modal.type === 'baixa' && <form className="form filament-withdrawal" onSubmit={saveWithdrawal}><div className="filament-dialog-summary"><div><span className="filament-dialog-eyebrow">Filamento selecionado</span><strong>{modal.row.filamento_marcas?.nome} · {modal.row.cor_nome}</strong><span>{modal.row.tipo} · {modal.row.categoria} · {modal.row.caixa}</span></div><div className="filament-dialog-balance"><span>Disponível</span><strong>{kg(modal.row.quantidade_gramas)}</strong></div></div><div className="filament-withdrawal-fields"><label>Quantidade da baixa (kg)<input type="number" min="0.001" max={Number(modal.row.quantidade_gramas) / 1000} step="0.001" value={withdrawal.quantidade} onChange={e => setWithdrawal(v => ({ ...v, quantidade: e.target.value }))} required disabled={busy} /></label><label>Data da baixa<input type="date" max={today()} value={withdrawal.data} onChange={e => setWithdrawal(v => ({ ...v, data: e.target.value }))} required disabled={busy} /></label><label className="filament-wide">Motivo da baixa<textarea rows={3} value={withdrawal.observacao} onChange={e => setWithdrawal(v => ({ ...v, observacao: e.target.value }))} required maxLength={500} disabled={busy} placeholder="Ex.: Impressão do pedido ou perda de material" /></label></div><div className="actions filament-dialog-footer"><button type="button" onClick={close} disabled={busy}>Cancelar</button><button className="primary" disabled={busy}>Confirmar baixa</button></div></form>}
-      {modal.type === 'historico' && <><div className="filament-dialog-summary"><div><span className="filament-dialog-eyebrow">Entradas e baixas</span><strong>{modal.row.filamento_marcas?.nome} · {modal.row.cor_nome}</strong><span>{modal.row.tipo} · {modal.row.categoria} · {modal.row.caixa}</span></div><div className="filament-dialog-balance"><span>Saldo atual</span><strong>{kg(modal.row.quantidade_gramas)}</strong></div></div><div className="filament-history-table">{historyLoading ? <p role="status">Carregando histórico…</p> : <DataTable heads={['Data', 'Movimento', 'Peso', 'Valor / kg', 'Observação']} rows={history.map(row => <tr key={row.id}><td>{row.data.split('-').reverse().join('/')}</td><td>{row.tipo === 'entrada' ? 'Entrada' : 'Baixa'}</td><td>{row.tipo === 'baixa' ? '−' : '+'}{kg(row.quantidade_gramas)}</td><td>{money(row.valor_kg_centavos)}</td><td>{row.observacao || '—'}</td></tr>)} empty="Nenhum movimento registrado." />}</div><div className="actions filament-dialog-footer"><button onClick={close}>Fechar</button></div></>}
+      {modal.type === 'historico' && <><div className="filament-dialog-summary"><div><span className="filament-dialog-eyebrow">Entradas e baixas</span><strong>{modal.row.filamento_marcas?.nome} · {modal.row.cor_nome}</strong><span>{modal.row.tipo} · {modal.row.categoria} · {modal.row.caixa}</span></div><div className="filament-dialog-balance"><span>Saldo atual</span><strong>{kg(modal.row.quantidade_gramas)}</strong></div></div><div className="filament-history-table">{historyLoading ? <p role="status">Carregando histórico…</p> : <DataTable heads={['Data', 'Movimento', 'Peso', 'Valor / kg', 'Observação', 'Ações']} rows={history.map(row => <tr key={row.id}><td>{row.data.split('-').reverse().join('/')}</td><td>{{ entrada: 'Entrada', baixa: 'Baixa', estorno_baixa: 'Devolução ao estoque' }[row.tipo]}{reversedWithdrawals.has(row.id) && <small><span className="status finance-neutro">Removida</span></small>}</td><td>{row.tipo === 'baixa' ? '−' : '+'}{kg(row.quantidade_gramas)}</td><td>{money(row.valor_kg_centavos)}</td><td>{row.observacao || '—'}</td><td>{row.tipo === 'baixa' && !reversedWithdrawals.has(row.id) ? <div className="row-actions"><button type="button" className="danger-text" disabled={busy} onClick={() => removeWithdrawal(row)}>Remover baixa</button></div> : '—'}</td></tr>)} empty="Nenhum movimento registrado." />}</div><div className="actions filament-dialog-footer"><button onClick={close}>Fechar</button></div></>}
     </Dialog>}
   </div>;
 }

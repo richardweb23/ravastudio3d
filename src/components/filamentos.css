@@ -51,9 +51,9 @@
 .filament-history-table table { width: 100%; min-width: 680px; }
 .filament-history-table th { position: sticky; top: 0; background: #f4f1eb; z-index: 1; }
 .filament-history-table th, .filament-history-table td { padding: 16px 18px; vertical-align: top; }
-.filament-history-table th:not(:last-child), .filament-history-table td:not(:last-child) { white-space: nowrap; }
-.filament-history-table th:last-child { width: 42%; }
-.filament-history-table td:last-child { min-width: 220px; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
+.filament-history-table th:not(:nth-child(5)), .filament-history-table td:not(:nth-child(5)) { white-space: nowrap; }
+.filament-history-table th:nth-child(5) { width: 42%; }
+.filament-history-table td:nth-child(5) { min-width: 220px; white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
 @media (max-width: 640px) {
  .filaments-page .filament-dialog, .filaments-page .filament-dialog--historico { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 20px; border-radius: 12px; }
  .filament-dialog-heading { gap: 12px; margin-bottom: 20px; }
@@ -66,3 +66,5 @@
  .filament-dialog--historico .filament-dialog-footer { grid-template-columns: 1fr; }
  .filament-history-table .table-wrap { max-height: 40dvh; }
 }
+
+.filament-history-table td small { display: block; margin-top: 8px; }

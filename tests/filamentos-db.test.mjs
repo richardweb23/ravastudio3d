@@ -67,10 +67,40 @@ test('filamentos: entradas, baixas, isolamento de caixas, histórico e permissõ
   await move('entrada',{...base,quantidade_gramas:500,valor_kg_centavos:20000});
   assert.equal(Number((await row(id)).custo_medio_centavos),20000);
  });
+ await t.test('remover baixa devolve somente ao estoque original, uma vez, preservando histórico',async()=>{
+  const stockId=await move('entrada',{...base,cor_nome:'Verde',quantidade_gramas:1000,valor_kg_centavos:10000});
+  const otherBox=await move('entrada',{...base,cor_nome:'Verde',caixa:'Bonecos',quantidade_gramas:1000});
+  const key=randomUUID();await move('baixa',{estoque_id:stockId,quantidade_gramas:250,data:date,observacao:'Consumo incorreto'},key);
+  const movement=await one('select * from public.filamento_movimentos where requisicao=$1',[key]);
+  const undo=()=>one('select public.remover_baixa_filamento($1) id',[movement.id]);
+  assert.equal((await undo()).id,stockId);await undo();
+  assert.equal(Number((await row(stockId)).quantidade_gramas),1000);
+  assert.equal(Number((await row(otherBox)).quantidade_gramas),1000);
+  assert.equal(Number((await one('select count(*) n from public.filamento_movimentos where estorno_de=$1',[movement.id])).n),1);
+  assert.equal((await one('select observacao from public.filamento_movimentos where id=$1',[movement.id])).observacao,'Consumo incorreto');
+  const reversal=await one('select * from public.filamento_movimentos where estorno_de=$1',[movement.id]);
+  assert.equal(reversal.criado_por,user);assert.equal(Number(reversal.quantidade_gramas),250);
+  await assert.rejects(one('select public.remover_baixa_filamento($1)',[reversal.id]),/Somente baixas/);
+  await assert.rejects(one('select public.remover_baixa_filamento($1)',[randomUUID()]),/não encontrada/);
+  await assert.rejects(db.query('update public.filamento_movimentos set estorno_de=null where id=$1',[reversal.id]),/permission/);
+ });
+ await t.test('remoção após reposição restaura peso e custo original sem alterar entrada',async()=>{
+  const stockId=await move('entrada',{...base,cor_nome:'Vermelho',quantidade_gramas:1000,valor_kg_centavos:10000});
+  const key=randomUUID();await move('baixa',{estoque_id:stockId,quantidade_gramas:1000,data:date,observacao:'Baixa total'},key);
+  await move('entrada',{...base,cor_nome:'Vermelho',quantidade_gramas:1000,valor_kg_centavos:20000});
+  const movement=await one('select id from public.filamento_movimentos where requisicao=$1',[key]);
+  await one('select public.remover_baixa_filamento($1)',[movement.id]);
+  assert.equal(Number((await row(stockId)).quantidade_gramas),2000);
+  assert.equal(Number((await row(stockId)).custo_medio_centavos),15000);
+  const entry=await one("select id from public.filamento_movimentos where estoque_id=$1 and tipo='entrada' limit 1",[stockId]);
+  await assert.rejects(one('select public.remover_baixa_filamento($1)',[entry.id]),/Somente baixas/);
+ });
  await t.test('inativo e anônimo não acessam nem alteram o estoque',async()=>{
   await db.exec('reset role');await db.query('update public.profiles set ativo=false where id=$1',[user]);await db.exec('set role authenticated');
   assert.equal((await db.query('select * from public.filamento_estoque')).rows.length,0);
   await assert.rejects(move('entrada',base),/autorizado/);
+  await assert.rejects(one('select public.remover_baixa_filamento($1)',[randomUUID()]),/autorizado/);
   await db.exec('set role anon');await assert.rejects(move('entrada',base),/permission/);
+  await assert.rejects(one('select public.remover_baixa_filamento($1)',[randomUUID()]),/permission/);
  });
 });
