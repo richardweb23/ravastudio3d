@@ -1,3 +1,4 @@
+import DataTable from "./DataTable.jsx";
 import { useMemo, useState } from "react";
 import {
   addMinutes,
@@ -281,17 +282,7 @@ export default function EstimativaImpressao() {
           )}
         </div>
         {alternatives.length ? (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Início</th>
-                  <th>Término</th>
-                  <th>Mudança de data</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alternatives.map((item) => (
+          <DataTable heads={["Início","Término","Mudança de data"]} rows={alternatives.map((item) => (
                   <tr key={item.start.getHours()}>
                     <td>{timeFormatter.format(item.start)}</td>
                     <td>
@@ -304,10 +295,7 @@ export default function EstimativaImpressao() {
                       </span>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))} empty="Nenhum registro encontrado." />
         ) : (
           <p className="empty">Informe a duração para comparar outros horários.</p>
         )}

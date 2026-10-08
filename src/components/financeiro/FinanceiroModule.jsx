@@ -1,3 +1,5 @@
+import StatusBadge from '../StatusBadge.jsx';
+import { loadAllTableRows } from "../../services/tableRows.js";
 import CashPanel from "./CashPanel.jsx";
 import CaixaSelect from "../CaixaSelect.jsx";
 import FilterButtons from "../ui/FilterButtons.jsx";
@@ -142,7 +144,7 @@ function AccountsTable({ items, socios, onPay }) {
             <td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td>
             <td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td>
             <td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td>
-            <td>{expense.responsavel_socio_id ? socios.find((partner) => partner.id === expense.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{payerLabel(item)}</td><td><span className={`status finance-${status}`}>{statusLabels[status]}</span></td>
+            <td>{expense.responsavel_socio_id ? socios.find((partner) => partner.id === expense.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{payerLabel(item)}</td><td><StatusBadge value={status}>{statusLabels[status]}</StatusBadge></td>
             <td><button className="link" type="button" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer baixa" : "Marcar como paga"}</button></td>
           </tr>
         );
@@ -209,7 +211,7 @@ function Accounts({ data, socios, onPay, onNavigate }) {
       <PartnerSummary summary={summary} />
       <section className="panel table-panel">
         <div className="panel-title"><h2>Contas de {monthLabel(selectedMonth)}</h2><span>{summary.items.length} parcela(s)</span></div>
-        <AccountsTable socios={socios} items={[...summary.items].sort((a, b) => a.vencimento.localeCompare(b.vencimento))} onPay={onPay} />
+        <AccountsTable socios={socios} items={[...summary.items].sort((a, b) => Number(Boolean(a.pago)) - Number(Boolean(b.pago)) || a.vencimento.localeCompare(b.vencimento))} onPay={onPay} />
         <div className="table-summary"><SplitValues total={summary.total} socios={socios} responsibilities={summary.responsibilities} compact /><div><span>Pago</span><strong>{formatBRLCents(summary.paid)}</strong><span>Pendente</span><strong>{formatBRLCents(summary.pending)}</strong></div></div>
       </section>
       <section className="panel table-panel finance-accounts-projections">
@@ -235,10 +237,20 @@ function Expenses({ data, socios, onReload, show }) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const totalCents = reaisToCents(form.valor);
+  const installmentsByExpense = new Map();
+  for (const installment of data.parcelas) {
+    const items = installmentsByExpense.get(installment.despesa_id) || [];
+    items.push(installment);
+    installmentsByExpense.set(installment.despesa_id, items);
+  }
+  const isPaid = (expense) => {
+    const items = installmentsByExpense.get(expense.id) || [];
+    return items.length > 0 && items.every((item) => item.pago);
+  };
   const filtered = data.despesas.filter((item) => {
-    const query = search.toLocaleLowerCase("pt-BR");
-    return (!query || `${item.nome} ${item.fornecedor || ""}`.toLocaleLowerCase("pt-BR").includes(query)) && (!category || item.categoria_id === category);
-  });
+    const query = search.trim().toLocaleLowerCase("pt-BR");
+    return (!query || `${item.numero_compra || ""} ${item.nome} ${item.fornecedor || ""}`.toLocaleLowerCase("pt-BR").includes(query)) && (!category || item.categoria_id === category);
+  }).sort((a, b) => Number(isPaid(a)) - Number(isPaid(b)));
   function edit(item) {
     setEditingId(item.id);
     setForm({
@@ -289,12 +301,12 @@ function Expenses({ data, socios, onReload, show }) {
         <aside className="panel finance-form-aside"><span className="eyebrow">Prévia</span><h2>{form.quantidade_parcelas || 1} parcela(s)</h2><p>A soma das parcelas sempre será exatamente igual ao valor total, inclusive quando houver diferença de um centavo.</p><strong>{formatBRLCents(totalCents)}</strong></aside>
       </div>
       <section className="panel table-panel">
-        <div className="panel-title finance-list-title"><h2>Compras cadastradas</h2><div className="finance-filters"><input type="search" aria-label="Pesquisar compra ou loja" placeholder="Pesquisar compra ou loja" value={search} onChange={(e) => setSearch(e.target.value)} /><select aria-label="Filtrar compras por categoria" value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas as categorias</option>{data.categorias.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></div></div>
-        <DataTable heads={["Data", "Compra", "Loja", "Categoria", "Pagamento", "Parcelas", "Total", "Responsável", "Status", "Ações"]} rows={filtered.map((item) => {
-          const installments = data.parcelas.filter((row) => row.despesa_id === item.id);
+        <div className="panel-title finance-list-title"><h2>Compras cadastradas</h2><div className="finance-filters"><input type="search" aria-label="Pesquisar por ID da compra, nome ou loja" placeholder="ID da compra, nome ou loja" value={search} onChange={(e) => setSearch(e.target.value)} /><select aria-label="Filtrar compras por categoria" value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas as categorias</option>{data.categorias.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></div></div>
+        <DataTable heads={["Data", "ID da compra", "Compra", "Loja", "Categoria", "Pagamento", "Parcelas", "Total", "Responsável", "Status", "Ações"]} rows={filtered.map((item) => {
+          const installments = installmentsByExpense.get(item.id) || [];
           const paid = installments.filter((row) => row.pago).length;
           const status = paid === installments.length && installments.length ? "Paga" : paid ? "Parcialmente paga" : installments.some((row) => installmentStatus(row) === "vencido") ? "Vencida" : "Pendente";
-          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td><strong>{item.nome}</strong>{item.numero_compra && <small>#{item.numero_compra}</small>}</td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{item.responsavel_socio_id ? socios.find((partner) => partner.id === item.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{status}</td><td><div className="row-actions"><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => remove(item)}>Excluir</button></div></td></tr>;
+          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td>{item.numero_compra || "—"}</td><td><strong>{item.nome}</strong></td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{item.responsavel_socio_id ? socios.find((partner) => partner.id === item.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td><StatusBadge value={{ Paga: "pago", "Parcialmente paga": "parcial", Vencida: "vencido", Pendente: "pendente" }[status]}>{status}</StatusBadge></td><td><div className="row-actions"><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => remove(item)}>Excluir</button></div></td></tr>;
         })} empty="Nenhuma compra cadastrada." />
       </section>
     </>
@@ -447,7 +459,7 @@ function Installments({ data, onPay }) {
     <section className="panel table-panel">
       <div className="finance-filter-grid"><label>Mês e ano<input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label><FilterButtons label="Status" value={status} onChange={setStatus} options={[{ value: "", label: "Todos" }, { value: "pago", label: "Pago" }, { value: "pendente", label: "Pendente" }, { value: "vencido", label: "Vencido" }]} /><label>Cartão<select value={card} onChange={(e) => setCard(e.target.value)}><option value="">Todos</option>{data.cartoes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label><label>Categoria<select value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas</option>{data.categorias.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label><label>Loja / fornecedor<select value={supplier} onChange={(e) => setSupplier(e.target.value)}><option value="">Todos</option>{suppliers.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label>Pago por<select value={payer} onChange={(e) => setPayer(e.target.value)}><option value="">Todos</option>{data.socios.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}<option value="caixa">Caixa da RAVA</option><option value="outro">Outro</option></select></label></div>
       <div className="selection-bar"><span>{selected.length} selecionada(s)</span><button className="primary" disabled={!unpaidSelected.length} onClick={() => onPay(unpaidSelected)}>Marcar selecionadas como pagas</button><button onClick={() => setSelected([])}>Limpar</button></div>
-      <DataTable heads={["", "Vencimento", "Compra", "Loja", "Parcela", "Cartão", "Valor", "Pago por", "Pagamento", "Status", "Ações"]} rows={filtered.map((item) => { const expense = item.financeiro_despesas || {}; const itemStatus = installmentStatus(item); return <tr key={item.id}><td><input type="checkbox" checked={selected.includes(item.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, item.id] : selected.filter((id) => id !== item.id))} aria-label={`Selecionar ${expense.nome}`} /></td><td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td><td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td><td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td><td>{payerLabel(item)}</td><td>{paymentDatesLabel(item)}</td><td><span className={`status finance-${itemStatus}`}>{statusLabels[itemStatus]}</span></td><td><button className="link" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer" : "Pagar"}</button></td></tr>; })} empty="Nenhuma parcela encontrada." />
+      <DataTable heads={["", "Vencimento", "Compra", "Loja", "Parcela", "Cartão", "Valor", "Pago por", "Pagamento", "Status", "Ações"]} rows={filtered.map((item) => { const expense = item.financeiro_despesas || {}; const itemStatus = installmentStatus(item); return <tr key={item.id}><td><input type="checkbox" checked={selected.includes(item.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, item.id] : selected.filter((id) => id !== item.id))} aria-label={`Selecionar ${expense.nome}`} /></td><td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td><td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td><td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td><td>{payerLabel(item)}</td><td>{paymentDatesLabel(item)}</td><td><StatusBadge value={itemStatus}>{statusLabels[itemStatus]}</StatusBadge></td><td><button className="link" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer" : "Pagar"}</button></td></tr>; })} empty="Nenhuma parcela encontrada." />
     </section>
   );
 }
@@ -486,11 +498,11 @@ export default function FinanceiroModule({ page, onNavigate, show, onDataChanged
   const load = useCallback(async () => {
     setLoading(true);
     const [socios, categorias, cartoes, despesas, parcelas] = await Promise.all([
-      supabase.from("financeiro_socios").select("*").eq("ativo", true).order("created_at"),
-      supabase.from("financeiro_categorias").select("*").order("nome"),
-      supabase.from("financeiro_cartoes").select("*").order("nome"),
-      supabase.from("financeiro_despesas").select("*, financeiro_categorias(nome), financeiro_cartoes(nome)").order("data_compra", { ascending: false }),
-      supabase.from("financeiro_parcelas").select("*, financeiro_despesas(nome, responsavel_socio_id, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento"),
+      loadAllTableRows(supabase.from("financeiro_socios").select("*").eq("ativo", true).order("created_at")),
+      loadAllTableRows(supabase.from("financeiro_categorias").select("*").order("nome")),
+      loadAllTableRows(supabase.from("financeiro_cartoes").select("*").order("nome")),
+      loadAllTableRows(supabase.from("financeiro_despesas").select("*, financeiro_categorias(nome), financeiro_cartoes(nome)").order("data_compra", { ascending: false })),
+      loadAllTableRows(supabase.from("financeiro_parcelas").select("*, financeiro_despesas(nome, responsavel_socio_id, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento")),
     ]);
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");

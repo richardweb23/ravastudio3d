@@ -1,3 +1,4 @@
+import StatusBadge from '../StatusBadge.jsx';
 import { useState } from "react";
 import DataTable from "../DataTable.jsx";
 import { filterTasks, taskHistoryStatuses, taskAssigneeLabel } from "../../lib/tasks.js";
@@ -28,7 +29,7 @@ export default function TaskHistory({ tarefas = [], error, onEdit }) {
       <p role="status">{filtered.length} tarefa(s) encontrada(s)</p>
       <DataTable heads={["Tarefa", "Responsável", "Etapa", "Previsão de entrega", "Cadastrada em", "Ações"]} empty="Nenhuma tarefa encontrada para os filtros selecionados." rows={filtered.map(task => <tr key={task.id}>
         <td className="task-history-description"><strong>{task.titulo || task.descricao?.slice(0, 150)}</strong><details><summary>Ver descrição</summary><p>{task.descricao}</p></details></td>
-        <td>{taskAssigneeLabel(task)}</td><td><span className={"task-status-badge " + task.status}><span className={"task-status-dot " + task.status} aria-hidden="true" />{labels[task.status] || task.status}</span></td>
+        <td>{taskAssigneeLabel(task)}</td><td><StatusBadge value={task.status}>{labels[task.status] || task.status}</StatusBadge></td>
         <td>{task.previsao_entrega ? new Date(task.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR") : "—"}</td>
         <td>{task.created_at ? new Date(task.created_at).toLocaleDateString("pt-BR") : "—"}</td>
         <td><button className="link" onClick={() => onEdit(task)}>Editar</button></td>

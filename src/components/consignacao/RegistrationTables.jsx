@@ -1,3 +1,4 @@
+import StatusBadge from '../StatusBadge.jsx';
 import { useEffect, useState } from "react";
 import DataTable from "../DataTable.jsx";
 import { loadLocationSummaries } from "../../services/consignacao.js";
@@ -28,7 +29,7 @@ export default function RegistrationTables({ locais, vendedores, onNavigate, onE
         const summary = result.values[localId] || emptySummary;
         const unavailable = result.loading ? "Carregando…" : result.error ? "Indisponível" : !localId ? "Sem local vinculado" : null;
         return <tr key={item.id}>
-          <td><strong>{item.nome}</strong>{!item.ativo && <small>Inativo</small>}</td>
+          <td><strong>{item.nome}</strong>{!item.ativo && <small><StatusBadge value="inativo">Inativo</StatusBadge></small>}</td>
           <td>{group.type === "vendedor" ? "Vendedor" : ({ principal: "Estoque principal", vendedor: "Com vendedor", estabelecimento: "Estabelecimento", rua: "Venda na rua", outro: "Outro" }[item.tipo] || item.tipo)}</td>
           <td>{item.responsavel || item.telefone || "—"}{item.responsavel && item.telefone && <small>{item.telefone}</small>}</td>
           <td>{unavailable || formatNumber(summary.unidades) + " un."}</td>

@@ -1,3 +1,4 @@
+import StatusBadge from './StatusBadge.jsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
 import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
@@ -204,8 +205,8 @@ export default function VendasComLocal({
                 )}
               </td>
               <td><button type="button" className="link" title="Alterar caixa da venda" aria-label={"Alterar caixa da venda de " + item.materiais?.nome} onClick={() => setAction({ sale: item, mode: "caixa" })}>{item.caixa || "Rivoxel"} ✎</button></td>
-              <td>{item.pedido_id ? <a href="#/pedidos">{{pago:"Pago",parcial:"Parcial",pendente:"Pendente"}[item.pagamento_pedido] || "Pendente"} · ver pedido</a> : <button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}>{item.pago === true ? "Pago" : "Pendente"} ✎</button>}</td>
-              <td>{item.devolvida_em ? <><span className="status">Devolvida</span><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : "Ativa"}</td>
+              <td>{item.pedido_id ? <a href="#/pedidos"><StatusBadge value={item.pagamento_pedido || "pendente"}>{{pago:"Pago",parcial:"Parcial",pendente:"Pendente"}[item.pagamento_pedido] || "Pendente"}</StatusBadge> · ver pedido</a> : <button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}><StatusBadge value={item.pago === true ? "pago" : "pendente"}>{item.pago === true ? "Pago" : "Pendente"}</StatusBadge> ✎</button>}</td>
+              <td>{item.devolvida_em ? <><StatusBadge value="devolvida">Devolvida</StatusBadge><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : <StatusBadge value="ativa">Ativa</StatusBadge>}</td>
               <td><div className="product-table-actions">
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : item.pedido_id ? "Venda vinculada a pedido" : "Editar venda"} aria-label={"Editar venda de " + item.materiais?.nome} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id || item.pedido_id)} onClick={() => setAction({ sale: item, mode: "edicao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg></button>
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda já devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : "Retornar venda ao estoque"} aria-label={"Retornar venda de " + item.materiais?.nome + " ao estoque"} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id)} onClick={() => setAction({ sale: item, mode: "devolucao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12" /></svg></button>

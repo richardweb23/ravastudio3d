@@ -1,3 +1,4 @@
+import StatusBadge from '../StatusBadge.jsx';
 import CashMovementDetails from './CashMovementDetails.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabase.js';
@@ -24,13 +25,16 @@ export default function CashPanel({ view='cash', onNavigate }) {
  const submitting=useRef(false),request=useRef(null);
  const [form,setForm]=useState({data:today(),caixa:'',valor:'',descricao:'',socio_id:'',caixa_legado:'',Rivoxel:'0',Rava:'0',Bonecos:'0'});
  const update=e=>setForm(s=>({...s,[e.target.name]:e.target.value}));
+ const [tableLoading,setTableLoading]=useState(false);
  const sequence=useRef(0);
  const load=useCallback(async()=>{
   const current=++sequence.current;
+  setTableLoading(true);
   const start=month?month+'-01':null;
   const end=month?new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).toLocaleDateString('sv-SE'):null;
   const [s,e]=await Promise.all([supabase.rpc('financeiro_resumo',{p_inicio:start,p_fim:end}),supabase.rpc('financeiro_extrato',{p_caixa:box||null,p_inicio:start,p_fim:end,p_tipo:kind||null,p_offset:offset})]);
   if(current!==sequence.current)return;
+  setTableLoading(false);
   if(s.error||e.error){setError((s.error||e.error).message);return;}
   setSummary(s.data);setRows(e.data||[]);setError('');
  },[month,box,kind,offset]);
@@ -71,8 +75,7 @@ export default function CashPanel({ view='cash', onNavigate }) {
     <div className="finance-overview-partner-list">{summary.socios.map(p=><span key={p.id}>{p.nome}<strong>{money(p.saldo_centavos)}</strong></span>)}</div>
    </section>}   {view!=='overview'&&<section className="panel table-panel"><div className="panel-title"><h2>{view==='partners'?'Histórico de reembolsos':'Caixa e extrato'}</h2><div className="actions">{view!=='partners'&&<button disabled={!summary.abertura} onClick={()=>open('entrada')}>Registrar entrada</button>}{view==='overview'&&onNavigate&&<button onClick={()=>onNavigate('financeiroReembolsos')}>Reembolsar sócios</button>}</div></div>
     <div className="finance-filters"><label>Período<input type="month" value={month} onChange={e=>{setMonth(e.target.value);setOffset(0);}}/></label><button className="link" onClick={()=>{setMonth('');setOffset(0);}}>Todo o histórico</button><label>Caixa<select value={box} onChange={e=>{setBox(e.target.value);setOffset(0);}}><option value="">Todos</option>{SALES_BOXES.map(c=><option key={c}>{c}</option>)}</select></label><label>Tipo<select value={kind} onChange={e=>{setKind(e.target.value);setOffset(0);}}><option value="">Todos</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label></div>
-    <DataTable heads={['Data','Caixa','Tipo','Descrição','Valor','Ações']} rows={rows.map(r=><tr key={r.id}><td>{r.data.split('-').reverse().join('/')}</td><td>{r.caixa}</td><td>{labels[r.tipo]}{r.estornado&&<small>Estornado</small>}</td><td>{r.descricao}{r.reembolso&&<small>{r.reembolso.socio}</small>}</td><td>{money(r.valor_centavos)}</td><td><div className="row-actions"><button onClick={()=>setDetail(r)}>Detalhes / origem</button>{!r.estornado&&!r.estorno_de&&r.tipo!=='abertura'&&<button onClick={()=>r.tipo==='despesa'?onNavigate?.('financeiroContas'):open('estorno',r)}>{r.tipo==='despesa'?'Ver conta':'Estornar'}</button>}{!r.estornado&&['venda','pedido'].includes(r.tipo)&&<button onClick={()=>open('devolucao_cliente',r)}>Devolver ao cliente</button>}</div></td></tr>)} empty="Nenhum movimento neste período."/>
-    <div className="actions"><button disabled={offset===0} onClick={()=>setOffset(Math.max(0,offset-100))}>Anterior</button><span>Página {offset/100+1}</span><button disabled={rows.length<100} onClick={()=>setOffset(offset+100)}>Próxima</button></div>
+    <DataTable pagination={{ page: offset / 10, hasNext: rows.length > 10, loading: tableLoading, onPageChange: page => { setTableLoading(true); setOffset(page * 10); } }} heads={['Data','Caixa','Tipo','Descrição','Valor','Ações']} rows={rows.map(r=><tr key={r.id}><td>{r.data.split('-').reverse().join('/')}</td><td>{r.caixa}</td><td>{labels[r.tipo]}{r.estornado&&<small><StatusBadge value="estornado">Estornado</StatusBadge></small>}</td><td>{r.descricao}{r.reembolso&&<small>{r.reembolso.socio}</small>}</td><td>{money(r.valor_centavos)}</td><td><div className="row-actions"><button onClick={()=>setDetail(r)}>Detalhes / origem</button>{!r.estornado&&!r.estorno_de&&r.tipo!=='abertura'&&<button onClick={()=>r.tipo==='despesa'?onNavigate?.('financeiroContas'):open('estorno',r)}>{r.tipo==='despesa'?'Ver conta':'Estornar'}</button>}{!r.estornado&&['venda','pedido'].includes(r.tipo)&&<button onClick={()=>open('devolucao_cliente',r)}>Devolver ao cliente</button>}</div></td></tr>)} empty="Nenhum movimento neste período."/>
    </section>}
   </>}
   {detail && <CashMovementDetails detail={detail} label={labels[detail.tipo]} onClose={() => setDetail(null)} onNavigate={onNavigate} />}

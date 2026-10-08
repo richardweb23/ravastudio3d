@@ -1,3 +1,4 @@
+import StatusBadge from '../StatusBadge.jsx';
 import CaixaSelect from "../CaixaSelect.jsx";
 import useCaixaPedido from "../../hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "../CaixaPedidoModal.jsx";
@@ -8,6 +9,8 @@ import Header from "../Header.jsx";
 import DataTable from "../DataTable.jsx";
 import Status from "../Status.jsx";
 import PedidoEditor from "./PedidoEditor.jsx";
+
+const statusPriority = { recebido: 0, em_producao: 1, pronto: 2, entregue: 4 };
 
 export default function PedidosComLocal({
   materiais,
@@ -61,6 +64,7 @@ export default function PedidosComLocal({
       (order) => statusFilter === "todos" || order.status === statusFilter,
     )
     .sort((a, b) =>
+      ((statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3)) ||
       (a.previsao_entrega || "9999-12-31").localeCompare(
         b.previsao_entrega || "9999-12-31",
       ),
@@ -246,7 +250,17 @@ export default function PedidosComLocal({
       )}
       <section className="panel table-panel orders-table">
         <div className="panel-title">
-          <h2>Pedidos em aberto</h2>
+          <h2>Pedidos cadastrados</h2>
+          <label>
+            Status do pedido
+            <select className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="todos">Todos</option>
+              <option value="recebido">Recebidos</option>
+              <option value="em_producao">Em produção</option>
+              <option value="pronto">Prontos</option>
+              <option value="entregue">Entregues</option>
+            </select>
+          </label>
         </div>
         <DataTable heads={["Cliente / itens", "Entrega", "Status", "Total", "Pagamento", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
           const info = financial(order);
@@ -277,7 +291,7 @@ export default function PedidosComLocal({
               </td>
               <td className="order-money"><strong>{fmtMoney(order.valor_total)}</strong></td>
               <td className="order-money">
-                <span className={`financial-status ${info.status}`}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</span>
+                <StatusBadge value={info.status}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</StatusBadge>
                 <div className="payment-summary">
                   <div>Pago: <strong>{fmtMoney(info.paid)}</strong></div>
                   <div>Restante: <strong className={info.balance ? "negative" : ""}>{fmtMoney(info.balance)}</strong></div>

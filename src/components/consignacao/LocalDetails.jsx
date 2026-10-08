@@ -1,3 +1,4 @@
+import StatusBadge from '../StatusBadge.jsx';
 import { useRef, useState } from "react";
 import Header from "../Header.jsx";
 import Metric from "../Metric.jsx";
@@ -79,7 +80,7 @@ export default function LocalDetails({ type, id, onNavigate, onSaved, show }) {
       {data.vendas.some(sale => !sale.acordo_registrado) && <p>Vendas sem acordo registrado não geram repasse presumido. Os valores históricos de venda foram preservados.</p>}
       <DataTable heads={["Data", "Produto", "Qtd.", "Venda / un.", "Total vendido", "Repasse / un.", "Total repasse", "Status", "Pagamento"]} empty="Nenhuma venda para os filtros selecionados." rows={sales.map(sale => <tr key={sale.id}>
         <td>{date(sale.data)}</td><td>{name(sale.material_id)}</td><td>{qty(sale.quantidade)}</td><td>{money(sale.preco_unitario_centavos)}</td><td>{money(sale.devolvida_em ? 0 : sale.total_centavos)}</td><td>{money(sale.repasse_unitario_centavos)}</td><td>{money(sale.devolvida_em ? 0 : sale.repasse_total_centavos)}</td>
-        <td><span className={"status consignment-status-" + repasseStatus(sale)}>{repasseLabels[repasseStatus(sale)]}</span></td><td>{date(data.pagamentos.find(payment => payment.id === sale.pagamento_id)?.data_pagamento)}</td>
+        <td><StatusBadge value={repasseStatus(sale)}>{repasseLabels[repasseStatus(sale)]}</StatusBadge></td><td>{date(data.pagamentos.find(payment => payment.id === sale.pagamento_id)?.data_pagamento)}</td>
       </tr>)} />
     </section>
     <section className="panel table-panel">

@@ -1,3 +1,4 @@
+import DataTable from "./DataTable.jsx";
 import { useMemo, useState } from "react";
 import { calculateScale, parseMeasurement } from "../lib/scale.js";
 import Header from "./Header.jsx";
@@ -127,17 +128,7 @@ export default function CalculadoraEscala() {
             Informe o tamanho atual para calcular as sugestões.
           </p>
         ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Tamanho desejado</th>
-                  <th>Escala no Bambu Studio</th>
-                  <th>Alteração</th>
-                </tr>
-              </thead>
-              <tbody>
-                {suggestions.map(({ size, result: suggestion }) => {
+          <DataTable heads={["Tamanho desejado","Escala no Bambu Studio","Alteração"]} rows={suggestions.map(({ size, result: suggestion }) => {
                   const selected = desiredSize === size;
                   return (
                     <tr className={selected ? "selected" : ""} key={size}>
@@ -158,10 +149,7 @@ export default function CalculadoraEscala() {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                })} empty="Nenhum registro encontrado." />
         )}
       </section>
     </div>

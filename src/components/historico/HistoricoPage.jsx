@@ -1,7 +1,7 @@
+import DataTable from "../DataTable.jsx";
 import { saleTotal, saleQuantity } from "../../lib/vendas.js";
 import { useMemo, useState } from "react";
 import Header from "../Header.jsx";
-import Empty from "../Empty.jsx";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const all = "todos";
@@ -126,21 +126,7 @@ export default function HistoricoPage({
       </section>
       <section className="panel table-panel history-table">
         <h2>Itens entregues e vendidos</h2>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Produto</th>
-                <th>Vendedor</th>
-                <th>Local</th>
-                <th>Qtd.</th>
-                <th>Valor unit.</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredSales.map((sale) => (
+        <DataTable heads={["Data","Produto","Vendedor","Local","Qtd.","Valor unit.","Total"]} rows={filteredSales.map((sale) => (
                 <tr key={sale.id}>
                   <td>
                     {sale.data
@@ -181,17 +167,7 @@ export default function HistoricoPage({
                     </strong>
                   </td>
                 </tr>
-              ))}
-              {!filteredSales.length && (
-                <tr>
-                  <td colSpan="7">
-                    <Empty text="Nenhuma venda encontrada para os filtros selecionados." />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))} empty="Nenhum registro encontrado." />
       </section>
     </>
   );

@@ -1,3 +1,4 @@
+import { loadAllTableRows } from "./services/tableRows.js";
 import useCaixaPedido from "./hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "./components/CaixaPedidoModal.jsx";
 import { loadSales } from "./services/vendas.js";
@@ -137,15 +138,15 @@ export default function AdminApp() {
     if (!supabase || !session?.user?.id) return;
     if (!silent) setLoading(true);
     const results = await Promise.all([
-      supabase.from("materiais").select("*").order("nome"),
-      supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false }).limit(50),
+      loadAllTableRows(supabase.from("materiais").select("*").order("nome")),
+      loadAllTableRows(supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false })),
       loadSales(),
-      supabase.from("pedidos").select("*").order("data_pedido", { ascending: false }),
-      supabase.from("pedido_itens").select("*, materiais(nome)"),
-      supabase.from("pedido_pagamentos").select("*").is("estornado_em", null).order("data", { ascending: false }),
-      supabase.from("locais_estoque").select("*").order("nome"),
-      supabase.from("vendedores").select("*").order("nome"),
-      supabase.from("estoque_por_local").select("*, locais_estoque(nome, tipo)"),
+      loadAllTableRows(supabase.from("pedidos").select("*").order("data_pedido", { ascending: false })),
+      loadAllTableRows(supabase.from("pedido_itens").select("*, materiais(nome)")),
+      loadAllTableRows(supabase.from("pedido_pagamentos").select("*").is("estornado_em", null).order("data", { ascending: false })),
+      loadAllTableRows(supabase.from("locais_estoque").select("*").order("nome")),
+      loadAllTableRows(supabase.from("vendedores").select("*").order("nome")),
+      loadAllTableRows(supabase.from("estoque_por_local").select("*, locais_estoque(nome, tipo)"), ["material_id", "local_id"]),
     ]);
     const firstError = results.find((result) => result.error)?.error;
     if (firstError) show(firstError.message, "error");

@@ -1,3 +1,5 @@
+import StatusBadge from './StatusBadge.jsx';
+import DataTable from "./DataTable.jsx";
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import { calculatePricing, calculateTier, money } from "../lib/pricing.js";
@@ -845,23 +847,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                 + Faixa
               </button>
             </div>
-            <div className="calculator-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Quantidade</th>
-                    <th>Desconto</th>
-                    <th>Preço unitário</th>
-                    <th>Total</th>
-                    <th>Custo total</th>
-                    <th>Lucro por peça</th>
-                    <th>Lucro total</th>
-                    <th>Margem</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tiers.map((tier, index) => {
+            <DataTable heads={["Quantidade","Desconto","Preço unitário","Total","Custo total","Lucro por peça","Lucro total","Margem","Status"]} rows={tiers.map((tier, index) => {
                     const tierResult = calculatePricing({
                       ...form,
                       quantity: tier.quantity,
@@ -883,18 +869,11 @@ export default function CalculadoraCustos({ materiais, show }) {
                         <td>{money(calculated.profitTotal)}</td>
                         <td>{calculated.margin.toFixed(1)}%</td>
                         <td>
-                          <span
-                            className={`calculator-margin-status ${calculated.status.tone}`}
-                          >
-                            {calculated.status.label}
-                          </span>
+                          <StatusBadge value={calculated.status.tone}>{calculated.status.label}</StatusBadge>
                         </td>
                       </tr>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  })} empty="Nenhum registro encontrado." />
           </section>
 
           <section className="calculator-section">
