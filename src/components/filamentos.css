@@ -68,3 +68,7 @@
 }
 
 .filament-history-table td small { display: block; margin-top: 8px; }
+.filament-actions .registration-icon-button { width: 40px; height: 40px; padding: 9px; display: inline-flex; align-items: center; justify-content: center; }
+.filament-actions svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.filament-replenishment-preview { display: grid; align-content: center; gap: 8px; font-size: 13px; color: #726858; }
+.filament-replenishment-preview strong { font-size: 22px; color: #29261f; }
