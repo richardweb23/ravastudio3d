@@ -2396,3 +2396,34 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .status[class*="finance-"] { display: inline-flex; align-items: center; max-width: 100%; line-height: 1.4; vertical-align: middle; }
 .status.finance-parcial { background: #e7eefb; color: #345a91; }
 .status.finance-neutro { background: #ece9e4; color: #625e57; }
+
+/* Orders: compact overview and item details. */
+.order-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 14px; padding: 0 20px 20px; }
+.order-filters label { display: grid; gap: 7px; min-width: 160px; font-size: 12px; font-weight: 600; color: #586276; }
+.order-filters .order-search { flex: 1; min-width: 210px; }
+.order-filters input { width: 100%; min-height: 36px; border: 1px solid #dce1ec; border-radius: 7px; padding: 8px 10px; background: white; }
+.order-filters select { min-height: 36px; }
+.order-result-count { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 500; color: #657084; }
+.orders-table > .data-table table { min-width: 1000px; }
+.orders-table > .data-table td { vertical-align: middle; }
+.orders-table > .data-table th:nth-child(4), .orders-table > .data-table th:nth-child(6), .orders-table > .data-table th:nth-child(7), .orders-table .order-money { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.orders-table .order-description { min-width: 160px; max-width: 260px; overflow-wrap: anywhere; }
+.orders-table .order-table-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.orders-table .order-date { white-space: nowrap; }
+.order-details-dialog { margin: auto; width: min(800px, calc(100vw - 32px)); border: 0; padding: 24px; }
+.order-details-dialog::backdrop { background: #18213a80; }
+.order-details-dialog .modal-heading p { margin: 0; overflow-wrap: anywhere; color: #657084; }
+.order-details-meta { display: flex; flex-wrap: wrap; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee7de; }
+.order-details-meta > div { display: grid; align-content: start; justify-items: start; gap: 8px; }
+.order-details-meta span, .order-details-totals dt { color: #657084; font-size: 12px; }
+.order-details-items { min-width: 550px; width: 100%; }
+.order-details-items small { display: block; margin-top: 5px; color: #657084; overflow-wrap: anywhere; }
+.order-details-items th:not(:first-child), .order-details-items td:not(:first-child) { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.order-details-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 16px; padding: 20px 0; }
+.order-details-totals dd { margin: 8px 0 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.order-details-note p { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .order-filters { padding: 0 14px 16px; }
+  .order-filters label, .order-filters .order-search { min-width: 0; flex: 1 1 100%; }
+  .order-details-dialog { padding: 18px; }
+}

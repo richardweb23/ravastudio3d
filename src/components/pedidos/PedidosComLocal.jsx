@@ -4,11 +4,12 @@ import useCaixaPedido from "../../hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "../CaixaPedidoModal.jsx";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../supabase.js";
-import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../../lib/formatters.js";
+import { formatMoney as fmtMoney, today } from "../../lib/formatters.js";
 import Header from "../Header.jsx";
 import DataTable from "../DataTable.jsx";
 import Status from "../Status.jsx";
 import PedidoEditor from "./PedidoEditor.jsx";
+import PedidoDetalhes from "./PedidoDetalhes.jsx";
 
 const statusPriority = { recebido: 0, em_producao: 1, pronto: 2, entregue: 4 };
 
@@ -28,6 +29,10 @@ export default function PedidosComLocal({
   const [paying,setPaying]=useState(false);
   const [paymentOrder, setPaymentOrder] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [paymentFilter, setPaymentFilter] = useState("todos");
+  const [search, setSearch] = useState("");
+  const [detailId, setDetailId] = useState(null);
+  const detailOrder = pedidos.find(order => order.id === detailId);
   const [payment, setPayment] = useState({
     caixa: "",
     valor: "",
@@ -61,7 +66,9 @@ export default function PedidosComLocal({
   };
   const visible = pedidos
     .filter(
-      (order) => statusFilter === "todos" || order.status === statusFilter,
+      (order) => (statusFilter === "todos" || order.status === statusFilter) &&
+        (paymentFilter === "todos" || financial(order).status === paymentFilter) &&
+        order.cliente.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")),
     )
     .sort((a, b) =>
       ((statusPriority[a.status] ?? 3) - (statusPriority[b.status] ?? 3)) ||
@@ -173,6 +180,7 @@ export default function PedidosComLocal({
           show={show}
         />
       )}
+      {detailOrder && <PedidoDetalhes order={detailOrder} items={itens.filter(item => item.pedido_id === detailId)} financial={financial(detailOrder)} onClose={() => setDetailId(null)} />}
       {paymentOrder && (
         <div className="modal-backdrop" role="presentation">
           <form className="panel form modal-card" onSubmit={savePayment}>
@@ -250,7 +258,10 @@ export default function PedidosComLocal({
       )}
       <section className="panel table-panel orders-table">
         <div className="panel-title">
-          <h2>Pedidos cadastrados</h2>
+          <h2>Pedidos cadastrados <small className="order-result-count">{visible.length} de {pedidos.length}</small></h2>
+        </div>
+        <div className="order-filters">
+          <label className="order-search">Buscar cliente<input type="search" placeholder="Nome do cliente" value={search} onChange={event => setSearch(event.target.value)} /></label>
           <label>
             Status do pedido
             <select className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
@@ -261,19 +272,19 @@ export default function PedidosComLocal({
               <option value="entregue">Entregues</option>
             </select>
           </label>
+          <label>Status pagamento
+            <select className="filter-select" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}>
+              <option value="todos">Todos</option><option value="pendente">Pendente</option><option value="parcial">Parcial</option><option value="pago">Quitado</option>
+            </select>
+          </label>
+          <button type="button" disabled={statusFilter === "todos" && paymentFilter === "todos" && !search} onClick={() => { setStatusFilter("todos"); setPaymentFilter("todos"); setSearch(""); }}>Limpar filtros</button>
         </div>
-        <DataTable heads={["Cliente / itens", "Entrega", "Status", "Total", "Pagamento", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
+        <DataTable heads={["Cliente", "Entrega", "Status do pedido", "Total", "Status pagamento", "Pago", "Restante", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
           const info = financial(order);
           return (
             <tr key={order.id}>
               <td className="order-description">
                 <strong>{order.cliente}</strong>
-                {itens.filter((item) => item.pedido_id === order.id).map((item) => (
-                  <small key={item.id}>
-                    {item.materiais?.nome}{item.subtitulo ? ` — ${item.subtitulo}` : ""}: {fmtNumber(item.quantidade)}
-                  </small>
-                ))}
-                {order.observacao && <p className="order-note">{order.observacao}</p>}
               </td>
               <td className="order-date">
                 {order.previsao_entrega ? new Date(order.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR") : "Não informada"}
@@ -292,13 +303,15 @@ export default function PedidosComLocal({
               <td className="order-money"><strong>{fmtMoney(order.valor_total)}</strong></td>
               <td className="order-money">
                 <StatusBadge value={info.status}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</StatusBadge>
-                <div className="payment-summary">
-                  <div>Pago: <strong>{fmtMoney(info.paid)}</strong></div>
-                  <div>Restante: <strong className={info.balance ? "negative" : ""}>{fmtMoney(info.balance)}</strong></div>
-                </div>
+
               </td>
+              <td className="order-money">{fmtMoney(info.paid)}</td>
+              <td className="order-money"><strong className={info.balance ? "negative" : ""}>{fmtMoney(info.balance)}</strong></td>
               <td>
                 <div className="row-actions order-table-actions">
+                  <button type="button" className="registration-icon-button" title="Ver detalhes" aria-label={`Ver detalhes do pedido de ${order.cliente}`} onClick={() => setDetailId(order.id)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  </button>
                   {order.status !== "entregue" && <>
                     <button type="button" className="registration-icon-button" title="Editar pedido" aria-label={`Editar pedido de ${order.cliente}`} onClick={() => setEditor(order)}>
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg>
@@ -310,7 +323,6 @@ export default function PedidosComLocal({
                   {info.balance > 0 && <button type="button" className="registration-icon-button" title="Registrar pagamento" aria-label={`Registrar pagamento do pedido de ${order.cliente}`} onClick={() => { setPayment(p=>({...p,requestId:crypto.randomUUID()})); setPaymentOrder(order); }}>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="3" /><path d="M2 9h20M6 15h4M17 12v6M14 15h6" /></svg>
                   </button>}
-                  {order.status === "entregue" && info.balance === 0 && <span aria-label="Nenhuma ação disponível">—</span>}
                 </div>
               </td>
             </tr>

@@ -5,6 +5,18 @@ import { fileURLToPath } from "node:url";
 
 const projectDir = fileURLToPath(new URL(".", import.meta.url));
 
+// Match the directory redirect used by the existing static hosting.
+function linksDirectoryRoute() {
+  const configure = server => { server.middlewares.use((req, res, next) => {
+    const url = new URL(req.url, "http://localhost");
+    if (url.pathname !== "/links") return next();
+    res.writeHead(302, { Location: `/links/${url.search}` });
+    res.end();
+  });
+  };
+  return { name: "links-directory-route", configureServer: configure, configurePreviewServer: configure };
+}
+
 export default defineConfig(({ mode }) => {
   const local = mode === "localtest";
   const envDir = local ? resolve(projectDir, "development") : resolve(projectDir);
@@ -21,13 +33,14 @@ export default defineConfig(({ mode }) => {
   }
   return {
   envDir,
-  plugins: [react()],
+  plugins: [react(), linksDirectoryRoute()],
   base: "./",
   build: {
     rollupOptions: {
       input: {
         site: resolve(projectDir, "index.html"),
         gestao: resolve(projectDir, "gestao/index.html"),
+        links: resolve(projectDir, "links/index.html"),
       },
     },
   },
