@@ -230,7 +230,7 @@ export default function AdminApp() {
   if (!profile) return <div className="app-loading">Validando acesso…</div>;
 
   async function changeOrderStatus(order, status) {
-    const caixa = status === "entregue" ? await requestCaixa() : null;
+    const caixa = status === "entregue" ? (order.caixa || await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return;
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
