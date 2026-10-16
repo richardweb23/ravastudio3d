@@ -4,9 +4,18 @@ import DataTable from "./DataTable.jsx";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../lib/formatters.js";
 import Header from "./Header.jsx";
 import ProdutoForm from "./ProdutoForm.jsx";
+import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 
 export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSaved, show }) {
   const [editing, setEditing] = useState(null);
+  const [productSearch, setProductSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const normalize = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  const query = normalize(productSearch.trim());
+  const visibleProducts = materiais.filter(item =>
+    normalize(item.nome).includes(query) &&
+    (!categoryFilter || (item.categoria || "Rivoxel") === categoryFilter)
+  );
   async function remover(produto) {
     if (
       !window.confirm(
@@ -35,9 +44,21 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
       <ProdutoForm locais={locais} onSaved={onSaved} show={show} />
       <section className="panel table-panel stock-products-table">
         <h2>Produtos cadastrados</h2>
+        <div className="sales-filters product-list-filters">
+          <label>Nome do produto
+            <input type="search" placeholder="Buscar produto pelo nome" value={productSearch} onChange={event => setProductSearch(event.target.value)} />
+          </label>
+          <label>Filtrar por categoria
+            <select value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
+              <option value="">Todas as categorias</option>
+              {PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </label>
+          <button type="button" disabled={!productSearch && !categoryFilter} onClick={() => { setProductSearch(""); setCategoryFilter(""); }}>Limpar filtros</button>
+        </div>
         <DataTable
           heads={["Produto", "Categoria", "Custo", "Saldo total", "Ações"]}
-          rows={materiais.map((item) => (
+          rows={visibleProducts.map((item) => (
             <tr key={item.id}>
               <td>
                 <strong>{item.nome}</strong>
@@ -57,7 +78,7 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
               </td>
             </tr>
           ))}
-          empty="Nenhum produto cadastrado."
+          empty={materiais.length ? "Nenhum produto encontrado para os filtros selecionados." : "Nenhum produto cadastrado."}
         />
       </section>
       {editing && (

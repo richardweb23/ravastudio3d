@@ -2,7 +2,7 @@ import StatusBadge from './StatusBadge.jsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
 import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
-import { saleTotal } from "../lib/vendas.js";
+import { saleTotal, saleCostCents, salesCostTotal } from "../lib/vendas.js";
 import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../lib/formatters.js";
@@ -187,8 +187,10 @@ export default function VendasComLocal({
         </div>
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
         <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
+        <p>Total dos custos dos itens filtrados: <strong>{fmtMoney(salesCostTotal(filteredSales))}</strong></p>
+        <p className="sales-cost-note">Custos calculados pelo custo de produção atual do cadastro do produto. Vendas devolvidas não entram no total de custos.</p>
         <DataTable
-          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
+          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Custo unitário", "Custo total", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
           rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
@@ -199,6 +201,8 @@ export default function VendasComLocal({
               <td>{item.locais_estoque?.nome || "—"}</td>
               <td>{item.vendedores?.nome || "—"}</td>
               <td>{fmtNumber(item.quantidade)}</td>
+              <td>{fmtMoney(item.materiais?.custo_medio || 0)}</td>
+              <td>{fmtMoney(saleCostCents(item) / 100)}</td>
               <td>
                 {fmtMoney(
                   saleTotal(item),

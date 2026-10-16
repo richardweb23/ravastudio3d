@@ -2427,3 +2427,18 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
   .order-filters label, .order-filters .order-search { min-width: 0; flex: 1 1 100%; }
   .order-details-dialog { padding: 18px; }
 }
+
+.product-cost-fields { min-width: 0; margin: 24px 0 20px; padding: 20px; border: 1px solid #dce1ec; border-radius: 12px; }
+.product-cost-fields legend { padding: 0 6px; font-size: 14px; font-weight: 600; }
+.product-cost-fields > small { display: block; margin-top: 8px; color: #657084; line-height: 1.5; }
+
+.product-cost-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.product-cost-grid > label, .product-cost-result { min-width: 0; display: grid; gap: 8px; }
+.product-cost-result > span { font-size: 13px; font-weight: 600; }
+.product-cost-result output { display: flex; align-items: center; min-height: 44px; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.product-cost-result .product-cost-edit { justify-self: start; padding: 0; border: 0; background: transparent; text-decoration: underline; font-size: 12px; }
+@media (max-width: 600px) { .product-cost-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }.product-cost-result { grid-column: 1 / -1; } }
+
+.stock-products-table .product-list-filters { padding: 0 20px; }
+
+.sales-cost-note { color: #657084; font-size: 12px; line-height: 1.5; }

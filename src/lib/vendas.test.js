@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { saleTotal, saleQuantity, salesByBox } from "./vendas.js";
+import { saleTotal, saleQuantity, salesByBox, saleCostCents, salesCostTotal } from "./vendas.js";
 import { summarizeConsignment, summarizeLocations, repasseStatus } from "./consignacao.js";
 
 test("devolução zera receita e unidades líquidas sem apagar valores originais", () => {
@@ -43,4 +43,17 @@ test('caixa só contabiliza pagamento confirmado, sem alterar o total vendido', 
  assert.equal(salesByBox([{...sale,pago:undefined}],'2026-09').Bonecos,0);
  assert.equal(salesByBox([{...sale,pago:true}],'2026-09').Bonecos,110);
  assert.equal(salesByBox([{...sale,pago:true,devolvida_em:'2026-09-23'}],'2026-09').Bonecos,0);
+});
+
+test('custos usam quantidade, custo atual e apenas as vendas filtradas, sem devoluções', () => {
+ const sale = { quantidade: 3, materiais: { custo_medio: '13.50' } };
+ assert.equal(saleCostCents(sale), 4050);
+ assert.equal(saleCostCents({quantidade:3,materiais:{custo_medio:'0.3333'}}),100);
+ assert.equal(saleCostCents({...sale,devolvida_em:'2026-10-16'}),0);
+ assert.equal(salesCostTotal([]),0);
+ const filtered = Array.from({length:12}, () => sale);
+ assert.equal(salesCostTotal(filtered),486);
+ assert.equal(salesCostTotal([...filtered,{...sale,devolvida_em:'2026-10-16'}]),486);
+ assert.equal(salesCostTotal(filtered.slice(0,2)),81);
+ assert.equal(saleCostCents({...sale,materiais:{custo_medio:0}}),0);
 });

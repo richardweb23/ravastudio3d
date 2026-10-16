@@ -16,3 +16,14 @@ export function salesByBox(sales, month) {
   }
   return totals;
 }
+
+// Cost uses the current product registration; returned units are back in stock.
+export function saleCostCents(sale) {
+  if (sale.devolvida_em) return 0;
+  const cost = Number(sale.materiais?.custo_medio || 0);
+  const quantity = Number(sale.quantidade || 0);
+  return Math.round((cost * quantity + Number.EPSILON) * 100);
+}
+export function salesCostTotal(sales) {
+  return sales.reduce((total, sale) => total + saleCostCents(sale), 0) / 100;
+}
