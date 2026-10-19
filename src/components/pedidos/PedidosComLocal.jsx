@@ -29,7 +29,7 @@ export default function PedidosComLocal({
   const [paying,setPaying]=useState(false);
   const [paymentOrder, setPaymentOrder] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [paymentFilter, setPaymentFilter] = useState("todos");
+  const [paymentFilter, setPaymentFilter] = useState("pendente");
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState(null);
   const detailOrder = pedidos.find(order => order.id === detailId);

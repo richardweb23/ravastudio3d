@@ -26,11 +26,13 @@ export default function VendasComLocal({
   const [filters, setFilters] = useState({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" });
   const updateFilter = (event) => setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
   const invalidPeriod = filters.inicio && filters.fim && filters.inicio > filters.fim;
+  const normalizeProductName = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  const productQuery = normalizeProductName(filters.produto.trim());
   const filteredSales = invalidPeriod ? [] : vendas.filter(sale =>
     matchesProductCategory(sale, filters.categoria) &&
     (!filters.inicio || sale.data >= filters.inicio) &&
     (!filters.fim || sale.data <= filters.fim) &&
-    (!filters.produto || sale.material_id === filters.produto) &&
+    (!productQuery || normalizeProductName(sale.materiais?.nome).includes(productQuery)) &&
     (!filters.local || sale.local_estoque_id === filters.local) &&
     (!filters.vendedor || (filters.vendedor === "sem-vendedor" ? !sale.vendedor_id : sale.vendedor_id === filters.vendedor))
   );
@@ -177,10 +179,10 @@ export default function VendasComLocal({
       <section className="panel table-panel">
         <h2>Vendas</h2>
         <div className="sales-filters">
+          <label>Produto<input type="search" name="produto" placeholder="Buscar pelo nome do produto" value={filters.produto} onChange={updateFilter} /></label>
           <label>Categoria do produto<select name="categoria" value={filters.categoria} onChange={updateFilter}><option value="">Todas as categorias</option>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
           <label>De<input type="date" name="inicio" value={filters.inicio} onChange={updateFilter} /></label>
           <label>Até<input type="date" name="fim" value={filters.fim} onChange={updateFilter} /></label>
-          <label>Produto<select name="produto" value={filters.produto} onChange={updateFilter}><option value="">Todos os produtos</option>{materiais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Local<select name="local" value={filters.local} onChange={updateFilter}><option value="">Todos os locais</option>{locais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Vendedor<select name="vendedor" value={filters.vendedor} onChange={updateFilter}><option value="">Todos os vendedores</option><option value="sem-vendedor">Não informado</option>{vendedores.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
