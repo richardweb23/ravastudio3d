@@ -9,8 +9,8 @@ const projectDir = fileURLToPath(new URL(".", import.meta.url));
 function linksDirectoryRoute() {
   const configure = server => { server.middlewares.use((req, res, next) => {
     const url = new URL(req.url, "http://localhost");
-    if (url.pathname !== "/links") return next();
-    res.writeHead(302, { Location: `/links/${url.search}` });
+    if (!["/links", "/catalogo"].includes(url.pathname)) return next();
+    res.writeHead(302, { Location: `${url.pathname}/${url.search}` });
     res.end();
   });
   };
@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => {
         site: resolve(projectDir, "index.html"),
         gestao: resolve(projectDir, "gestao/index.html"),
         links: resolve(projectDir, "links/index.html"),
+        catalogo: resolve(projectDir, "catalogo/index.html"),
       },
     },
   },

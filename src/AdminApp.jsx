@@ -10,6 +10,7 @@ import { orderStatusLabel } from "./lib/formatters.js";
 import { getAdminPage, getAdminPageHref } from "./lib/adminNavigation.js";
 import { LoginScreen, PasswordScreen, SetupScreen } from "./components/auth/AuthScreens.jsx";
 import Dashboard from "./components/dashboard/Dashboard.jsx";
+import CatalogAdmin from "./components/catalogo/CatalogAdmin.jsx";
 import EstoqueComLocais from "./components/EstoqueComLocais.jsx";
 import EstoquePorLocal from "./components/EstoquePorLocal.jsx";
 import ComprasComLocal from "./components/ComprasComLocal.jsx";
@@ -54,6 +55,7 @@ const productNavigation = [
 ];
 
 const stockNavigation = [
+  ["catalogo", "Catálogo do site"],
   ["estoque", "Criar novo produto"],
   ["compras", "Entrada de produto"],
   ["cadastros", "Locais e vendedores"],
@@ -261,6 +263,7 @@ export default function AdminApp() {
       const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) show(error.message, "error"); else refresh();
     }} onStatusChange={changeOrderStatus} />,
+    catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,

@@ -36,7 +36,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
     let calculated;
     try { calculated = filamentProductionCost(form.filamento_gramas, form.filamento_valor_kg); }
     catch (error) { return show(error.message, "error"); }
-    const { error } = await supabase.rpc("salvar_material", {
+    const { data: savedId, error } = await supabase.rpc("salvar_material", {
       p_material_id: editing || null,
       p_nome: form.nome,
       p_categoria: form.categoria,
@@ -49,12 +49,13 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
     if (error) return show(error.message, "error");
     show(editing ? "Produto atualizado." : "Produto cadastrado no local selecionado.");
     setForm({ nome: "", categoria: "Rivoxel", custo_medio: "", filamento_gramas: 0, filamento_valor_kg: 100, quantidade: "", local_id: "" });
-    onSaved();
+    onSaved(savedId);
   }
   return (
         <form className="panel form" onSubmit={addMaterial}>
           <h2>{editing ? "Editar produto" : "Novo produto"}</h2>
           <div className="form-grid">
+          {editing && produto.codigo != null && <p style={{ gridColumn: "1 / -1" }}>Código do produto: <strong>{String(produto.codigo).padStart(3, "0")}</strong></p>}
           <label>
             Nome do produto
             <input

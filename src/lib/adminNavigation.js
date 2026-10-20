@@ -3,6 +3,7 @@ import { localDetailsPage, parseLocalDetailsPage } from "./consignacao.js";
 export const adminPageRoutes = Object.freeze({
   dashboard: "",
   estoque: "produtos",
+  catalogo: "catalogo",
   estoquePorLocal: "estoque",
   compras: "compras",
   vendas: "vendas",

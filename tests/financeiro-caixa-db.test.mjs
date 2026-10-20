@@ -1,4 +1,5 @@
-﻿import { PGlite } from '@electric-sql/pglite';
+import { storageTestSchema } from './storage-test-schema.mjs';
+import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -14,7 +15,7 @@ test('caixa e reembolsos: migração, saldos, integridade e recebimentos',async 
  const one=async(sql,args=[])=>(await db.query(sql,args)).rows[0];
  let historical,richard,xandy;
  for(const file of readdirSync('supabase/migrations').filter(x=>x.endsWith('.sql')).sort()){
-  await db.exec(readFileSync('supabase/migrations/'+file,'utf8').replace('create extension if not exists pgcrypto;',''));
+  await db.exec((file === '202610200001_catalogo.sql' ? storageTestSchema : '') + readFileSync('supabase/migrations/'+file,'utf8').replace('create extension if not exists pgcrypto;',''));
   if(file==='202609050001_initial_schema.sql'){
    await db.query('insert into auth.users(id,email) values($1,$2)',[user,'cash-test@example.invalid']);
    await db.query("select set_config('request.jwt.claim.sub',$1,false)",[user]);

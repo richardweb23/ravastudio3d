@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap");
+/* All page styles are scoped so importing the shared modal in Gestão does not reset it. */
+.catalog-site { color:#171714;background:#f4efe8;min-height:100vh;font-family:"Instrument Sans",sans-serif; }
+body:has(.catalog-site) { margin:0; }
+.catalog-site *, .catalog-dialog * { box-sizing:border-box; }
+.catalog-site button,.catalog-site input,.catalog-site select { font:inherit; }
+.catalog-site a { color:inherit; }
+.catalog-site button,.catalog-site a { -webkit-tap-highlight-color:transparent; }
+.catalog-site button { cursor:pointer; }
+.catalog-site :focus-visible,.catalog-dialog :focus-visible { outline:3px solid #956b41;outline-offset:4px; }
+.catalog-site-header { max-width:1280px;margin:auto;padding:24px 6%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d8d0c6;gap:24px; }
+.catalog-site-header img { width:112px;height:58px;object-fit:contain; }
+.catalog-site-header>a:last-child { font-size:14px;text-underline-offset:6px; }
+.catalog-hero { max-width:1000px;margin:auto;text-align:center;padding:80px 24px 64px; }
+.catalog-eyebrow { font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#75604c;font-weight:600; }
+.catalog-hero h1 { font-family:"Instrument Serif",serif;font-size:clamp(46px,7vw,88px);font-weight:400;line-height:1.05;margin:20px 0 24px;letter-spacing:-.035em; }
+.catalog-hero h1 em { color:#94704e;font-weight:400; }
+.catalog-hero>p:last-child { line-height:1.8;color:#5e5b55; }
+.catalog-products { max-width:1280px;margin:auto;padding:0 6% 72px;scroll-margin-top:24px; }
+.catalog-filters { display:grid;grid-template-columns:2fr 1fr 1fr;gap:18px;padding:24px 0;border-top:1px solid #d8d0c6;border-bottom:1px solid #d8d0c6; }
+.catalog-filters label { font-size:12px;display:grid;gap:8px;font-weight:600; }
+.catalog-filters input,.catalog-filters select { border:1px solid #cfc6b9;border-radius:9px;padding:12px;background:transparent;color:#171714;width:100%;min-width:0;min-height:46px; }
+.catalog-count { color:#686259;font-size:12px;margin:24px 0; }
+.catalog-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px; }
+.catalog-card { background:#fbf8f3;border:1px solid #ded6cb;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s; }
+.catalog-card:hover { transform:translateY(-4px);box-shadow:0 12px 30px #3429190d; }
+.catalog-card-open { display:block;width:100%;border:0;background:transparent;padding:0;text-align:left;color:inherit;flex:1; }
+.catalog-card-photo { aspect-ratio:1;background:#e8e0d5;position:relative;display:grid;place-items:center;color:#74695c;font-size:13px; }
+.catalog-card-photo img { width:100%;height:100%;object-fit:cover; }
+.catalog-featured { position:absolute;top:14px;left:14px;background:#f4efe8;padding:7px 10px;border-radius:20px;font-size:10px;letter-spacing:.04em; }
+.catalog-card-copy { padding:22px; }
+.catalog-card-copy h2 { font-size:19px;margin:12px 0;line-height:1.3;overflow-wrap:anywhere; }
+.catalog-card-copy>p:not(.catalog-eyebrow) { color:#686259;font-size:13px;line-height:1.6; }
+.catalog-price { display:flex;gap:10px;align-items:baseline;flex-wrap:wrap; }
+.catalog-price strong { font-size:21px;font-weight:600; }
+.catalog-price del { font-size:13px;color:#736c62; }
+.catalog-view { display:block;font-size:12px;margin-top:22px;color:#75604c; }
+.catalog-card-contact { margin:0 22px 22px;text-align:center;text-decoration:none;border-top:1px solid #ded6cb;padding-top:18px;font-size:12px;font-weight:600; }
+.catalog-more { display:block;margin:36px auto 0;padding:14px 26px;border:1px solid #171714;border-radius:30px;background:transparent; }
+.catalog-empty { text-align:center;padding:64px 16px; }
+.catalog-empty h2 { font-family:"Instrument Serif",serif;font-size:36px;font-weight:400; }
+.catalog-message { background:#fff8ed;padding:20px;margin-top:20px;border:1px solid #cab18e;border-radius:12px; }
+.catalog-message button { margin:8px;padding:8px; }
+.catalog-footer { border-top:1px solid #d8d0c6;max-width:1280px;margin:auto;padding:32px 6%;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:11px;color:#686259; }
+.catalog-skip { position:fixed;top:-100px;left:10px;padding:16px;background:white;z-index:10; }
+.catalog-skip:focus { top:10px; }
+.catalog-dialog { border:1px solid #d8d0c6;border-radius:18px;width:min(960px,calc(100% - 24px));max-height:90dvh;padding:0;background:#fbf8f3;color:#171714;font-family:"Instrument Sans",sans-serif;box-shadow:0 30px 90px #0003; }
+.catalog-dialog::backdrop { background:#171714a8;backdrop-filter:blur(4px); }
+.catalog-dialog-content { padding:26px; }
+.catalog-dialog-header { display:flex;justify-content:space-between;align-items:start;gap:20px;margin-bottom:24px; }
+.catalog-dialog-header h2 { font-size:24px;line-height:1.25;margin:0;overflow-wrap:anywhere; }
+.catalog-dialog-header button { flex-shrink:0;border:1px solid #d8d0c6;border-radius:50%;width:40px;height:40px;font-size:25px;cursor:pointer;background:transparent;color:inherit; }
+.catalog-detail-grid { display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px; }
+.catalog-detail-grid>div { min-width:0; }
+.catalog-detail-image,.catalog-no-image { width:100%;aspect-ratio:1;object-fit:contain;background:#e8e0d5;border-radius:12px; }
+.catalog-no-image { display:grid;place-items:center; }
+.catalog-thumbnails { display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding:4px; }
+.catalog-thumbnails button { width:64px;min-width:64px;height:64px;border:1px solid #d8d0c6;padding:2px;background:transparent;border-radius:6px;cursor:pointer; }
+.catalog-thumbnails button[aria-pressed=true] { border:2px solid #94704e; }
+.catalog-thumbnails img { width:100%;height:100%;object-fit:cover; }
+.catalog-description { white-space:pre-wrap;line-height:1.7;font-size:14px;overflow-wrap:anywhere; }
+.catalog-detail-info dl { font-size:13px;margin:24px 0; }
+.catalog-detail-info dl>div { border-bottom:1px solid #ded6cb;padding:10px 0; }
+.catalog-detail-info dt { font-weight:600;margin-bottom:5px; }
+.catalog-detail-info dd { margin:0;color:#686259;overflow-wrap:anywhere; }
+.catalog-cta { display:block;text-align:center;padding:15px 20px;border-radius:10px;background:#171714;color:#fff!important;text-decoration:none;font-size:14px; }
+@media(max-width:800px) { .catalog-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:16px; }.catalog-detail-grid{grid-template-columns:1fr}.catalog-detail-image{max-height:42dvh}.catalog-filters{grid-template-columns:1fr 1fr}.catalog-filters label:first-child{grid-column:1/-1} }
+@media(max-width:480px) { .catalog-hero{padding:48px 22px}.catalog-grid{grid-template-columns:1fr}.catalog-products{padding-inline:20px}.catalog-dialog-content{padding:18px}.catalog-site-header{padding:18px 20px}.catalog-footer{flex-direction:column} }
+@media(prefers-reduced-motion:reduce) { .catalog-card{transition:none}.catalog-card:hover{transform:none} }

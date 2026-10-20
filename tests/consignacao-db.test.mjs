@@ -1,3 +1,4 @@
+import { storageTestSchema } from './storage-test-schema.mjs';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
@@ -16,7 +17,7 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
   const migrations = readdirSync('supabase/migrations').filter(file => file.endsWith('.sql')).sort();
   let legacyProduct, legacySale;
   for (const file of migrations) {
-    let sql = readFileSync('supabase/migrations/' + file, 'utf8');
+    let sql = (file === '202610200001_catalogo.sql' ? storageTestSchema : '') + readFileSync('supabase/migrations/' + file, 'utf8');
     // gen_random_uuid é nativo neste PostgreSQL; a extensão não é necessária no teste.
     sql = sql.replace('create extension if not exists pgcrypto;', '');
     await db.exec(sql);

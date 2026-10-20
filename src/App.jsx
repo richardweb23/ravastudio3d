@@ -115,6 +115,7 @@ function Header() {
       </button>
 
       <nav className={menuOpen ? "nav is-open" : "nav"} aria-label="Navegação principal">
+        <a href="/catalogo/" onClick={closeMenu}>Catálogo</a>
         <a href="#colecoes" onClick={closeMenu}>Coleções</a>
         <a href="#sobre" onClick={closeMenu}>O estúdio</a>
         <a href="#processo" onClick={closeMenu}>Processo</a>

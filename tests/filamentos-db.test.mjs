@@ -1,3 +1,4 @@
+import { storageTestSchema } from './storage-test-schema.mjs';
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
@@ -13,7 +14,7 @@ test('filamentos: entradas, baixas, isolamento de caixas, histórico e permissõ
  grant usage on schema public,auth to authenticated,anon;`);
  const one = async (sql,args=[]) => (await db.query(sql,args)).rows[0];
  for (const f of readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort()) {
-  await db.exec(readFileSync('supabase/migrations/'+f,'utf8').replace('create extension if not exists pgcrypto;',''));
+  await db.exec((f === '202610200001_catalogo.sql' ? storageTestSchema : '') + readFileSync('supabase/migrations/'+f,'utf8').replace('create extension if not exists pgcrypto;',''));
  }
  await db.query('insert into auth.users(id,email) values($1,$2)',[user,'filamentos@example.invalid']);
  await db.query("update public.profiles set perfil='administrador',ativo=true where id=$1",[user]);

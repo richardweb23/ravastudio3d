@@ -1,4 +1,5 @@
-﻿import { PGlite } from '@electric-sql/pglite';
+import { storageTestSchema } from './storage-test-schema.mjs';
+import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, readdirSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { test } from 'node:test';
@@ -14,7 +15,7 @@ test('custo de produto: migração preserva legado e cálculo persiste no custo 
  let legacy;
  for(const file of readdirSync('supabase/migrations').filter(f=>f.endsWith('.sql')).sort()){
   if(file==='202610160001_custo_filamento_produto.sql') legacy=(await one("insert into public.materiais(nome,custo_medio) values('Legado',27.43) returning id")).id;
-  await db.exec(readFileSync('supabase/migrations/'+file,'utf8').replace('create extension if not exists pgcrypto;',''));
+  await db.exec((file === '202610200001_catalogo.sql' ? storageTestSchema : '') + readFileSync('supabase/migrations/'+file,'utf8').replace('create extension if not exists pgcrypto;',''));
  }
  const user=randomUUID();await db.query('insert into auth.users(id,email) values($1,$2)',[user,'cost@example.invalid']);
  await db.query("update public.profiles set ativo=true,perfil='administrador' where id=$1",[user]);

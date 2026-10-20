@@ -62,6 +62,7 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
             <tr key={item.id}>
               <td>
                 <strong>{item.nome}</strong>
+                {item.codigo != null && <small style={{ display: "block", marginTop: 6 }}>Código {String(item.codigo).padStart(3, "0")} · <a href={`?produto=${encodeURIComponent(item.id)}#/catalogo`}>Editar catálogo</a></small>}
               </td>
               <td>{item.categoria || "Rivoxel"}</td>
               <td>{fmtMoney(item.custo_medio)}</td>
