@@ -24,9 +24,9 @@ body:has(.catalog-site) { margin:0; }
 .catalog-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px; }
 .catalog-card { background:#fbf8f3;border:1px solid #ded6cb;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s; }
 .catalog-card:hover { transform:translateY(-4px);box-shadow:0 12px 30px #3429190d; }
-.catalog-card-open { display:block;width:100%;border:0;background:transparent;padding:0;text-align:left;color:inherit;flex:1; }
-.catalog-card-photo { aspect-ratio:1;background:#e8e0d5;position:relative;display:grid;place-items:center;color:#74695c;font-size:13px; }
-.catalog-card-photo img { width:100%;height:100%;object-fit:cover; }
+.catalog-card-open { display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;width:100%;border:0;background:transparent;padding:0;text-align:left;color:inherit;flex:1; }
+.catalog-card-photo { width:100%;aspect-ratio:4 / 5;flex:none;overflow:hidden;background:#e8e0d5;position:relative;display:grid;place-items:center;color:#74695c;font-size:13px; }
+.catalog-card-photo img { position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain; }
 .catalog-featured { position:absolute;top:14px;left:14px;background:#f4efe8;padding:7px 10px;border-radius:20px;font-size:10px;letter-spacing:.04em; }
 .catalog-card-copy { padding:22px; }
 .catalog-card-copy h2 { font-size:19px;margin:12px 0;line-height:1.3;overflow-wrap:anywhere; }
@@ -57,7 +57,7 @@ body:has(.catalog-site) { margin:0; }
 .catalog-thumbnails { display:flex;gap:8px;overflow-x:auto;margin-top:12px;padding:4px; }
 .catalog-thumbnails button { width:64px;min-width:64px;height:64px;border:1px solid #d8d0c6;padding:2px;background:transparent;border-radius:6px;cursor:pointer; }
 .catalog-thumbnails button[aria-pressed=true] { border:2px solid #94704e; }
-.catalog-thumbnails img { width:100%;height:100%;object-fit:cover; }
+.catalog-thumbnails img { width:100%;height:100%;object-fit:contain; }
 .catalog-description { white-space:pre-wrap;line-height:1.7;font-size:14px;overflow-wrap:anywhere; }
 .catalog-detail-info dl { font-size:13px;margin:24px 0; }
 .catalog-detail-info dl>div { border-bottom:1px solid #ded6cb;padding:10px 0; }
