@@ -12,5 +12,5 @@ test("catálogo: centavos, códigos permanentes e links de pedido", () => {
   const url=new URL(catalogWhatsapp({nome:"Peça & presente",codigo:7,descricao:"Descrição",slug:"peca-007",preco_centavos:2590,promocional_centavos:1990},"https://ravastudio3d.com.br"));
   assert.equal(url.hostname,"wa.me");assert.equal(url.pathname,"/5521984470594");
   const text=url.searchParams.get("text");
-  assert.match(text,/Peça & presente/);assert.match(text,/007/);assert.match(text,/19,90/);assert.doesNotMatch(text,/25,90/);
+  assert.equal(text,"Oi! Vi o produto Peça & presente no catálogo da RAVA e gostaria de mais informações.\n\nhttps://ravastudio3d.com.br/catalogo/?produto=peca-007");
 });

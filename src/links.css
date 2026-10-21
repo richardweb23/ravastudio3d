@@ -14,7 +14,7 @@
 .links-tagline { margin: 0; font-size: 14px; color: #b7b3a9; line-height: 1.6; }
 .links-actions { display: grid; gap: 12px; margin-top: 34px; }
 .links-card { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 86px; padding: 18px; border: 1px solid #eee0ca1c; border-radius: 16px; background: #252521; color: #f4efe8; text-align: left; text-decoration: none; cursor: pointer; box-shadow: 0 4px 12px #0001; transition: background .2s, border-color .2s, transform .2s; animation: links-enter .6s ease both; }
-.links-card:nth-child(2) { animation-delay: .07s; }.links-card:nth-child(3) { animation-delay: .14s; }.links-card:nth-child(4) { animation-delay: .21s; }
+.links-card:nth-child(2) { animation-delay: .07s; }.links-card:nth-child(3) { animation-delay: .14s; }.links-card:nth-child(4) { animation-delay: .21s; }.links-card:nth-child(5) { animation-delay: .28s; }
 .links-icon { color: #d8c3a4; flex: 0 0 26px; }.links-icon svg { width: 24px; height: 24px; display: block; }
 .links-card strong { display: block; font-size: 14px; line-height: 1.45; font-weight: 600; }
 .links-card small { display: block; margin-top: 5px; color: #b7b3a9; font-size: 12px; line-height: 1.4; }

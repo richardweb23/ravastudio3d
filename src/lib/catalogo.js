@@ -14,6 +14,6 @@ export function catalogLink(slug, origin = window.location.origin) {
 }
 export function catalogWhatsapp(product, origin) {
   return "https://wa.me/5521984470594?text=" + encodeURIComponent(
-    `Olá! Tudo bem?\n\nVi este produto no catálogo da RAVA Studio 3D e gostaria de fazer um pedido.\n\n*Produto:* ${product.nome}\n*Código:* ${catalogCode(product.codigo)}\n*Descrição:* ${(product.descricao || "").slice(0, 1000)}\n*Valor:* ${catalogMoney(product.promocional_centavos ?? product.preco_centavos)}\n*Link:* ${catalogLink(product.slug, origin)}\n\nGostaria de saber sobre disponibilidade, prazo de produção e entrega.`
+    `Oi! Vi o produto ${product.nome} no catálogo da RAVA e gostaria de mais informações.\n\n${catalogLink(product.slug, origin)}`
   );
 }

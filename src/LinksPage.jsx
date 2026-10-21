@@ -7,6 +7,7 @@ const WHATSAPP = "https://wa.me/5521984470594?text=Ol%C3%A1%21%20Conheci%20a%20R
 
 function Icon({ name }) {
   const paths = {
+    catalog: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
     copy: <><rect x="9" y="3" width="12" height="13" rx="3" /><path d="M15 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h4" /></>,
     qr: <><rect x="3" y="3" width="6" height="6" rx="1" /><rect x="15" y="3" width="6" height="6" rx="1" /><rect x="3" y="15" width="6" height="6" rx="1" /><path d="M15 15h3v3h3v3h-6v-3M21 12v3M12 3v3M3 12h3m6 0v3m0 6v-3" /></>,
     globe: <><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></>,
@@ -57,6 +58,7 @@ export default function LinksPage() {
       <p className="links-tagline">Transformamos ideias em realidade.</p>
     </header>
     <nav className="links-actions" aria-label="Links úteis da RAVA">
+      <a className="links-card" href="/catalogo/"><span className="links-icon"><Icon name="catalog" /></span><span><strong>Conheça nosso catálogo</strong><small>Explore nossos produtos em impressão 3D</small></span><span className="links-card-end"><Icon name="arrow" /></span></a>
       <button className="links-card links-card-primary" onClick={copyPix}><span className="links-icon"><Icon name="copy" /></span><span><strong>Copiar chave Pix</strong><small>{PIX}</small></span><span className="links-card-end" aria-hidden="true">Copiar</span></button>
       <button className="links-card" aria-haspopup="dialog" onClick={() => { setFeedback(""); setManualCopy(false); setModalOpen(true); dialog.current.showModal(); }}><span className="links-icon"><Icon name="qr" /></span><span><strong>QR Code Pix</strong><small>Abra, escaneie ou baixe</small></span><span className="links-card-end"><Icon name="qr" /></span></button>
       <a className="links-card" href={WHATSAPP} target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="whatsapp" /></span><span><strong>Fale conosco no WhatsApp</strong><small>+55 21 98447-0594</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
