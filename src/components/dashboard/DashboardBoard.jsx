@@ -24,20 +24,26 @@ export default function DashboardBoard({
   data,
   onNavigate,
   onStatusChange,
+  onPriorityChange,
   onItemStatusChange,
   tarefas, taskError, onTaskStatusChange,
 }) {
   const { materiais, vendas, pedidos } = data;
   const [dragged, setDragged] = useState(null);
+  const [savingPriority, setSavingPriority] = useState(false);
   const [clock, setClock] = useState(() => new Date());
-  const [detailOrder, setDetailOrder] = useState(null);
+  const [selectedOrder, setDetailOrder] = useState(null);
+  const detailOrder = selectedOrder
+    ? pedidos.find((order) => order.id === selectedOrder.id) ?? null
+    : null;
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 60000);
     return () => window.clearInterval(timer);
   }, []);
-  const byDelivery = (items) =>
+  const byPriority = (items) =>
     [...items].sort((a, b) =>
+      (a.prioridade ?? Infinity) - (b.prioridade ?? Infinity) ||
       (a.previsao_entrega || "9999-12-31").localeCompare(
         b.previsao_entrega || "9999-12-31",
       ),
@@ -56,10 +62,23 @@ export default function DashboardBoard({
       0,
     );
 
-  const open = byDelivery(pedidos.filter((item) => item.status !== "entregue"));
+  const open = byPriority(pedidos.filter((item) => item.status !== "entregue"));
+  async function movePriority(cards, index, direction) {
+    if (savingPriority) return;
+    const reordered = [...cards];
+    const target = index + direction;
+    if (target < 0 || target >= cards.length) return;
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    setSavingPriority(true);
+    try {
+      await onPriorityChange(cards[index].status, reordered.map((order) => order.id));
+    } finally {
+      setSavingPriority(false);
+    }
+  }
   const low = materiais.filter((item) => Number(item.quantidade_atual) <= 0);
   async function drop(status) {
-    if (!dragged || dragged.status === status) return setDragged(null);
+    if (savingPriority || !dragged || dragged.status === status) return setDragged(null);
     await onStatusChange(dragged, status);
     setDragged(null);
   }
@@ -103,8 +122,8 @@ export default function DashboardBoard({
           </button>
         </div>
         <p className="kanban-help">
-          Arraste um pedido para alterar sua etapa. Cada coluna está ordenada
-          pela entrega mais próxima.
+          Use as setas para definir a prioridade em cada coluna: 1 é a maior
+          prioridade. Arraste um pedido para alterar sua etapa.
         </p>
         <div className="kanban-columns">
           {[
@@ -112,7 +131,7 @@ export default function DashboardBoard({
             ["em_producao", "Em produção"],
             ["pronto", "Prontos"],
           ].map(([status, label]) => {
-            const cards = byDelivery(
+            const cards = byPriority(
               open.filter((order) => order.status === status),
             );
             return (
@@ -126,14 +145,21 @@ export default function DashboardBoard({
                   <span>{label}</span>
                   <b>{cards.length}</b>
                 </div>
-                {cards.map((order) => (
+                {cards.map((order, index) => (
                   <article
-                    draggable
+                    draggable={!savingPriority}
                     className={`kanban-card ${dragged?.id === order.id ? "dragging" : ""}`}
                     key={order.id}
                     onDragStart={() => setDragged(order)}
                     onDragEnd={() => setDragged(null)}
                   >
+                    <div className="order-priority">
+                      <span aria-label={`Prioridade ${index + 1}`}>#{index + 1} · Prioridade</span>
+                      <div>
+                        <button type="button" disabled={savingPriority || index === 0} onClick={() => movePriority(cards, index, -1)} aria-label={`Subir pedido de ${order.cliente}`} title="Aumentar prioridade">↑</button>
+                        <button type="button" disabled={savingPriority || index === cards.length - 1} onClick={() => movePriority(cards, index, 1)} aria-label={`Descer pedido de ${order.cliente}`} title="Diminuir prioridade">↓</button>
+                      </div>
+                    </div>
                     <button
                       className="kanban-card-main"
                       onClick={() => setDetailOrder(order)}
@@ -153,6 +179,7 @@ export default function DashboardBoard({
                     {status === "pronto" && (
                       <button
                         className="deliver-button"
+                        disabled={savingPriority}
                         onClick={() => deliver(order)}
                       >
                         Entregar

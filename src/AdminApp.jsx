@@ -3,7 +3,7 @@ import useCaixaPedido from "./hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "./components/CaixaPedidoModal.jsx";
 import { loadSales } from "./services/vendas.js";
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
 import { isSupabaseConfigured, supabase } from "./supabase.js";
 import { orderStatusLabel } from "./lib/formatters.js";
@@ -95,6 +95,8 @@ export default function AdminApp() {
   const [profile, setProfile] = useState(null);
   const [page, setPage] = useState(() => getAdminPage(window.location));
   const [loading, setLoading] = useState(true);
+  const [boardUpdating, setBoardUpdating] = useState(false);
+  const boardUpdateLock = useRef(false);
   const [taskCreateRequested, setTaskCreateRequested] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(initialPasswordMode);
@@ -231,9 +233,24 @@ export default function AdminApp() {
     return authView(<PasswordScreen onMessage={show} onDone={() => setNeedsPassword(false)} />);
   if (!profile) return <div className="app-loading">Validando acesso…</div>;
 
+  async function updateBoard(action) {
+    if (boardUpdateLock.current) return;
+    boardUpdateLock.current = true;
+    setBoardUpdating(true);
+    try {
+      await action();
+    } catch (error) {
+      show(error.message || "Não foi possível atualizar o quadro. Tente novamente.", "error");
+    } finally {
+      boardUpdateLock.current = false;
+      setBoardUpdating(false);
+    }
+  }
+
   async function changeOrderStatus(order, status) {
     const caixa = status === "entregue" ? (order.caixa || await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return;
+    return updateBoard(async () => {
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
       p_status: status,
@@ -242,27 +259,37 @@ export default function AdminApp() {
     if (error) show(error.message, "error");
     else {
       show(`Pedido movido para ${orderStatusLabel[status]}.`);
-      refresh();
+      await refresh(true);
     }
+    });
+  }
+
+  async function changeOrderPriority(status, ids) {
+    return updateBoard(async () => {
+      const { error } = await supabase.rpc("ordenar_pedidos", { p_status: status, p_ids: ids });
+      if (error) throw error;
+      await refresh(true);
+    });
   }
 
   async function changeTaskStatus(task, status) {
-    try {
+    return updateBoard(async () => {
       const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
       if (error) throw error;
       await refreshTasks();
       show(status === "concluido" ? "Tarefa concluída. Disponível no histórico de tarefas." : "Etapa da tarefa atualizada.");
-    } catch (error) { show(error.message || "Não foi possível atualizar a tarefa.", "error"); }
+    });
   }
 
   const taskProps = { tarefas, error: taskError, onNavigate: navigate, onSaved: refreshTasks, onStatusChange: changeTaskStatus, show };
   const detailRoute = parseLocalDetailsPage(page);
   const pages = {
     tarefas: <TasksPage key="tarefas" initialOpen={taskCreateRequested} {...taskProps} />,
-    dashboard: <Dashboard tarefas={tarefas} taskError={taskError} onTaskStatusChange={changeTaskStatus} data={data} onNavigate={navigate} onItemStatusChange={async (item, concluido) => {
+    dashboard: <Dashboard tarefas={tarefas} taskError={taskError} onTaskStatusChange={changeTaskStatus} data={data} onNavigate={navigate} onItemStatusChange={(item, concluido) => updateBoard(async () => {
       const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
-      if (error) show(error.message, "error"); else refresh();
-    }} onStatusChange={changeOrderStatus} />,
+      if (error) throw error;
+      await refresh(true);
+    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
@@ -296,7 +323,8 @@ export default function AdminApp() {
   }
 
   return (
-    <div className="app-shell">
+    <>
+    <div className="app-shell" inert={boardUpdating} aria-busy={boardUpdating}>
       {caixaOpen && <CaixaPedidoModal onDone={finishCaixa} />}
       <button className="mobile-menu" onClick={() => setMenuOpen(true)} aria-label="Abrir menu"><span /><span /><span /></button>
       {menuOpen && <button className="sidebar-scrim" onClick={() => setMenuOpen(false)} aria-label="Fechar menu" />}
@@ -425,5 +453,14 @@ export default function AdminApp() {
         {loading ? <div className="loading">Atualizando dados…</div> : detailRoute ? <LocalDetails key={page} {...detailRoute} onNavigate={navigate} onSaved={() => refresh(true)} show={show} /> : pages[page] || pages.dashboard}
       </main>
     </div>
+    {boardUpdating && (
+      <div className="board-update-overlay" role="status" aria-live="polite">
+        <div className="board-update-indicator">
+          <span className="board-update-spinner" aria-hidden="true" />
+          <span>Atualizando quadro…</span>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
