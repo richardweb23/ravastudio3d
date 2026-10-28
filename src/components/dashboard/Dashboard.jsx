@@ -5,10 +5,10 @@ import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 
 export default function Dashboard({ data, onNavigate, onStatusChange, onPriorityChange, onItemStatusChange, tarefas, taskError, onTaskStatusChange }) {
   useEffect(() => {
-    const cards = document.querySelectorAll(".kanban-card:not(.task-card)");
+    const cards = document.querySelectorAll(".kanban-card[data-order-id]");
     cards.forEach((card) => {
       const order = data.pedidos.find((item) =>
-        card.textContent.includes(item.cliente),
+        String(item.id) === card.dataset.orderId,
       );
       if (!order) return;
       const items = data.pedidoItens
@@ -20,7 +20,7 @@ export default function Dashboard({ data, onNavigate, onStatusChange, onPriority
         .join("\n");
       card.title = `Cliente: ${order.cliente}\nEntrega: ${order.previsao_entrega ? new Date(`${order.previsao_entrega}T12:00:00`).toLocaleDateString("pt-BR") : "não informada"}\nTotal: ${fmtMoney(order.valor_total)}${order.observacao ? `\nObservação: ${order.observacao}` : ""}\n\nItens:\n${items || "Nenhum item"}`;
       const paid = data.pagamentos
-        .filter((payment) => payment.pedido_id === order.id)
+        .filter((payment) => payment.pedido_id === order.id && !payment.estornado_em)
         .reduce((sum, payment) => sum + Number(payment.valor || 0), 0);
       const total = Number(order.valor_total || 0);
       const balance = Math.max(0, total - paid);

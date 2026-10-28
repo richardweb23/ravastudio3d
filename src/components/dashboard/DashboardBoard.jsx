@@ -156,6 +156,7 @@ export default function DashboardBoard({
                     draggable={!savingPriority}
                     className={`kanban-card ${dragged?.id === order.id ? "dragging" : ""}`}
                     key={order.id}
+                    data-order-id={order.id}
                     onDragStart={() => setDragged(order)}
                     onDragEnd={() => setDragged(null)}
                   >
