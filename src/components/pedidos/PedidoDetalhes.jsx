@@ -1,18 +1,28 @@
-﻿import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import Status from "../Status.jsx";
 import StatusBadge from "../StatusBadge.jsx";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR") : "Não informada";
 
-export default function PedidoDetalhes({ order, items, financial, onClose }) {
+export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange }) {
   const dialog = useRef(null);
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
+  async function changeCompletion(item, checked) {
+    if (saving.current) return;
+    saving.current = true;
+    setBusy(true);
+    try { await onItemStatusChange(item, checked); }
+    finally { saving.current = false; setBusy(false); }
+  }
   useEffect(() => {
     const node = dialog.current;
     node.showModal();
     return () => node.close();
   }, []);
-  return <dialog ref={dialog} className="panel modal-card order-details-dialog" aria-labelledby="order-details-title" onCancel={event => { event.preventDefault(); onClose(); }}>
+  return <dialog ref={dialog} className="panel modal-card order-details-dialog" aria-labelledby="order-details-title" onCancel={event => { event.preventDefault(); if (!saving.current) onClose(); }}>
+    <div inert={busy} aria-busy={busy}>
     <div className="modal-heading">
       <div><h2 id="order-details-title">Detalhes do pedido</h2><p>{order.cliente}</p></div>
       <button autoFocus type="button" className="close-modal" aria-label="Fechar detalhes" onClick={onClose}>×</button>
@@ -24,11 +34,12 @@ export default function PedidoDetalhes({ order, items, financial, onClose }) {
     </div>
     <h3>Itens do pedido</h3>
     <div className="table-wrap"><table className="order-details-items">
-      <thead><tr><th scope="col">Item</th><th scope="col">Quantidade</th><th scope="col">Valor unitário</th><th scope="col">Subtotal</th></tr></thead>
+      <thead><tr><th scope="col">Item</th><th scope="col">Quantidade</th><th scope="col">Valor unitário</th><th scope="col">Subtotal</th>{onItemStatusChange && <th scope="col">Concluído</th>}</tr></thead>
       <tbody>{items.length ? items.map(item => <tr key={item.id}>
         <td><strong>{item.materiais?.nome || "Produto"}</strong>{item.subtitulo && <small>{item.subtitulo}</small>}</td>
         <td>{formatNumber(item.quantidade)}</td><td>{formatMoney(item.preco_unitario)}</td><td>{formatMoney(Number(item.quantidade) * Number(item.preco_unitario))}</td>
-      </tr>) : <tr><td colSpan="4">Nenhum item neste pedido.</td></tr>}</tbody>
+        {onItemStatusChange && <td><input className="order-item-completed" type="checkbox" checked={Boolean(item.concluido)} disabled={busy || order.status === "entregue"} aria-label={`Concluído: ${item.materiais?.nome || "Produto"} ${item.subtitulo || ""}`} onChange={event => changeCompletion(item, event.target.checked)} /></td>}
+      </tr>) : <tr><td colSpan={onItemStatusChange ? 5 : 4}>Nenhum item neste pedido.</td></tr>}</tbody>
     </table></div>
     <dl className="order-details-totals">
       <div><dt>Desconto</dt><dd>{formatMoney(order.desconto || 0)}</dd></div>
@@ -39,5 +50,7 @@ export default function PedidoDetalhes({ order, items, financial, onClose }) {
     </dl>
     {order.observacao && <section className="order-details-note"><h3>Observação / personalização</h3><p>{order.observacao}</p></section>}
     <div className="actions"><button type="button" onClick={onClose}>Fechar</button></div>
+    </div>
+    {busy && <div className="board-update-overlay" role="status"><div className="board-update-indicator"><span className="board-update-spinner" aria-hidden="true" /><span>Atualizando item…</span></div></div>}
   </dialog>;
 }

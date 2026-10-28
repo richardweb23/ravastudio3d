@@ -2496,3 +2496,5 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 @media (prefers-reduced-motion: reduce) {
   .board-update-spinner { animation: none; }
 }
+
+.order-details-items .order-item-completed { width: 20px; height: 20px; accent-color: #238257; cursor: pointer; }

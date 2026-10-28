@@ -1,11 +1,11 @@
 import { saleTotal } from "../../lib/vendas.js";
 import { CashBalances } from "../financeiro/CashPanel.jsx";
 import { useEffect, useState } from "react";
-import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
+import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
 import Header from "../Header.jsx";
 import Metric from "../Metric.jsx";
-import Empty from "../Empty.jsx";
+import PedidoDetalhes from "../pedidos/PedidoDetalhes.jsx";
 
 function monthKey(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -94,6 +94,12 @@ export default function DashboardBoard({
   const detailItems = detailOrder
     ? data.pedidoItens.filter((item) => item.pedido_id === detailOrder.id)
     : [];
+  const paid = detailOrder ? data.pagamentos
+    .filter(payment => payment.pedido_id === detailOrder.id && !payment.estornado_em)
+    .reduce((sum, payment) => sum + Number(payment.valor), 0) : 0;
+  const total = Number(detailOrder?.valor_total || 0);
+  const detailFinancial = { paid, balance: Math.max(0, total - paid),
+    status: paid >= total ? "pago" : paid > 0 ? "parcial" : "pendente" };
   return (
     <>
       <Header
@@ -195,21 +201,8 @@ export default function DashboardBoard({
       </section>
       <TaskBoard tarefas={tarefas} error={taskError} onStatusChange={onTaskStatusChange} onCreate={() => onNavigate("tarefas", { createTask: true })} />
       {detailOrder && (
-        <div className="modal-backdrop" role="presentation">
-          <section className="panel modal-card production-detail" role="dialog" aria-modal="true" aria-labelledby="production-detail-title">
-            <div className="modal-heading">
-              <div>
-                <h2 id="production-detail-title">Pedido de {detailOrder.cliente}</h2>
-                <p>Entrega: {detailOrder.previsao_entrega ? new Date(`${detailOrder.previsao_entrega}T12:00:00`).toLocaleDateString("pt-BR") : "não informada"} · {fmtMoney(detailOrder.valor_total)}</p>
-              </div>
-              <button className="close-modal" onClick={() => setDetailOrder(null)} aria-label="Fechar detalhes">×</button>
-            </div>
-            {detailOrder.observacao && <p className="order-note">{detailOrder.observacao}</p>}
-            <div className="production-progress"><strong>{detailItems.filter((item) => item.concluido).length} de {detailItems.length} itens concluídos</strong><span>{detailItems.length ? Math.round((detailItems.filter((item) => item.concluido).length / detailItems.length) * 100) : 0}%</span></div>
-            <div className="production-items">{detailItems.map((item) => <label key={item.id} className={item.concluido ? "production-item done" : "production-item"}><input type="checkbox" checked={Boolean(item.concluido)} disabled={detailOrder.status === "entregue"} onChange={(event) => onItemStatusChange(item, event.target.checked)} /><span><strong>{item.materiais?.nome || "Produto"}{item.subtitulo ? ` — ${item.subtitulo}` : ""}</strong><small>{fmtNumber(item.quantidade)} × {fmtMoney(item.preco_unitario)} · subtotal {fmtMoney(Number(item.quantidade) * Number(item.preco_unitario))}</small></span><b>{item.concluido ? "Concluído" : "Pendente"}</b></label>)}</div>
-            {!detailItems.length && <Empty text="Este pedido não possui itens cadastrados." />}
-          </section>
-        </div>
+        <PedidoDetalhes order={detailOrder} items={detailItems} financial={detailFinancial}
+          onItemStatusChange={onItemStatusChange} onClose={() => setDetailOrder(null)} />
       )}
       <section className="panel shortcut">
         <h2>Atalhos</h2>
