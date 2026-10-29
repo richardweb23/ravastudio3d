@@ -26,6 +26,7 @@ export default function DashboardBoard({
   onStatusChange,
   onPriorityChange,
   onItemStatusChange,
+  onDescriptionSave,
   tarefas, taskError, onTaskStatusChange,
 }) {
   const { materiais, vendas, pedidos } = data;
@@ -203,7 +204,7 @@ export default function DashboardBoard({
       <TaskBoard tarefas={tarefas} error={taskError} onStatusChange={onTaskStatusChange} onCreate={() => onNavigate("tarefas", { createTask: true })} />
       {detailOrder && (
         <PedidoDetalhes order={detailOrder} items={detailItems} financial={detailFinancial}
-          onItemStatusChange={onItemStatusChange} onClose={() => setDetailOrder(null)} />
+          onItemStatusChange={onItemStatusChange} onDescriptionSave={onDescriptionSave} onClose={() => setDetailOrder(null)} />
       )}
       <section className="panel shortcut">
         <h2>Atalhos</h2>

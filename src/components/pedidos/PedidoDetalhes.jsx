@@ -5,10 +5,28 @@ import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR") : "Não informada";
 
-export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange }) {
+export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange, onDescriptionSave }) {
   const dialog = useRef(null);
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [description, setDescription] = useState(order.observacao || "");
+  const [descriptionMessage, setDescriptionMessage] = useState(null);
+  async function saveDescription(event) {
+    event.preventDefault();
+    if (saving.current) return;
+    saving.current = true;
+    setBusy(true);
+    setDescriptionMessage(null);
+    try {
+      await onDescriptionSave(order, description);
+      setDescriptionMessage({ text: "Descrição salva.", error: false });
+    } catch (error) {
+      setDescriptionMessage({ text: error.message || "Não foi possível salvar a descrição. Tente novamente.", error: true });
+    } finally {
+      saving.current = false;
+      setBusy(false);
+    }
+  }
   async function changeCompletion(item, checked) {
     if (saving.current) return;
     saving.current = true;
@@ -48,9 +66,14 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
       <div><dt>Pago</dt><dd>{formatMoney(financial.paid)}</dd></div>
       <div><dt>Restante</dt><dd className={financial.balance ? "negative" : ""}>{formatMoney(financial.balance)}</dd></div>
     </dl>
-    {order.observacao && <section className="order-details-note"><h3>Observação / personalização</h3><p>{order.observacao}</p></section>}
+    {onDescriptionSave ? <form className="order-details-note" onSubmit={saveDescription}>
+      <h3><label htmlFor="order-description">Descrição do pedido / observações</label></h3>
+      <textarea id="order-description" rows={4} value={description} onChange={event => { setDescription(event.target.value); setDescriptionMessage(null); }} placeholder="Descreva os detalhes e a personalização do pedido" />
+      <div className="actions"><button type="submit" disabled={busy || description === (order.observacao || "")}>Salvar descrição</button></div>
+      {descriptionMessage && <p role={descriptionMessage.error ? "alert" : "status"}>{descriptionMessage.text}</p>}
+    </form> : order.observacao && <section className="order-details-note"><h3>Observação / personalização</h3><p>{order.observacao}</p></section>}
     <div className="actions"><button type="button" onClick={onClose}>Fechar</button></div>
     </div>
-    {busy && <div className="board-update-overlay" role="status"><div className="board-update-indicator"><span className="board-update-spinner" aria-hidden="true" /><span>Atualizando item…</span></div></div>}
+    {busy && <div className="board-update-overlay" role="status"><div className="board-update-indicator"><span className="board-update-spinner" aria-hidden="true" /><span>Salvando alterações…</span></div></div>}
   </dialog>;
 }

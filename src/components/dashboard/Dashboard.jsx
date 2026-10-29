@@ -3,7 +3,7 @@ import DashboardBoard from "./DashboardBoard.jsx";
 import { useEffect } from "react";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 
-export default function Dashboard({ data, onNavigate, onStatusChange, onPriorityChange, onItemStatusChange, tarefas, taskError, onTaskStatusChange }) {
+export default function Dashboard({ data, onNavigate, onStatusChange, onPriorityChange, onItemStatusChange, onDescriptionSave, tarefas, taskError, onTaskStatusChange }) {
   useEffect(() => {
     const cards = document.querySelectorAll(".kanban-card[data-order-id]");
     cards.forEach((card) => {
@@ -46,6 +46,7 @@ export default function Dashboard({ data, onNavigate, onStatusChange, onPriority
       onStatusChange={onStatusChange}
       onPriorityChange={onPriorityChange}
       onItemStatusChange={onItemStatusChange}
+      onDescriptionSave={onDescriptionSave}
     />
   );
 }

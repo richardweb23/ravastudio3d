@@ -97,3 +97,12 @@ body:has(.catalog-site) { margin:0; }
   .catalog-list .catalog-featured { top:6px;left:6px;padding:5px 7px;font-size:9px; }
 }
 @media(prefers-reduced-motion:reduce) { .catalog-card{transition:none}.catalog-card:hover{transform:none} }
+
+.catalog-review { max-width:1120px; margin:24px auto 40px; padding:28px; display:flex; align-items:center; justify-content:space-between; gap:24px; border:1px solid #d8d0c6; border-radius:16px; background:#eee7dc; }
+.catalog-review-star { color:#85623e; font-size:32px; }
+.catalog-review h2 { margin:6px 0 10px; font-size:22px; }
+.catalog-review p { margin:0; max-width:620px; color:#686259; line-height:1.6; font-size:14px; }
+.catalog-review a { flex-shrink:0; padding:14px 20px; border-radius:10px; background:#171714; color:#fff; text-decoration:none; text-align:center; font-size:14px; }
+.catalog-review a:hover { background:#39362f; }
+@media(max-width:1200px) { .catalog-review { margin-inline:6%; } }
+@media(max-width:640px) { .catalog-review { flex-direction:column; align-items:stretch; padding:22px; margin-inline:20px; } }

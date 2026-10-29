@@ -272,6 +272,15 @@ export default function AdminApp() {
     });
   }
 
+  async function saveOrderDescription(order, description) {
+    const { data: saved, error } = await supabase.from("pedidos")
+      .update({ observacao: description || null }).eq("id", order.id)
+      .select("id, observacao").single();
+    if (error) throw error;
+    setData(current => ({ ...current, pedidos: current.pedidos.map(item =>
+      item.id === saved.id ? { ...item, observacao: saved.observacao } : item) }));
+  }
+
   async function changeTaskStatus(task, status) {
     return updateBoard(async () => {
       const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
@@ -289,7 +298,7 @@ export default function AdminApp() {
       const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) throw error;
       await refresh(true);
-    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} />,
+    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,

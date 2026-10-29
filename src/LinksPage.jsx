@@ -7,6 +7,7 @@ const WHATSAPP = "https://wa.me/5521984470594?text=Ol%C3%A1%21%20Conheci%20a%20R
 
 function Icon({ name }) {
   const paths = {
+    star: <path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2L3.2 9.6l6.3-.9L12 3Z" />,
     check: <path d="m5 12 4 4L19 6" />,
     catalog: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
     copy: <><rect x="9" y="3" width="12" height="13" rx="3" /><path d="M15 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h4" /></>,
@@ -61,6 +62,7 @@ export default function LinksPage() {
     </header>
     <nav className="links-actions" aria-label="Links úteis da RAVA">
       <a className="links-card" href="/catalogo/"><span className="links-icon"><Icon name="catalog" /></span><span><strong>Conheça nosso catálogo</strong><small>Explore nossos produtos em impressão 3D</small></span><span className="links-card-end"><Icon name="arrow" /></span></a>
+      <a className="links-card" href="https://share.google/dQtoDpKNHGCducQ8D" target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="star" /></span><span><strong>Avalie a RAVA no Google</strong><small>Conte como foi sua experiência com a gente</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
       <button className={`links-card${pixCopied ? " links-card-copied" : ""}`} onClick={copyPix}><span className="links-icon"><Icon name={pixCopied ? "check" : "copy"} /></span><span><strong>{pixCopied ? "Chave Pix copiada!" : "Copiar chave Pix"}</strong><small>{PIX}</small></span><span className="links-card-end" aria-hidden="true">{pixCopied ? "Copiado!" : "Copiar"}</span></button>
       <button className="links-card" aria-haspopup="dialog" onClick={() => { setFeedback(""); setManualCopy(false); setModalOpen(true); dialog.current.showModal(); }}><span className="links-icon"><Icon name="qr" /></span><span><strong>QR Code Pix</strong><small>Abra, escaneie ou baixe</small></span><span className="links-card-end"><Icon name="qr" /></span></button>
       <a className="links-card" href={WHATSAPP} target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="whatsapp" /></span><span><strong>Fale conosco no WhatsApp</strong><small>+55 21 98447-0594</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
