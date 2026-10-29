@@ -96,7 +96,7 @@ export default function CatalogPage() {
       </section>
       <section className="catalog-review" aria-labelledby="catalog-review-title">
         <div><span className="catalog-review-star" aria-hidden="true">☆</span><h2 id="catalog-review-title">Sua experiência merece ser compartilhada</h2><p>Já comprou com a RAVA? Conte como foi e ajude outras pessoas a conhecer nosso trabalho.</p></div>
-        <a href="https://share.google/dQtoDpKNHGCducQ8D" target="_blank" rel="noopener noreferrer" aria-label="Avalie a RAVA no Google (abre em nova aba)">Avalie a RAVA no Google ↗</a>
+        <a href="https://g.page/r/CaRNI72q_6jFEBI/review" target="_blank" rel="noopener noreferrer" aria-label="Avalie a RAVA no Google (abre em nova aba)">Avalie a RAVA no Google ↗</a>
       </section>
     </main>
     <footer className="catalog-footer"><span>RAVA Studio 3D © {new Date().getFullYear()}</span><span>Feito com criatividade, camada por camada.</span><a href="/">Conheça nosso site ↗</a></footer>
