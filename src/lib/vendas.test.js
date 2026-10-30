@@ -1,3 +1,4 @@
+import { bonecosTransferCost, CASH_BOXES, SALES_BOXES } from './vendas.js';
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { saleTotal, saleQuantity, salesByBox, saleCostCents, salesCostTotal } from "./vendas.js";
@@ -56,4 +57,10 @@ test('custos usam quantidade, custo atual e apenas as vendas filtradas, sem devo
  assert.equal(salesCostTotal([...filtered,{...sale,devolvida_em:'2026-10-16'}]),486);
  assert.equal(salesCostTotal(filtered.slice(0,2)),81);
  assert.equal(saleCostCents({...sale,materiais:{custo_medio:0}}),0);
+});
+test('custo histórico de Bonecos é referência estável sem alterar caixas de venda', () => {
+ assert.ok(CASH_BOXES.includes('Materiais Bonecos')); assert.ok(!SALES_BOXES.includes('Materiais Bonecos'));
+ assert.deepEqual(bonecosTransferCost({caixa:'Bonecos',custo_producao_venda:2.5432,quantidade:2,materiais:{custo_medio:999}}),{unit:2.5432,total:5.09});
+ assert.equal(bonecosTransferCost({caixa:'Bonecos',custo_producao_venda:null}),null);
+ assert.equal(bonecosTransferCost({caixa:'Rava',custo_producao_venda:2}),null);
 });

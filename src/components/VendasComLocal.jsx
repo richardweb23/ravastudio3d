@@ -1,3 +1,4 @@
+import { bonecosTransferCost } from '../lib/vendas.js';
 import StatusBadge from './StatusBadge.jsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
 import CaixaSelect from "./CaixaSelect.jsx";
@@ -190,9 +191,9 @@ export default function VendasComLocal({
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
         <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
         <p>Total dos custos dos itens filtrados: <strong>{fmtMoney(salesCostTotal(filteredSales))}</strong></p>
-        <p className="sales-cost-note">Custos calculados pelo custo de produção atual do cadastro do produto. Vendas devolvidas não entram no total de custos.</p>
+        <p className="sales-cost-note">O total de custos usa o custo de produção atual do produto. Para Bonecos, a referência de transferência abaixo usa o custo registrado na venda. Vendas devolvidas não entram no total de custos.</p>
         <DataTable
-          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Custo unitário", "Custo total", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
+          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Custo unitário", "Custo total", "Referência materiais Bonecos", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
           rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
@@ -205,6 +206,7 @@ export default function VendasComLocal({
               <td>{fmtNumber(item.quantidade)}</td>
               <td>{fmtMoney(item.materiais?.custo_medio || 0)}</td>
               <td>{fmtMoney(saleCostCents(item) / 100)}</td>
+              <td>{item.caixa !== 'Bonecos' ? '—' : bonecosTransferCost(item) ? <><strong>{fmtMoney(bonecosTransferCost(item).total)}</strong><small>{fmtMoney(bonecosTransferCost(item).unit)} por unidade · referência para transferência{item.devolvida_em ? ' · venda devolvida; ajuste manual' : ''}</small></> : <small>Custo histórico indisponível</small>}</td>
               <td>
                 {fmtMoney(
                   saleTotal(item),

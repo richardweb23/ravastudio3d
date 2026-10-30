@@ -6,6 +6,12 @@ export function saleQuantity(sale) {
 }
 
 export const SALES_BOXES = ['Rivoxel', 'Rava', 'Bonecos'];
+export const CASH_BOXES = [...SALES_BOXES, 'Materiais Bonecos'];
+
+export function bonecosTransferCost(sale) {
+  if (sale.caixa !== 'Bonecos' || sale.custo_producao_venda == null) return null;
+  return { unit: Number(sale.custo_producao_venda), total: Math.round(Number(sale.custo_producao_venda) * Number(sale.quantidade || 0) * 100) / 100 };
+}
 export function salesByBox(sales, month) {
   const totals = Object.fromEntries(SALES_BOXES.map(box => [box, 0]));
   for (const sale of sales) {

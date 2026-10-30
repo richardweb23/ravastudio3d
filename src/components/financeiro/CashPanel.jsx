@@ -2,14 +2,14 @@ import StatusBadge from '../StatusBadge.jsx';
 import CashMovementDetails from './CashMovementDetails.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabase.js';
-import { SALES_BOXES } from '../../lib/vendas.js';
+import { CASH_BOXES, SALES_BOXES } from '../../lib/vendas.js';
 import { formatBRLCents as money, reaisToCents, currentMonthKey } from '../../lib/financeiro.js';
 import { today } from '../../lib/formatters.js';
 import CaixaSelect from '../CaixaSelect.jsx';
 import DataTable from '../DataTable.jsx';
 
 const labels = { abertura:'Saldo inicial', entrada:'Entrada manual',saida:'Saída manual',transferencia_saida:'Transferência enviada',transferencia_entrada:'Transferência recebida', venda:'Venda recebida', pedido:'Pedido recebido', despesa:'Despesa paga', repasse:'Repasse', reembolso:'Reembolso ao sócio', estorno:'Estorno', devolucao_cliente:'Devolução ao cliente' };
-const orderedCaixas = (caixas = []) => SALES_BOXES.map((nome) => caixas.find((caixa) => caixa.nome === nome)).filter(Boolean);
+const orderedCaixas = (caixas = []) => CASH_BOXES.map((nome) => caixas.find((caixa) => caixa.nome === nome)).filter(Boolean);
 export function CashBalances({ refreshKey }) {
  const [state,setState]=useState(null), [error,setError]=useState('');
  useEffect(()=>{let active=true; supabase.rpc('financeiro_resumo').then(({data,error})=>{if(active){setState(data);setError(error?.message || '');}});return()=>{active=false;};},[refreshKey]);
@@ -23,7 +23,7 @@ export default function CashPanel({ view='cash', onNavigate }) {
  const [month,setMonth]=useState(currentMonthKey),[box,setBox]=useState(''),[kind,setKind]=useState(view==='partners'?'reembolso':''),[offset,setOffset]=useState(0);
  const [modal,setModal]=useState(null),[busy,setBusy]=useState(false),[detail,setDetail]=useState(null);
  const submitting=useRef(false),request=useRef(null);
- const [form,setForm]=useState({data:today(),caixa:'',valor:'',descricao:'',socio_id:'',caixa_legado:'',Rivoxel:'0',Rava:'0',Bonecos:'0'});
+ const [form,setForm]=useState({data:today(),caixa:'',valor:'',descricao:'',socio_id:'',caixa_legado:'',Rivoxel:'0',Rava:'0',Bonecos:'0','Materiais Bonecos':'0'});
  const update=e=>setForm(s=>({...s,[e.target.name]:e.target.value}));
  const [tableLoading,setTableLoading]=useState(false);
  const sequence=useRef(0);
@@ -45,7 +45,7 @@ export default function CashPanel({ view='cash', onNavigate }) {
   try{
    const action=modal.action;
    const data={data:form.data};
-   if(action==='abertura'){data.saldos=Object.fromEntries(SALES_BOXES.map(c=>[c,reaisToCents(form[c])]));data.caixa_legado=form.caixa_legado||null;}
+   if(action==='abertura'){data.saldos=Object.fromEntries(CASH_BOXES.map(c=>[c,reaisToCents(form[c] || 0)]));data.caixa_legado=form.caixa_legado||null;}
    else {data.descricao=form.descricao.trim();if(action!=='estorno')data.valor_centavos=reaisToCents(form.valor);}
    if(['entrada','saida','transferencia','reembolso'].includes(action))data.caixa=form.caixa;
    if(action==='transferencia')data.caixa_destino=form.caixa_destino;
@@ -75,17 +75,17 @@ export default function CashPanel({ view='cash', onNavigate }) {
     <div className="finance-overview-partners"><div><span>A empresa deve aos sócios</span><strong>{money(credit)}</strong></div><button onClick={()=>onNavigate?.('financeiroReembolsos')}>Ver reembolsos</button></div>
     <div className="finance-overview-partner-list">{summary.socios.map(p=><span key={p.id}>{p.nome}<strong>{money(p.saldo_centavos)}</strong></span>)}</div>
    </section>}   {view!=='overview'&&<section className="panel table-panel"><div className="panel-title"><h2>{view==='partners'?'Histórico de reembolsos':'Caixa e extrato'}</h2><div className="actions">{view!=='partners'&&<button disabled={!summary.abertura} onClick={()=>open('entrada')}>Registrar entrada</button>}{view!=='partners'&&<button disabled={!summary.abertura} onClick={()=>open('saida')}>Registrar saída</button>}{view!=='partners'&&<button disabled={!summary.abertura} onClick={()=>open('transferencia')}>Transferir entre caixas</button>}{view==='overview'&&onNavigate&&<button onClick={()=>onNavigate('financeiroReembolsos')}>Reembolsar sócios</button>}</div></div>
-    <div className="finance-filters"><label>Período<input type="month" value={month} onChange={e=>{setMonth(e.target.value);setOffset(0);}}/></label><button className="link" onClick={()=>{setMonth('');setOffset(0);}}>Todo o histórico</button><label>Caixa<select value={box} onChange={e=>{setBox(e.target.value);setOffset(0);}}><option value="">Todos</option>{SALES_BOXES.map(c=><option key={c}>{c}</option>)}</select></label><label>Tipo<select value={kind} onChange={e=>{setKind(e.target.value);setOffset(0);}}><option value="">Todos</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label></div>
+    <div className="finance-filters"><label>Período<input type="month" value={month} onChange={e=>{setMonth(e.target.value);setOffset(0);}}/></label><button className="link" onClick={()=>{setMonth('');setOffset(0);}}>Todo o histórico</button><label>Caixa<select value={box} onChange={e=>{setBox(e.target.value);setOffset(0);}}><option value="">Todos</option>{CASH_BOXES.map(c=><option key={c}>{c}</option>)}</select></label><label>Tipo<select value={kind} onChange={e=>{setKind(e.target.value);setOffset(0);}}><option value="">Todos</option>{Object.entries(labels).map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label></div>
     <DataTable pagination={{ page: offset / 10, hasNext: rows.length > 10, loading: tableLoading, onPageChange: page => { setTableLoading(true); setOffset(page * 10); } }} heads={['Data','Caixa','Tipo','Descrição','Valor','Ações']} rows={rows.map(r=><tr key={r.id}><td>{r.data.split('-').reverse().join('/')}</td><td>{r.caixa}</td><td>{labels[r.tipo]}{r.estornado&&<small><StatusBadge value="estornado">Estornado</StatusBadge></small>}</td><td>{r.descricao}{r.reembolso&&<small>{r.reembolso.socio}</small>}</td><td>{money(r.valor_centavos)}</td><td><div className="row-actions"><button onClick={()=>setDetail(r)}>Detalhes / origem</button>{!r.estornado&&!r.estorno_de&&r.tipo!=='abertura'&&<button onClick={()=>r.tipo==='despesa'?onNavigate?.('financeiroContas'):open('estorno',r)}>{r.tipo==='despesa'?'Ver conta':'Estornar'}</button>}{!r.estornado&&['venda','pedido'].includes(r.tipo)&&<button onClick={()=>open('devolucao_cliente',r)}>Devolver ao cliente</button>}</div></td></tr>)} empty="Nenhum movimento neste período."/>
    </section>}
   </>}
   {detail && <CashMovementDetails detail={detail} label={labels[detail.tipo]} onClose={() => setDetail(null)} onNavigate={onNavigate} />}
   {modal&&<div className="modal-backdrop"><form className="panel form modal-card" role="dialog" aria-modal="true" aria-label="Operação de caixa" onSubmit={submit}><h2>{{abertura:'Abertura dos caixas',entrada:'Entrada manual',saida:'Saída manual',transferencia:'Transferência entre caixas',reembolso:'Reembolso ao sócio',estorno:'Estornar lançamento',devolucao_cliente:'Devolver dinheiro ao cliente'}[modal.action]}</h2><fieldset disabled={busy}>
    <label>Data<input type="date" name="data" value={form.data} max={today()} min={modal.action==='abertura'?undefined:summary?.abertura||undefined} onChange={update} required/></label>
-   {modal.action==='abertura'?<><p>Informe o saldo no início do dia, antes das movimentações dessa data.</p>{SALES_BOXES.map(c=><label key={c}>{c} (R$)<input name={c} type="number" step="0.01" min="0" value={form[c]} onChange={update} required/></label>)}<label>Caixa de pedidos e repasses antigos sem classificação<select name="caixa_legado" value={form.caixa_legado} onChange={update}><option value="">Não há / escolher se necessário</option>{SALES_BOXES.map(c=><option key={c}>{c}</option>)}</select></label><small>Despesas antigas pagas por “Caixa da RAVA” pertencem ao caixa Rava.</small></>:<>
+   {modal.action==='abertura'?<><p>Informe o saldo no início do dia, antes das movimentações dessa data.</p>{CASH_BOXES.map(c=><label key={c}>{c} (R$)<input name={c} type="number" step="0.01" min="0" value={form[c]} onChange={update} required/></label>)}<label>Caixa de pedidos e repasses antigos sem classificação<select name="caixa_legado" value={form.caixa_legado} onChange={update}><option value="">Não há / escolher se necessário</option>{SALES_BOXES.map(c=><option key={c}>{c}</option>)}</select></label><small>Despesas antigas pagas por “Caixa da RAVA” pertencem ao caixa Rava.</small></>:<>
    {modal.action==='reembolso'&&<label>Sócio<select name="socio_id" value={form.socio_id} onChange={update} required><option value="">Selecione</option>{summary.socios.map(s=><option key={s.id} value={s.id}>{s.nome} · {money(s.saldo_centavos)} a receber</option>)}</select></label>}
-   {['entrada','saida','transferencia','reembolso'].includes(modal.action)&&<CaixaSelect label={modal.action === "entrada" ? "Caixa de destino" : "Caixa de origem"} value={form.caixa} onChange={update}/>}
-   {modal.action==='transferencia'&&<label>Caixa de destino<select name="caixa_destino" value={form.caixa_destino} onChange={update} required><option value="">Selecione a caixa</option>{SALES_BOXES.filter(c=>c!==form.caixa).map(c=><option key={c} value={c}>{c}</option>)}</select></label>}
+   {['entrada','saida','transferencia','reembolso'].includes(modal.action)&&<CaixaSelect boxes={CASH_BOXES} label={modal.action === "entrada" ? "Caixa de destino" : "Caixa de origem"} value={form.caixa} onChange={update}/>}
+   {modal.action==='transferencia'&&<label>Caixa de destino<select name="caixa_destino" value={form.caixa_destino} onChange={update} required><option value="">Selecione a caixa</option>{CASH_BOXES.filter(c=>c!==form.caixa).map(c=><option key={c} value={c}>{c}</option>)}</select></label>}
    {modal.action!=='estorno'&&<label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" value={form.valor} onChange={update} required/></label>}
    <label>{modal.action==='estorno'?'Motivo do estorno':'Descrição / observação'}<textarea name="descricao" value={form.descricao} onChange={update} maxLength={2000} required/></label>
    {modal.action==='estorno'&&modal.row?.tipo?.startsWith('transferencia_')&&<p>O estorno desfará os dois lados da transferência.</p>}

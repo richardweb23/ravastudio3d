@@ -1,3 +1,4 @@
+import { CASH_BOXES } from '../../lib/vendas.js';
 import StatusBadge from '../StatusBadge.jsx';
 import { loadAllTableRows } from "../../services/tableRows.js";
 import CashPanel from "./CashPanel.jsx";
@@ -434,7 +435,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
             {payer === "outro" && <label>Quem pagou / observação<input value={note} onChange={(e) => setNote(e.target.value)} required /></label>}
           </>
         )}
-        {(reaisToCents(cashAmount)>0 || payer==="caixa") && <CaixaSelect label="Caixa de origem" value={caixa} onChange={e=>setCaixa(e.target.value)} />}
+        {(reaisToCents(cashAmount)>0 || payer==="caixa") && <CaixaSelect boxes={CASH_BOXES} label="Caixa de origem" value={caixa} onChange={e=>setCaixa(e.target.value)} />}
         <div className="actions"><button className="primary" disabled={saving}>Confirmar pagamento</button><button type="button" onClick={onClose}>Cancelar</button></div>
       </form>
     </div>
