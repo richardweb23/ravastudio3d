@@ -48,6 +48,35 @@ test('caixa e reembolsos: migração, saldos, integridade e recebimentos',async 
   assert.equal(Number((await partner()).saldo_centavos),256933);
   await assert.rejects(op('abertura',{data:earlier,saldos:{Rava:1,Rivoxel:0,Bonecos:0}}),/já registrada/i);
  });
+ await t.test('transferências e saídas avulsas preservam saldos, histórico e idempotência',async()=>{
+  const entrada={data:date,caixa:'Bonecos',valor_centavos:10000,descricao:'Entrada avulsa'};
+  const key=randomUUID(); const first=await op('entrada',entrada,key);
+  assert.deepEqual(await op('entrada',entrada,key),first);
+  const baseline=await summary();
+  const transfer={data:date,caixa:'Bonecos',caixa_destino:'Rivoxel',valor_centavos:4000,descricao:'Ajuste entre caixas'};
+  const request=randomUUID(); const move=await op('transferencia',transfer,request);
+  assert.deepEqual(await op('transferencia',transfer,request),move);
+  assert.equal(await saldo('Bonecos'),6000); assert.equal(await saldo('Rivoxel'),4000);
+  assert.equal(Number((await summary()).entradas_centavos),Number(baseline.entradas_centavos));
+  assert.equal(Number((await summary()).saidas_centavos),Number(baseline.saidas_centavos));
+  await assert.rejects(op('transferencia',{...transfer,caixa_destino:'Bonecos'}),/diferentes/);
+  await assert.rejects(op('transferencia',{...transfer,valor_centavos:100000}),/insuficiente/);
+  const row=(await one("select public.financeiro_extrato('Rivoxel',null,null,'transferencia_entrada',0) r")).r[0];
+  assert.equal(row.origem_id,move.id);
+  const spent=await op('saida',{data:date,caixa:'Rivoxel',valor_centavos:4000,descricao:'Despesa posterior'});
+  await assert.rejects(op('estorno',{data:date,movimento_id:row.id,descricao:'Sem saldo'}),/insuficiente/);
+  assert.equal(await saldo('Bonecos'),6000); assert.equal(await saldo('Rivoxel'),0);
+  await op('estorno',{data:date,movimento_id:spent.movimento_id,descricao:'Desfazer saída'});
+  await op('estorno',{data:date,movimento_id:row.id,descricao:'Cancelar transferência'});
+  assert.equal(await saldo('Bonecos'),10000); assert.equal(await saldo('Rivoxel'),0);
+  await assert.rejects(op('estorno',{data:date,movimento_id:move.movimento_id,descricao:'Duplicada'}),/estornada/);
+  const expense=await op('saida',{data:date,caixa:'Bonecos',valor_centavos:3000,descricao:'Saída esporádica'});
+  assert.equal(await saldo('Bonecos'),7000);
+  await assert.rejects(op('saida',{data:date,caixa:'Bonecos',valor_centavos:9000,descricao:'Excesso'}),/insuficiente/);
+  await op('estorno',{data:date,movimento_id:expense.movimento_id,descricao:'Corrigir saída'});
+  await op('estorno',{data:date,movimento_id:first.movimento_id,descricao:'Limpar fixture'});
+  assert.equal(await saldo('Bonecos'),0);
+ });
  await t.test('reembolso parcial vincula despesa e bloqueia desfazer a baixa; repetição não duplica',async()=>{
   const payload={data:date,caixa:'Rava',socio_id:richard,valor_centavos:50000,descricao:'Devolução parcial'};
   const key=randomUUID();reimbursement=await op('reembolso',payload,key);
