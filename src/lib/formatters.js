@@ -9,8 +9,9 @@ export const today = () => new Date().toISOString().slice(0, 10);
 
 export const orderStatusLabel = {
   recebido: "Recebido",
+  em_preparacao: "Em preparação",
   em_producao: "Em produção",
-  pronto: "Pronto",
+  pronto: "Pronto para entrega",
   entregue: "Entregue",
 };
 

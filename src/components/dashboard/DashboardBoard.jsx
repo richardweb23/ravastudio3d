@@ -1,3 +1,7 @@
+import { orderStages, orderSituations, orderTooltip } from '../../lib/orderBoard.js';
+import { deliveryAlert } from '../../lib/deliveryAlert.js';
+import StageHelp from './StageHelp.jsx';
+import OrderSubtasks from '../pedidos/OrderSubtasks.jsx';
 import { saleTotal } from "../../lib/vendas.js";
 import { CashBalances } from "../financeiro/CashPanel.jsx";
 import { useEffect, useState } from "react";
@@ -27,6 +31,8 @@ export default function DashboardBoard({
   onPriorityChange,
   onItemStatusChange,
   onDescriptionSave,
+  onSituationSave,
+  onSubtaskChange,
   tarefas, taskError, onTaskStatusChange,
 }) {
   const { materiais, vendas, pedidos } = data;
@@ -84,12 +90,6 @@ export default function DashboardBoard({
     setDragged(null);
   }
   async function deliver(order) {
-    if (
-      !window.confirm(
-        `Confirmar a entrega do pedido de ${order.cliente}? O estoque será baixado e o pedido sairá deste quadro.`,
-      )
-    )
-      return;
     await onStatusChange(order, "entregue");
   }
   const detailItems = detailOrder
@@ -121,7 +121,7 @@ export default function DashboardBoard({
         />
       </div>
       <CashBalances refreshKey={data} />
-      <section className="panel kanban">
+      <section className="panel kanban order-board">
         <div className="panel-title">
           <h2>Pedidos em andamento</h2>
           <button className="link" onClick={() => onNavigate("pedidos")}>
@@ -133,11 +133,7 @@ export default function DashboardBoard({
           prioridade. Arraste um pedido para alterar sua etapa.
         </p>
         <div className="kanban-columns">
-          {[
-            ["recebido", "Recebidos"],
-            ["em_producao", "Em produção"],
-            ["pronto", "Prontos"],
-          ].map(([status, label]) => {
+          {orderStages.map(([status, label, help]) => {
             const cards = byPriority(
               open.filter((order) => order.status === status),
             );
@@ -149,16 +145,16 @@ export default function DashboardBoard({
                 onDrop={() => drop(status)}
               >
                 <div className="kanban-title">
-                  <span>{label}</span>
+                  <span>{label} <StageHelp label={label}>{help}</StageHelp></span>
                   <b>{cards.length}</b>
                 </div>
                 {cards.map((order, index) => (
                   <article
                     draggable={!savingPriority}
-                    className={`kanban-card ${dragged?.id === order.id ? "dragging" : ""}`}
+                    className={`kanban-card situation-${order.situacao || "normal"} ${deliveryAlert(order.previsao_entrega, order.status === "pronto", clock)} ${dragged?.id === order.id ? "dragging" : ""}`}
                     key={order.id}
                     data-order-id={order.id}
-                    onDragStart={() => setDragged(order)}
+                    onDragStart={event => { if (event.target.closest(".order-subtasks, .order-priority")) { event.preventDefault(); return; } setDragged(order); }}
                     onDragEnd={() => setDragged(null)}
                   >
                     <div className="order-priority">
@@ -170,9 +166,13 @@ export default function DashboardBoard({
                     </div>
                     <button
                       className="kanban-card-main"
+                      title={orderTooltip(order, data)}
                       onClick={() => setDetailOrder(order)}
                     >
                       <strong>{order.cliente}</strong>
+                      <span className="order-situation">{order.situacao === 'bloqueado' ? '⛔' : order.situacao === 'aguardando' ? '◷' : '○'} {orderSituations[order.situacao || 'normal']}</span>
+                      {order.situacao_descricao && <small className="order-situation-description">{order.situacao_descricao}</small>}
+                      {deliveryAlert(order.previsao_entrega, order.status === 'pronto', clock) && <small className="order-deadline">{deliveryAlert(order.previsao_entrega, order.status === 'pronto', clock) === 'overdue' ? 'Entrega atrasada' : 'Entrega próxima'}</small>}
                       <small>
                         {order.previsao_entrega
                           ? `Entrega: ${new Date(order.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR")}`
@@ -184,6 +184,7 @@ export default function DashboardBoard({
                         {data.pedidoItens.filter((item) => item.pedido_id === order.id).length} itens concluídos
                       </em>
                     </button>
+                    <OrderSubtasks order={order} tasks={data.subtarefas.filter(task => task.pedido_id === order.id)} onChange={onSubtaskChange} />
                     {status === "pronto" && (
                       <button
                         className="deliver-button"
@@ -203,7 +204,7 @@ export default function DashboardBoard({
       </section>
       <TaskBoard tarefas={tarefas} error={taskError} onStatusChange={onTaskStatusChange} onCreate={() => onNavigate("tarefas", { createTask: true })} />
       {detailOrder && (
-        <PedidoDetalhes order={detailOrder} items={detailItems} financial={detailFinancial}
+        <PedidoDetalhes key={detailOrder.id} subtasks={data.subtarefas.filter(task => task.pedido_id === detailOrder.id)} onSubtaskChange={onSubtaskChange} onSituationSave={onSituationSave} onStatusChange={onStatusChange} order={detailOrder} items={detailItems} financial={detailFinancial}
           onItemStatusChange={onItemStatusChange} onDescriptionSave={onDescriptionSave} onClose={() => setDetailOrder(null)} />
       )}
       <section className="panel shortcut">

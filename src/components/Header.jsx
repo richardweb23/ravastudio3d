@@ -12,8 +12,9 @@ export default function Header({ title, subtitle, action }) {
     [
       ["todos", "Todos os status"],
       ["recebido", "Recebidos"],
+      ["em_preparacao", "Em preparação"],
       ["em_producao", "Em produção"],
-      ["pronto", "Prontos"],
+      ["pronto", "Prontos para entrega"],
       ["entregue", "Entregues"],
     ].forEach(([value, label]) => {
       const option = document.createElement("option");

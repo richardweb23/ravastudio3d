@@ -2498,3 +2498,52 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 }
 
 .order-details-items .order-item-completed { width: 20px; height: 20px; accent-color: #238257; cursor: pointer; }
+.order-board .kanban-columns { grid-template-columns: repeat(4, minmax(270px, 1fr)); overflow-x: auto; align-items: start; padding-bottom: 12px; }
+.order-board .kanban-column { min-width: 0; }
+.order-board .kanban-title { min-height: 40px; gap: 8px; align-items: flex-start; }
+.stage-help { display: inline-block; position: relative; font-weight: normal; }
+.stage-help > button { border: 0; background: transparent; color: #63503f; padding: 4px 6px; min-height: 30px; cursor: help; }
+.stage-help-tip { display: block; position: absolute; z-index: 20; top: 100%; left: -100px; width: 225px; padding: 12px; border-radius: 8px; color: #fff; background: #303744; box-shadow: 0 4px 16px #0003; font-size: 12px; line-height: 1.5; }
+.order-board .kanban-card.situation-aguardando { background: #fff7d9; border-color: #cf9a20; border-left: 4px solid #cf9a20; }
+.order-board .kanban-card.situation-bloqueado { background: #fff0ee; border-color: #c74c45; border-left: 4px solid #c74c45; }
+.order-board .order-situation { color: #514338; }
+.order-board .order-situation-description { white-space: pre-wrap; overflow-wrap: anywhere; color: #4c4a45; }
+.order-board .order-deadline { font-weight: 700; color: #8c3928; }
+.order-subtasks { padding: 12px; cursor: default; border-top: 1px solid #d9d3c9; }
+.order-subtasks summary { cursor: pointer; font-size: 12px; font-weight: 600; }
+.order-subtasks ul { padding: 0; list-style: none; margin: 12px 0; display: grid; gap: 10px; }
+.order-subtask-row label { display: flex; align-items: flex-start; gap: 8px; }
+.order-subtask-row label input { width: 18px; height: 18px; flex: 0 0 18px; accent-color: #238257; margin-top: 2px; }
+.order-subtask-row label span { overflow-wrap: anywhere; color: #41453e; font-size: 13px; font-weight: 400; }
+.order-subtask-row .subtask-done { text-decoration: line-through; color: #687268; }
+.subtask-buttons, .subtask-add, .order-subtask-row form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.order-subtasks button { font-size: 12px; padding: 8px 10px; }
+.subtask-add input, .order-subtask-row form input { flex: 1; min-width: 140px; }
+.order-subtasks p { font-size: 12px; }
+.order-subtasks [role=alert], .order-workflow [role=alert] { color: #a32a20; }
+.order-workflow { margin: 18px 0; }
+.order-workflow fieldset { border: 1px solid #ded8ce; border-radius: 8px; padding: 16px; }
+.order-workflow label { display: grid; gap: 6px; margin: 8px 0; }
+.order-workflow textarea { width: 100%; resize: vertical; }
+.order-workflow form > button { display: block; margin-top: 10px; }
+.order-details-dialog .order-subtasks { padding-inline: 0; }
+@media (max-width: 1100px) { .order-board .kanban-columns { grid-template-columns: repeat(4, 290px); } }
+
+/* Keep the order dialog actions visible while its contents scroll. */
+.order-details-dialog { width: min(960px, calc(100vw - 48px)); max-width: none; max-height: min(80vh, 850px); max-height: min(80dvh, 850px); padding: 0; overflow: hidden; }
+.order-details-dialog[open] { display: flex; flex-direction: column; }
+.order-dialog-layout { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.order-details-dialog .modal-heading { flex: none; margin: 0; padding: 20px 24px 16px; border-bottom: 1px solid #eee7de; }
+.order-dialog-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 24px; }
+.order-dialog-footer { flex: none; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid #eee7de; background: #fff; }
+.order-details-dialog .close-modal { flex: 0 0 40px; width: 40px; height: 40px; cursor: pointer; }
+.order-details-dialog :is(.order-workflow, .order-subtasks) button:not(.primary) { border: 1px solid #dce1ec; border-radius: 8px; padding: 10px 14px; background: white; color: #252b39; cursor: pointer; }
+.order-details-dialog :is(.order-workflow, .order-subtasks) button.primary { cursor: pointer; }
+.order-details-dialog button:disabled { cursor: not-allowed; }
+.order-details-dialog button:focus-visible { outline: 2px solid #a78158; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .order-details-dialog { width: calc(100vw - 24px); max-height: 85vh; max-height: 85dvh; }
+  .order-details-dialog .modal-heading { padding: 16px 18px 12px; }
+  .order-dialog-body { padding: 16px 18px; }
+  .order-dialog-footer { padding: 12px 18px; }
+}

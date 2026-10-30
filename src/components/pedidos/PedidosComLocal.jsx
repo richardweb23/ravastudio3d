@@ -1,3 +1,4 @@
+import { orderAdvanceWarning } from "../../lib/orderBoard.js";
 import StatusBadge from '../StatusBadge.jsx';
 import CaixaSelect from "../CaixaSelect.jsx";
 import useCaixaPedido from "../../hooks/useCaixaPedido.js";
@@ -11,9 +12,10 @@ import Status from "../Status.jsx";
 import PedidoEditor from "./PedidoEditor.jsx";
 import PedidoDetalhes from "./PedidoDetalhes.jsx";
 
-const statusPriority = { recebido: 0, em_producao: 1, pronto: 2, entregue: 4 };
+const statusPriority = { recebido: 0, em_preparacao: 1, em_producao: 2, pronto: 3, entregue: 4 };
 
 export default function PedidosComLocal({
+  subtarefas = [],
   materiais,
   locais,
   vendedores,
@@ -80,11 +82,13 @@ export default function PedidosComLocal({
   async function changeStatus(order, status) {
     if (order.status === "entregue")
       return show("Pedidos entregues não podem voltar de status.", "error");
+    const warning = orderAdvanceWarning(order, subtarefas, status);
+    if (status === 'pronto' && warning && !window.confirm(warning + '\n\nAvançar mesmo assim?')) return;
     if (status === "entregue") {
       const info = financial(order);
       if (info.balance > 0 && !window.confirm(`Restam ${fmtMoney(info.balance)}. Entregar mesmo assim?`))
         return;
-      if (!window.confirm("Confirmar entrega e baixa de estoque?")) return;
+      if (!window.confirm([warning, "Confirmar entrega e baixa de estoque?"].filter(Boolean).join("\n\n"))) return;
     }
     const caixa = status === "entregue" ? await requestCaixa() : null;
     if (status === "entregue" && !caixa) return;
@@ -180,7 +184,7 @@ export default function PedidosComLocal({
           show={show}
         />
       )}
-      {detailOrder && <PedidoDetalhes order={detailOrder} items={itens.filter(item => item.pedido_id === detailId)} financial={financial(detailOrder)} onClose={() => setDetailId(null)} />}
+      {detailOrder && <PedidoDetalhes key={detailOrder.id} subtasks={subtarefas.filter(task => task.pedido_id === detailId)} order={detailOrder} items={itens.filter(item => item.pedido_id === detailId)} financial={financial(detailOrder)} onClose={() => setDetailId(null)} />}
       {paymentOrder && (
         <div className="modal-backdrop" role="presentation">
           <form className="panel form modal-card" onSubmit={savePayment}>
@@ -267,8 +271,8 @@ export default function PedidosComLocal({
             <select className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="todos">Todos</option>
               <option value="recebido">Recebidos</option>
-              <option value="em_producao">Em produção</option>
-              <option value="pronto">Prontos</option>
+              <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
+              <option value="pronto">Prontos para entrega</option>
               <option value="entregue">Entregues</option>
             </select>
           </label>
@@ -294,8 +298,8 @@ export default function PedidosComLocal({
                   <Status value={order.status} />
                   <select className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
                     <option value="recebido">Recebido</option>
-                    <option value="em_producao">Em produção</option>
-                    <option value="pronto">Pronto</option>
+                    <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
+                    <option value="pronto">Pronto para entrega</option>
                     <option value="entregue">Entregue</option>
                   </select>
                 </div>

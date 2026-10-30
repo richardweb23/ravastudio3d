@@ -1,3 +1,4 @@
+import { orderAdvanceWarning } from "./lib/orderBoard.js";
 import { loadAllTableRows } from "./services/tableRows.js";
 import useCaixaPedido from "./hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "./components/CaixaPedidoModal.jsx";
@@ -106,7 +107,7 @@ export default function AdminApp() {
   const [financeRevision, setFinanceRevision] = useState(0);
   const refreshPayablesAlert = useCallback(() => setFinanceRevision(value => value + 1), []);
   const [data, setData] = useState({
-    materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
+    subtarefas: [], materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
     pagamentos: [], locais: [], vendedores: [], locaisTodos: [], vendedoresTodos: [], estoqueLocal: [],
   });
 
@@ -142,6 +143,7 @@ export default function AdminApp() {
     if (!supabase || !session?.user?.id) return;
     if (!silent) setLoading(true);
     const results = await Promise.all([
+      loadAllTableRows(supabase.from("pedido_subtarefas").select("*").order("created_at").order("id")),
       loadAllTableRows(supabase.from("materiais").select("*").order("nome")),
       loadAllTableRows(supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false })),
       loadSales(),
@@ -155,8 +157,9 @@ export default function AdminApp() {
     const firstError = results.find((result) => result.error)?.error;
     if (firstError) show(firstError.message, "error");
     else {
-      const [materiais, compras, vendas, pedidos, pedidoItens, pagamentos, locais, vendedores, estoqueLocal] = results;
+      const [subtarefas, materiais, compras, vendas, pedidos, pedidoItens, pagamentos, locais, vendedores, estoqueLocal] = results;
       setData({
+        subtarefas: subtarefas.data || [],
         materiais: materiais.data || [], compras: compras.data || [],
         vendas: vendas.data || [], pedidos: pedidos.data || [],
         pedidoItens: pedidoItens.data || [], pagamentos: pagamentos.data || [],
@@ -239,8 +242,10 @@ export default function AdminApp() {
     setBoardUpdating(true);
     try {
       await action();
+      return true;
     } catch (error) {
       show(error.message || "Não foi possível atualizar o quadro. Tente novamente.", "error");
+      return false;
     } finally {
       boardUpdateLock.current = false;
       setBoardUpdating(false);
@@ -248,6 +253,10 @@ export default function AdminApp() {
   }
 
   async function changeOrderStatus(order, status) {
+    const warning = orderAdvanceWarning(order, data.subtarefas, status);
+    if (status === "entregue") {
+      if (!window.confirm([warning, 'Confirmar a entrega e baixa de estoque? O pedido sairá deste quadro.'].filter(Boolean).join('\n\n'))) return;
+    } else if (warning && !window.confirm(warning + '\n\nMover para Prontos para entrega mesmo assim?')) return;
     const caixa = status === "entregue" ? (order.caixa || await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return;
     return updateBoard(async () => {
@@ -256,7 +265,7 @@ export default function AdminApp() {
       p_status: status,
       ...(caixa ? { p_caixa: caixa } : {}),
     });
-    if (error) show(error.message, "error");
+    if (error) throw error;
     else {
       show(`Pedido movido para ${orderStatusLabel[status]}.`);
       await refresh(true);
@@ -270,6 +279,25 @@ export default function AdminApp() {
       if (error) throw error;
       await refresh(true);
     });
+  }
+
+  async function saveOrderSituation(order, situacao, situacao_descricao) {
+    const { data: saved, error } = await supabase.from("pedidos").update({ situacao, situacao_descricao })
+      .eq("id", order.id).select("id, situacao, situacao_descricao").single();
+    if (error) throw error;
+    setData(current => ({ ...current, pedidos: current.pedidos.map(item => item.id === saved.id ? { ...item, ...saved } : item) }));
+  }
+  async function changeOrderSubtask(action, task, patch = {}) {
+    let query;
+    if (action === 'create') query = supabase.from('pedido_subtarefas').insert({ pedido_id: task.pedido_id, titulo: patch.titulo });
+    else if (action === 'delete') query = supabase.from('pedido_subtarefas').delete().eq('id', task.id).eq('pedido_id', task.pedido_id);
+    else query = supabase.from('pedido_subtarefas').update(patch).eq('id', task.id).eq('pedido_id', task.pedido_id);
+    const { data: saved, error } = await query.select('*').single();
+    if (error) throw error;
+    setData(current => ({ ...current, subtarefas: (action === 'delete'
+      ? current.subtarefas.filter(item => item.id !== saved.id)
+      : [...current.subtarefas.filter(item => item.id !== saved.id), saved])
+      .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)) }));
   }
 
   async function saveOrderDescription(order, description) {
@@ -298,13 +326,13 @@ export default function AdminApp() {
       const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) throw error;
       await refresh(true);
-    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} />,
+    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     vendas: <VendasComLocal materiais={data.materiais} locais={data.locaisTodos} vendedores={data.vendedoresTodos} estoqueLocal={data.estoqueLocal} vendas={data.vendas} onSaved={refresh} show={show} />,
-    pedidos: <PedidosComLocal materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
+    pedidos: <PedidosComLocal subtarefas={data.subtarefas} materiais={data.materiais} locais={data.locais} vendedores={data.vendedores} pedidos={data.pedidos} itens={data.pedidoItens} pagamentos={data.pagamentos} onSaved={refresh} show={show} />,
     filamentos: <Filamentos />,
     cadastros: <Cadastros locais={data.locaisTodos} vendedores={data.vendedoresTodos} onNavigate={navigate} onSaved={refresh} show={show} />,
     calculadora: <CalculadoraCustos materiais={data.materiais} show={show} />,
