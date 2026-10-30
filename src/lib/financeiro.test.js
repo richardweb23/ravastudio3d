@@ -110,3 +110,12 @@ it('filtra contas individuais e compartilhadas com totais da parte do sócio', (
   assert.equal(xandy.paid, 0);
   assert.equal(summarizePartnerInstallments([], partners, '2026-09', 'x').total, 0);
 });
+
+
+it('despesas da RAVA integram o total da empresa sem atribuir custos ou acertos entre sócios', () => {
+ const data=[{valor_centavos:10000,vencimento:'2026-10-10',pago:true,financeiro_despesas:{responsavel_empresa:true},financeiro_pagamentos_parcela:[{pago_por_tipo:'socio',socio_id:'r',valor_centavos:10000}]}];
+ const summary=summarizeInstallments(data,partners,'2026-10');
+ assert.equal(summary.total,10000); assert.deepEqual(summary.responsibilities.map(x=>x.valor_centavos),[0,0]);
+ assert.equal(summary.paidByPartner.r,0); assert.equal(settlementSuggestion(summary),null);
+ assert.equal(summarizePartnerInstallments(data,partners,'2026-10','r').total,0);
+});

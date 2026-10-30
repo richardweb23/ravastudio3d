@@ -52,6 +52,7 @@ export function splitAmount(totalCents, partners = DEFAULT_PARTNERS) {
 }
 
 export function expenseResponsibilities(totalCents, partners, responsiblePartnerId) {
+  if (responsiblePartnerId === 'rava') return partners.map(partner => ({ ...partner, valor_centavos: 0 }));
   if (!responsiblePartnerId) return splitAmount(totalCents, partners);
   return partners.map((partner) => ({
     ...partner,
@@ -60,7 +61,7 @@ export function expenseResponsibilities(totalCents, partners, responsiblePartner
 }
 
 export function installmentResponsibilities(installments, partners) {
-  const shared = installments.filter((item) => !item.financeiro_despesas?.responsavel_socio_id);
+  const shared = installments.filter((item) => !item.financeiro_despesas?.responsavel_empresa && !item.financeiro_despesas?.responsavel_socio_id);
   const responsibilities = splitAmount(shared.reduce((sum, item) => sum + normalizeCents(item.valor_centavos), 0), partners);
   return responsibilities.map((partner) => ({
     ...partner,
@@ -124,7 +125,7 @@ export function summarizeInstallments(installments, partners, selectedMonth) {
   const responsibilities = installmentResponsibilities(inMonth, partners);
   const paidByPartner = Object.fromEntries(
     partners.map((partner) => [partner.id, inMonth.reduce((sum, item) => {
-      if (!item.pago) return sum;
+      if (!item.pago || item.financeiro_despesas?.responsavel_empresa) return sum;
       if (Array.isArray(item.financeiro_pagamentos_parcela)) {
         return sum + item.financeiro_pagamentos_parcela
           .filter((payment) => payment.pago_por_tipo === "socio" && payment.socio_id === partner.id)
@@ -147,9 +148,13 @@ export function summarizeInstallments(installments, partners, selectedMonth) {
 export function summarizePartnerInstallments(installments, partners, selectedMonth, partnerId = "") {
   const summary = summarizeInstallments(installments, partners, selectedMonth);
   if (!partnerId) return summary;
+  if (partnerId === 'rava') {
+    const companyItems = summary.items.filter(item => item.financeiro_despesas?.responsavel_empresa);
+    return summarizeInstallments(companyItems, partners, selectedMonth);
+  }
   const items = summary.items.filter((item) => {
     const responsible = item.financeiro_despesas?.responsavel_socio_id;
-    return !responsible || responsible === partnerId;
+    return !item.financeiro_despesas?.responsavel_empresa && (!responsible || responsible === partnerId);
   });
   const share = (rows) => installmentResponsibilities(rows, partners)
     .find((partner) => partner.id === partnerId)?.valor_centavos || 0;

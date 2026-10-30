@@ -108,6 +108,28 @@ test('caixa e reembolsos: migração, saldos, integridade e recebimentos',async 
   assert.equal(Number((await one('select count(*) n from public.financeiro_pagamentos_parcela where parcela_id=$1',[p])).n),3);
   assert.equal((await one('select pago from public.financeiro_parcelas where id=$1',[p])).pago,false);
  });
+ await t.test('compra da RAVA registra responsabilidade e pagamentos sem criar crédito indevido',async()=>{
+  const payload={nome:'Filamento RAVA',valor_total_centavos:20000,forma_pagamento:'pix',quantidade_parcelas:2,primeiro_vencimento:date,responsavel_empresa:true};
+  const before=await saldo('Rava'); const credit=Number((await partner()).saldo_centavos);
+  const d=(await one('select public.salvar_despesa_financeira(null,$1::jsonb) id',[JSON.stringify(payload)])).id;
+  assert.equal((await one('select responsavel_empresa from public.financeiro_despesas where id=$1',[d])).responsavel_empresa,true);
+  const parcels=(await db.query('select id,valor_centavos from public.financeiro_parcelas where despesa_id=$1 order by numero',[d])).rows;
+  assert.equal(parcels.length,2); assert.equal(await saldo('Rava'),before);
+  const pay=(id,caixa)=>db.query('select public.salvar_pagamentos_parcela($1,$2::jsonb)',[id,JSON.stringify([{valor_centavos:10000,data_pagamento:date,pago_por_tipo:'caixa',caixa}])]);
+  await assert.rejects(pay(parcels[0].id,'Bonecos'),/insuficiente/);
+  await pay(parcels[0].id,'Rava'); assert.equal(await saldo('Rava'),before-10000);
+  assert.equal(Number((await partner()).saldo_centavos),credit);
+  await assert.rejects(pay(parcels[0].id,'Rava'),/já paga/);
+  await op('entrada',{data:date,caixa:'Rivoxel',valor_centavos:10000,descricao:'Provisão teste'});
+  await pay(parcels[1].id,'Rivoxel'); assert.equal(await saldo('Rivoxel'),0);
+  await db.query('select public.excluir_pagamentos_parcela($1)',[parcels[0].id]);
+  assert.equal(await saldo('Rava'),before);
+  await db.query('select public.excluir_pagamentos_parcela($1)',[parcels[1].id]);
+  assert.equal(await saldo('Rivoxel'),10000);
+  await db.query('select public.salvar_pagamentos_parcela($1,$2::jsonb)',[parcels[0].id,JSON.stringify([{valor_centavos:10000,data_pagamento:date,pago_por_tipo:'socio',socio_id:richard}])]);
+  assert.equal(Number((await partner()).saldo_centavos),credit+10000);
+  await db.query('select public.excluir_pagamentos_parcela($1)',[parcels[0].id]);
+ });
  await t.test('recebimento futuro não financia saída retroativa, estorno sem saldo é bloqueado',async()=>{
   movement=await op('entrada',{data:date,caixa:'Bonecos',valor_centavos:10000,descricao:'Entrada teste'});
   await assert.rejects(op('reembolso',{data:earlier,caixa:'Bonecos',socio_id:richard,valor_centavos:5000}),/insuficiente/i);
