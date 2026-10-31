@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import logo from "../logo.svg";
 import { publicCatalog, catalogImageUrl } from "./services/catalogo.js";
-import { catalogMoney, catalogWhatsapp } from "./lib/catalogo.js";
+import { catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
 import ProductDetail from "./components/catalogo/ProductDetail.jsx";
 import CatalogDialog from "./components/catalogo/CatalogDialog.jsx";
 export default function CatalogPage() {
@@ -89,7 +89,7 @@ export default function CatalogPage() {
               <div className="catalog-card-photo">{product.imagens[0] ? <img loading="lazy" decoding="async" src={catalogImageUrl(product.imagens[0].miniatura)} alt={product.imagens[0].alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
               <div className="catalog-card-copy"><p className="catalog-eyebrow">{product.categoria || "Feito em 3D"}</p><h2>{product.nome}</h2>{product.resumo && <p>{product.resumo}</p>}<div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div><span className="catalog-view">Ver detalhes +</span></div>
             </button>
-            <a className="catalog-card-contact" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer">Pedir pelo WhatsApp ↗</a>
+            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer">Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer">Pedir pelo WhatsApp ↗</a>}
           </article>)}</div>
           {result.produtos.length < result.total && <button className="catalog-more" disabled={loading} onClick={() => setOffset(result.produtos.length)}>Carregar mais produtos</button>}
         </>}

@@ -112,6 +112,20 @@ test('catálogo: códigos, histórico, permissões, publicação, aliases e cicl
  assert.equal(recent1.produtos.length,24); assert.equal(recent1.produtos[0].slug,'peca-25');
  assert.equal(recent1.produtos[23].slug,'peca-2'); assert.deepEqual(recent2.produtos.map(p=>p.slug),['peca-1','peca-0']);
  assert.equal((await pub({category,order:'destaque'})).produtos[0].slug,'peca-0');
+ // Produtos Marketplace preservam o link e nunca expõem destinos inseguros.
+ const market=(await one("insert into public.catalogo_categorias(nome,slug,marketplace) values('Indicações','indicacoes',true) returning id")).id;
+ const mid=(await one("insert into public.materiais(nome) values('Indicado') returning id")).id;
+ await assert.rejects(save(mid,{slug:'indicado',descricao:'Produto',categoria_id:market,status:'publicado'}),/link de compra/i);
+ await assert.rejects(save(mid,{slug:'indicado',descricao:'Produto',categoria_id:market,status:'publicado',link_marketplace:'javascript:alert(1)'}),/check/i);
+ let mp=await save(mid,{slug:'indicado',descricao:'Produto',categoria_id:market,status:'publicado',link_marketplace:'https://loja.example/produto?ref=123'});
+ assert.equal((await pub({search:'Indicado'})).produtos[0].link_marketplace,'https://loja.example/produto?ref=123');
+ assert.equal((await pub({search:'Indicado'})).produtos[0].marketplace,true);
+ mp=await save(mid,{...mp,link_marketplace:'https://loja.example/novo'},mp.versao);
+ assert.equal((await pub({search:'Indicado'})).produtos[0].link_marketplace,'https://loja.example/novo');
+ mp=await save(mid,{...mp,categoria_id:category},mp.versao);
+ assert.equal((await pub({search:'Indicado'})).produtos[0].marketplace,false);
+ assert.equal((await pub({search:'Indicado'})).produtos[0].link_marketplace,null);
+ await save(mid,{...mp,status:'inativo'},mp.versao);
  const page1=await pub({category,order:'preco_asc'});
  assert.equal(page1.total,26);assert.equal(page1.produtos.length,24);assert.equal(page1.produtos[0].preco_centavos,0);
  assert.equal((await pub({category,order:'preco_desc'})).produtos[0].preco_centavos,2500);

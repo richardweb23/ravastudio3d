@@ -1,6 +1,6 @@
 import { useState } from "react";
 import CatalogDialog from "./CatalogDialog.jsx";
-import { catalogCode, catalogMoney, catalogWhatsapp } from "../../lib/catalogo.js";
+import { catalogCode, catalogMoney, catalogWhatsapp, marketplaceUrl } from "../../lib/catalogo.js";
 import { catalogImageUrl } from "../../services/catalogo.js";
 export default function ProductDetail({ product, onClose, preview = false }) {
   const [selected, setSelected] = useState(0);
@@ -17,8 +17,8 @@ export default function ProductDetail({ product, onClose, preview = false }) {
         <p className="catalog-eyebrow">{product.categoria || "RAVA Studio 3D"} · {catalogCode(product.codigo)}</p>
         <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>
         <p className="catalog-description">{product.descricao}</p>
-        <dl>{[["Material", product.material], ["Dimensões", product.dimensoes], ["Peso", product.peso_gramas != null && `${product.peso_gramas} g`], ["Cores", product.cores], ["Prazo de produção", product.prazo], ["Personalização", product.personalizavel && "Disponível — consulte pelo WhatsApp"]].filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-        <a className="catalog-cta" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer">Quero este produto ↗</a>
+        <dl>{[["Material", product.material], ["Dimensões", product.dimensoes], ["Peso", product.peso_gramas != null && `${product.peso_gramas} g`], ["Cores", product.cores], ["Prazo de produção", product.prazo], ["Personalização", product.personalizavel && (product.marketplace ? "Disponível — consulte o anúncio" : "Disponível — consulte pelo WhatsApp")]].filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+        {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-cta" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer">Comprar produto ↗</a> : <p>Link de compra indisponível.</p>) : <a className="catalog-cta" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer">Quero este produto ↗</a>}
       </div>
     </div>
   </CatalogDialog>;

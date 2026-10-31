@@ -17,3 +17,7 @@ export function catalogWhatsapp(product, origin) {
     `Oi! Vi o produto ${product.nome} no catálogo da RAVA e gostaria de mais informações.\n\n${catalogLink(product.slug, origin)}`
   );
 }
+
+export function marketplaceUrl(value) {
+  try { const u = new URL(String(value || '').trim()); return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password ? u.href : null; } catch { return null; }
+}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
-import { catalogCents, catalogCode, catalogSlug } from "../../lib/catalogo.js";
+import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../lib/catalogo.js";
 import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, uploadCatalogImage } from "../../services/catalogo.js";
 import CatalogDialog from "./CatalogDialog.jsx";
 import ProductDetail from "./ProductDetail.jsx";
@@ -13,7 +13,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
     slug: record?.slug || suggestLink(record?.titulo),
     price: ((record?.preco_centavos || 0) / 100).toFixed(2),
     promo: record?.promocional_centavos != null ? (record.promocional_centavos / 100).toFixed(2) : "",
-    categoria_id: record?.categoria_id || "", material: record?.material || "", dimensoes: record?.dimensoes || "",
+    categoria_id: record?.categoria_id || "", link_marketplace: record?.link_marketplace || "", material: record?.material || "", dimensoes: record?.dimensoes || "",
     peso_gramas: record?.peso_gramas ?? "", cores: record?.cores || "", prazo: record?.prazo || "",
     personalizavel: record?.personalizavel || false, destaque: record?.destaque || false,
     status: record?.status || "rascunho", ordem: record?.ordem || 0,
@@ -45,6 +45,8 @@ export default function CatalogEditor({ product, record, images, categories, onC
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug)) throw Error("Use letras minúsculas, números e hífens no endereço.");
     if (form.status === "publicado" && !form.descricao.trim()) throw Error("Preencha a descrição para publicar.");
     if (form.status === "publicado" && form.categoria_id && !categories.find(c => c.id === form.categoria_id)?.ativa) throw Error("Escolha uma categoria ativa para publicar.");
+    if (form.link_marketplace && !marketplaceUrl(form.link_marketplace)) throw Error("Informe um link de compra HTTP ou HTTPS válido.");
+    if (form.status === "publicado" && categories.find(c => c.id === form.categoria_id)?.marketplace && !marketplaceUrl(form.link_marketplace)) throw Error("Informe o link de compra para publicar este produto Marketplace.");
     return { ...form, preco_centavos: price, promocional_centavos: promo, peso_gramas: form.peso_gramas === "" ? null : Number(form.peso_gramas), ordem: Number(form.ordem) };
   }
   async function run(action, success = "") {
@@ -77,7 +79,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
     await run(async () => { await imageAction("ordenar", product.id, null, { ids: ordered.map(i => i.id) }); await onSaved(); });
   }
   function showPreview() {
-    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categories.find(c => c.id === form.categoria_id)?.nome, imagens: ready }); }
+    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categories.find(c => c.id === form.categoria_id)?.nome, marketplace: Boolean(categories.find(c => c.id === form.categoria_id)?.marketplace), imagens: ready }); }
     catch (err) { setError(err.message); }
   }
   return <CatalogDialog title={`Catálogo · ${catalogCode(product.codigo)} — ${product.nome}`} onClose={close} busy={busy}>
@@ -87,6 +89,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
         <div className="form-grid">
           {field("Título no catálogo (opcional)", "titulo", { maxLength: 180, placeholder: product.nome })}
           <label>Categoria do site<select value={form.categoria_id} onChange={e => change("categoria_id", e.target.value)}><option value="">Sem categoria</option>{categories.map(c => <option value={c.id} key={c.id}>{c.nome}{!c.ativa ? " (inativa)" : ""}</option>)}</select></label>
+          {categories.find(c => c.id === form.categoria_id)?.marketplace && field("Link de compra no Marketplace", "link_marketplace", { type: "url", maxLength: 2048, placeholder: "https://..." })}
           {field("Preço de venda (R$)", "price", { type: "number", min: 0, max: 10000000, step: ".01", required: true })}
           {field("Preço promocional (R$)", "promo", { type: "number", min: 0, max: 10000000, step: ".01" })}
         </div>

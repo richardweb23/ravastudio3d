@@ -82,7 +82,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
           <td><div className="catalog-admin-product">{image && <img src={catalogImageUrl(image.miniatura)} alt="" loading="lazy" />}<div><strong>{catalogCode(item.codigo)} · {record?.titulo || item.nome}</strong>{record?.titulo && <small>{item.nome}</small>}</div></div></td>
           <td>{data.categories.find(c => c.id === record?.categoria_id)?.nome || "—"}</td>
           <td>{record ? catalogMoney(record.promocional_centavos ?? record.preco_centavos) : "—"}</td>
-          <td>{record?.status === "publicado" ? "Publicado" : record?.status === "inativo" ? "Arquivado" : "Não publicado"}</td><td>{record?.ordem || 0}</td>
+          <td>{record?.status === "publicado" && data.categories.find(c => c.id === record.categoria_id)?.marketplace && !record.link_marketplace && <span>Marketplace sem link · </span>}{record?.status === "publicado" ? "Publicado" : record?.status === "inativo" ? "Arquivado" : "Não publicado"}</td><td>{record?.ordem || 0}</td>
           <td><div className="row-actions"><button disabled={busy} onClick={() => setEditing(item.id)}>Editar catálogo</button><button disabled={busy} onClick={() => duplicate(item)}>Duplicar</button>{record && <button disabled={busy} onClick={() => run(async () => { await saveCatalog(item.id, { ...record, status: record.status === "publicado" ? "rascunho" : "publicado" }, record.versao); })}>{record.status === "publicado" ? "Despublicar" : "Publicar"}</button>}{record?.status === "publicado" && <a href={catalogLink(record.slug)} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td>
         </tr>;
       })} />}
@@ -92,17 +92,18 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
     {categoryModal && <CatalogDialog title="Categorias do site" onClose={() => setCategoryModal(false)} busy={busy}>
       <p>Estas categorias são exclusivas do catálogo. Ao desativar uma categoria, seus produtos deixam de aparecer no site.</p>
       <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(async () => {
-        const payload = { nome: categoryEdit.nome.trim(), slug: categoryEdit.slug || catalogSlug(categoryEdit.nome), ativa: categoryEdit.ativa };
+        const payload = { nome: categoryEdit.nome.trim(), slug: categoryEdit.slug || catalogSlug(categoryEdit.nome), ativa: categoryEdit.ativa, marketplace: Boolean(categoryEdit.marketplace) };
         if (categoryEdit.id) await unwrap(supabase.from("catalogo_categorias").update(payload).eq("id", categoryEdit.id));
         else await unwrap(supabase.from("catalogo_categorias").insert(payload));
         setCategoryEdit({ nome: "", slug: "", ativa: true });
       }); }}>
         <div className="form-grid"><label>Nome<input required maxLength={100} value={categoryEdit.nome} onChange={e => setCategoryEdit({ ...categoryEdit, nome: e.target.value })} /></label><label>Slug<input pattern="[a-z0-9]+(-[a-z0-9]+)*" value={categoryEdit.slug} placeholder={catalogSlug(categoryEdit.nome)} onChange={e => setCategoryEdit({ ...categoryEdit, slug: e.target.value })} /></label></div>
         <label className="catalog-inline-check"><input type="checkbox" checked={categoryEdit.ativa} onChange={e => setCategoryEdit({ ...categoryEdit, ativa: e.target.checked })} />Ativa</label>
+        <label className="catalog-inline-check"><input type="checkbox" checked={Boolean(categoryEdit.marketplace)} onChange={e => setCategoryEdit({ ...categoryEdit, marketplace: e.target.checked })} />Categoria Marketplace</label><small>Produtos desta categoria usam o link de compra cadastrado em cada produto.</small>
         <div className="actions"><button className="primary" disabled={busy}>{categoryEdit.id ? "Salvar categoria" : "Criar categoria"}</button>{categoryEdit.id && <button type="button" onClick={() => setCategoryEdit({ nome: "", slug: "", ativa: true })}>Cancelar edição</button>}</div>
       </form>
       {error && <p role="alert" className="catalog-admin-error">{error}</p>}
-      <ul className="catalog-category-list">{data.categories.map(c => <li key={c.id}><span>{c.nome} · {c.ativa ? "Ativa" : "Inativa"}</span><button disabled={busy} onClick={() => setCategoryEdit(c)}>Editar</button><button disabled={busy} onClick={() => { if (window.confirm(`Excluir a categoria “${c.nome}”? Categorias com produtos vinculados não podem ser excluídas.`)) run(() => unwrap(supabase.from("catalogo_categorias").delete().eq("id", c.id))); }}>Excluir</button></li>)}</ul>
+      <ul className="catalog-category-list">{data.categories.map(c => <li key={c.id}><span>{c.nome} · {c.ativa ? "Ativa" : "Inativa"}{c.marketplace ? " · Marketplace" : ""}</span><button disabled={busy} onClick={() => setCategoryEdit(c)}>Editar</button><button disabled={busy} onClick={() => { if (window.confirm(`Excluir a categoria “${c.nome}”? Categorias com produtos vinculados não podem ser excluídas.`)) run(() => unwrap(supabase.from("catalogo_categorias").delete().eq("id", c.id))); }}>Excluir</button></li>)}</ul>
     </CatalogDialog>}
   </div>;
 }
