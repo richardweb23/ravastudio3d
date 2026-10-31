@@ -104,6 +104,14 @@ test('catálogo: códigos, histórico, permissões, publicação, aliases e cicl
   const id=(await one("insert into public.materiais(nome) values($1) returning id",['Peça '+n])).id;
   await save(id,{slug:'peca-'+n,descricao:'Descrição',preco_centavos:n*100,categoria_id:category,status:'publicado'});
  }
+ // Data de inclusão no catálogo define a ordem, inclusive entre páginas.
+ await db.exec('reset role');
+ for(let n=0;n<26;n++) await db.query("update public.catalogo_produtos set created_at = timestamptz '2025-01-01 00:00:00+00' + ($1::int * interval '1 minute'), destaque=($1=0) where slug=$2",[n,'peca-'+n]);
+ await db.exec('set role authenticated');
+ const recent1=await pub({category,order:'novos'}), recent2=await pub({category,order:'novos',offset:24});
+ assert.equal(recent1.produtos.length,24); assert.equal(recent1.produtos[0].slug,'peca-25');
+ assert.equal(recent1.produtos[23].slug,'peca-2'); assert.deepEqual(recent2.produtos.map(p=>p.slug),['peca-1','peca-0']);
+ assert.equal((await pub({category,order:'destaque'})).produtos[0].slug,'peca-0');
  const page1=await pub({category,order:'preco_asc'});
  assert.equal(page1.total,26);assert.equal(page1.produtos.length,24);assert.equal(page1.produtos[0].preco_centavos,0);
  assert.equal((await pub({category,order:'preco_desc'})).produtos[0].preco_centavos,2500);

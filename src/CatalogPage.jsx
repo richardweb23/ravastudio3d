@@ -9,7 +9,7 @@ export default function CatalogPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
-  const [order, setOrder] = useState("destaque");
+  const [order, setOrder] = useState("novos");
   const [view, setView] = useState(() => window.matchMedia("(max-width: 640px)").matches ? "list" : "grid");
   const [offset, setOffset] = useState(0);
   const [result, setResult] = useState({ produtos: [], categorias: [], total: 0 });
@@ -73,7 +73,7 @@ export default function CatalogPage() {
         <div className="catalog-filters">
           <label>Buscar produto<input type="search" maxLength={150} placeholder="O que você procura?" value={search} onChange={e => setSearch(e.target.value)} /></label>
           <label>Categoria<select value={category} onChange={e => { setCategory(e.target.value); setOffset(0); }}><option value="">Todas as categorias</option>{result.categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
-          <label>Ordenar por<select value={order} onChange={e => { setOrder(e.target.value); setOffset(0); }}><option value="destaque">Destaques</option><option value="preco_asc">Menor preço</option><option value="preco_desc">Maior preço</option></select></label>
+          <label>Ordenar por<select value={order} onChange={e => { setOrder(e.target.value); setOffset(0); }}><option value="novos">Mais recentes</option><option value="destaque">Destaques</option><option value="preco_asc">Menor preço</option><option value="preco_desc">Maior preço</option></select></label>
         </div>
         <div className="catalog-toolbar">
           <p className="catalog-count" role="status">{loading ? "Carregando…" : `${result.total} produto${result.total === 1 ? "" : "s"}`}</p>
