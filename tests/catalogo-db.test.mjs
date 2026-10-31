@@ -126,6 +126,17 @@ test('catálogo: códigos, histórico, permissões, publicação, aliases e cicl
  assert.equal((await pub({search:'Indicado'})).produtos[0].marketplace,false);
  assert.equal((await pub({search:'Indicado'})).produtos[0].link_marketplace,null);
  await save(mid,{...mp,status:'inativo'},mp.versao);
+ // Indicações são independentes de materiais e estoque e aparecem na vitrine.
+ const beforeCounts=await one('select (select count(*) from public.materiais)::int materiais,(select count(*) from public.estoque_por_local)::int estoque');
+ const standalone=(await one("insert into public.catalogo_indicacoes(titulo,slug,descricao,preco_centavos,categoria_id,link_marketplace,status,imagem_externa) values('Peça indicada','peca-indicada','Descrição externa',900,$1,'https://loja.example/item','publicado','https://loja.example/foto.jpg') returning *",[market]));
+ assert.deepEqual(await one('select (select count(*) from public.materiais)::int materiais,(select count(*) from public.estoque_por_local)::int estoque'),beforeCounts);
+ let publicItem=(await pub({search:'Peça indicada'})).produtos[0];
+ assert.equal(publicItem.id,standalone.material_id); assert.equal(publicItem.marketplace,true); assert.equal(publicItem.imagem_externa,'https://loja.example/foto.jpg');
+ assert.equal((await pub({slug:'peca-indicada'})).produtos[0].link_marketplace,'https://loja.example/item');
+ await assert.rejects(db.query("update public.catalogo_indicacoes set link_marketplace='javascript:alert(1)' where material_id=$1",[standalone.material_id]),/check/i);
+ await assert.rejects(db.query("update public.catalogo_indicacoes set categoria_id=$1 where material_id=$2",[category,standalone.material_id]),/Marketplace/i);
+ await db.query('delete from public.catalogo_indicacoes where material_id=$1',[standalone.material_id]);
+ assert.equal((await pub({slug:'peca-indicada'})).total,0);
  const page1=await pub({category,order:'preco_asc'});
  assert.equal(page1.total,26);assert.equal(page1.produtos.length,24);assert.equal(page1.produtos[0].preco_centavos,0);
  assert.equal((await pub({category,order:'preco_desc'})).produtos[0].preco_centavos,2500);

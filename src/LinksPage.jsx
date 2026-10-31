@@ -22,6 +22,7 @@ function Icon({ name }) {
 
 export default function LinksPage() {
   const dialog = useRef(null);
+  const backdropStart = useRef(false);
   const manual = useRef(null);
   const timer = useRef(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -71,7 +72,7 @@ export default function LinksPage() {
     <div className={`links-feedback${!modalOpen && pixCopied ? " links-feedback-success" : ""}`} role="status" aria-live="polite">{!modalOpen && feedback}</div>
     {manualCopy && !modalOpen && manualField}
     <footer className="links-footer"><span className="links-footer-line" /><p>RAVA Studio 3D © 2026</p><p>Feito com criatividade, camada por camada.</p></footer>
-    <dialog ref={dialog} className="links-dialog" aria-labelledby="pix-title" aria-describedby="pix-description" onClose={() => { setModalOpen(false); setManualCopy(false); setFeedback(""); }} onClick={event => { if (event.target === dialog.current) { const rect = dialog.current.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.current.close(); } }}>
+    <dialog ref={dialog} className="links-dialog" aria-labelledby="pix-title" aria-describedby="pix-description" onClose={() => { setModalOpen(false); setManualCopy(false); setFeedback(""); }} onPointerDown={event => { const rect = dialog.current.getBoundingClientRect(); backdropStart.current = event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom); }} onClick={event => { const rect = dialog.current.getBoundingClientRect(); if (backdropStart.current && event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.current.close(); backdropStart.current = false; }}>
       <button className="links-close" autoFocus onClick={() => dialog.current.close()} aria-label="Fechar QR Code">×</button>
       <p className="links-eyebrow">PAGAMENTO VIA PIX</p><h2 id="pix-title">QR Code Pix</h2><p id="pix-description">Escaneie com o aplicativo do seu banco.</p>
       {qrFailed ? <p className="links-qr-error" role="alert">Não foi possível carregar o QR Code. Use a chave Pix abaixo.</p> : <div className="links-qr"><img src={QR} alt="QR Code Pix da RAVA Studio 3D" width="300" height="300" onLoad={() => setQrLoaded(true)} onError={() => setQrFailed(true)} /></div>}

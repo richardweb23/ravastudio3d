@@ -18,10 +18,11 @@ export async function adminCatalog() {
     unwrap(loadAllTableRows(supabase.from("catalogo_produtos").select("*"), ["material_id"])),
     unwrap(loadAllTableRows(supabase.from("catalogo_categorias").select("*"))),
     unwrap(loadAllTableRows(supabase.from("catalogo_imagens").select("*"))),
+    unwrap(loadAllTableRows(supabase.from("catalogo_indicacoes").select("*"), ["material_id"])),
   ]);
   const failed = results.find(r => r.status === "rejected");
   if (failed) throw failed.reason;
-  return { products: results[0].value, categories: results[1].value, images: results[2].value };
+  return { products: results[0].value, categories: results[1].value, images: results[2].value, indicacoes: results[3].value };
 }
 export async function removeCatalogImage(image) {
   await imageAction("remover", image.material_id, image.id);

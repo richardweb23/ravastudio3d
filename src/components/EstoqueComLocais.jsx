@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import DataTable from "./DataTable.jsx";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../lib/formatters.js";
@@ -7,6 +7,7 @@ import ProdutoForm from "./ProdutoForm.jsx";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 
 export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSaved, show }) {
+  const backdropStart = useRef(false);
   const [editing, setEditing] = useState(null);
   const [productSearch, setProductSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -83,7 +84,7 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
         />
       </section>
       {editing && (
-        <div className="modal-backdrop" role="presentation" onClick={event => { if (event.target === event.currentTarget) setEditing(null); }}>
+        <div className="modal-backdrop" role="presentation" onPointerDown={event => { backdropStart.current = event.target === event.currentTarget; }} onClick={event => { if (backdropStart.current && event.target === event.currentTarget) setEditing(null); backdropStart.current = false; }}>
           <div className="modal-card" role="dialog" aria-modal="true" aria-label="Editar produto" onKeyDown={event => { if (event.key === "Escape") setEditing(null); }}>
             <ProdutoForm key={editing.id} produto={editing} materiais={materiais} locais={locais} estoqueLocal={estoqueLocal} show={show} onCancel={() => setEditing(null)} onSaved={() => { setEditing(null); onSaved(); }} />
           </div>

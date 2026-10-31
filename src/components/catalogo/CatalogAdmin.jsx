@@ -8,10 +8,11 @@ import DataTable from "../DataTable.jsx";
 import ProdutoForm from "../ProdutoForm.jsx";
 import CatalogDialog from "./CatalogDialog.jsx";
 import CatalogEditor from "./CatalogEditor.jsx";
+import MarketplaceEditor from "./MarketplaceEditor.jsx";
 import "../../catalogo.css";
 import "./catalog-admin.css";
 export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
-  const [data, setData] = useState({ products: [], categories: [], images: [] });
+  const [data, setData] = useState({ products: [], categories: [], images: [], indicacoes: [] });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -20,6 +21,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState(() => new URLSearchParams(window.location.search).get("produto"));
   const [creating, setCreating] = useState(false);
+  const [marketEditing, setMarketEditing] = useState(null);
   const [categoryModal, setCategoryModal] = useState(false);
   const [categoryEdit, setCategoryEdit] = useState({ nome: "", slug: "", ativa: true });
   const refresh = useCallback(async () => {
@@ -67,7 +69,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
   }
   return <div className="catalog-admin">
     <Header title="Catálogo" subtitle="Publique seus produtos no site, independentemente do estoque." />
-    <div className="actions"><button className="primary" onClick={() => setCreating(true)}>Novo produto</button><button onClick={() => setCategoryModal(true)}>Categorias do site</button><a href="/catalogo/" target="_blank" rel="noopener noreferrer">Abrir catálogo público ↗</a></div>
+    <div className="actions"><button className="primary" onClick={() => setCreating(true)}>Novo produto</button><button onClick={() => setMarketEditing({})}>Nova indicação Marketplace</button><button onClick={() => setCategoryModal(true)}>Categorias do site</button><a href="/catalogo/" target="_blank" rel="noopener noreferrer">Abrir catálogo público ↗</a></div>
     {error && <p role="alert" className="catalog-admin-error">{error} <button disabled={busy} onClick={() => refresh().catch(() => {})}>Tentar novamente</button></p>}
     <section className="panel table-panel">
       <div className="sales-filters">
@@ -87,6 +89,10 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
         </tr>;
       })} />}
     </section>
+    <section className="panel table-panel"><h2>Indicações Marketplace</h2><p>Produtos de terceiros, exibidos apenas na vitrine.</p>
+      <DataTable heads={["Produto", "Categoria", "Preço", "Status", "Ações"]} empty="Nenhuma indicação cadastrada." rows={data.indicacoes.filter(item => normalized(item.titulo).includes(normalized(search)) && (!category || item.categoria_id === category) && (!status || item.status === status)).map(item => <tr key={item.material_id}><td><strong>{item.titulo}</strong></td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td><td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(supabase.from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{item.status==='publicado' && <a href={catalogLink(item.slug)} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>)} />
+    </section>
+    {marketEditing && <MarketplaceEditor record={marketEditing.material_id ? marketEditing : null} categories={data.categories} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
     {product && <CatalogEditor key={product.id} product={product} record={records.get(product.id)} categories={data.categories} images={data.images.filter(i => i.material_id === product.id)} onSaved={refresh} onClose={() => setEditing(null)} />}
     {creating && <CatalogDialog title="Cadastrar produto na Gestão" onClose={() => setCreating(false)}><ProdutoForm locais={locais} show={show} onSaved={async id => { await onSaved(); setCreating(false); setEditing(id); }} /></CatalogDialog>}
     {categoryModal && <CatalogDialog title="Categorias do site" onClose={() => setCategoryModal(false)} busy={busy}>
