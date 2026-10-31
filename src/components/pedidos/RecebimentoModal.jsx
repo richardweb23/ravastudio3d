@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useRef, useState } from 'react';
 import { supabase } from '../../supabase.js';
 import { CASH_BOXES } from '../../lib/vendas.js';
@@ -54,15 +55,15 @@ export default function RecebimentoModal({ order, items, materiais, balance, onC
     <section className="receipt-cost"><h3>Custo de produção dos produtos</h3><ul>{items.map(item => { const product = materiais.find(row => row.id === item.material_id); return <li key={item.id}>{product?.nome || item.materiais?.nome || 'Produto'}{item.subtitulo ? ` — ${item.subtitulo}` : ''} · {formatNumber(item.quantidade)} × {product?.custo_medio == null ? 'custo indisponível' : formatMoney(product.custo_medio)}</li>; })}</ul><strong>Custo total: {cost == null ? 'indisponível' : formatMoney(cost / 100)}</strong><p>Referência baseada no custo atual dos produtos; não representa um débito automático.</p></section>
     <fieldset disabled={busy}>
       <div className="receipt-value-box"><label>Valor recebido (R$)<input type="number" min="0.01" step="0.01" required value={amount} onChange={event => { const value = event.target.value; setAmount(value); if (!edited) recalculate(value); }} /></label>
-      <label>Caixa<select required value={receiptBox} onChange={event => { const box = event.target.value; setReceiptBox(box); setError(''); if (box === 'divisao' && !edited) recalculate(amount); }}><option value="">Selecione o caixa</option>{CASH_BOXES.map(box => <option key={box} value={box}>{box}</option>)}<option value="divisao">Divisão de caixa</option></select></label></div>
+      <label>Caixa<SearchSelect required value={receiptBox} onChange={event => { const box = event.target.value; setReceiptBox(box); setError(''); if (box === 'divisao' && !edited) recalculate(amount); }}><option value="">Selecione o caixa</option>{CASH_BOXES.map(box => <option key={box} value={box}>{box}</option>)}<option value="divisao">Divisão de caixa</option></SearchSelect></label></div>
       {receiptBox === 'divisao' && <div className="receipt-allocation"><h3>Destino do recebimento</h3><div className="receipt-allocation-grid">
         <label>Valor para materiais (R$)<input type="number" min="0" step="0.01" value={materialAmount} onChange={event => { setMaterialAmount(event.target.value); setEdited(true); }} /></label>
-        <label>Caixa para materiais<select value={materialBox} onChange={event => setMaterialBox(event.target.value)}>{CASH_BOXES.map(box=><option key={box}>{box}</option>)}</select></label>
+        <label>Caixa para materiais<SearchSelect value={materialBox} onChange={event => setMaterialBox(event.target.value)}>{CASH_BOXES.map(box=><option key={box}>{box}</option>)}</SearchSelect></label>
         <label>Valor restante (R$)<input type="number" min="0" step="0.01" value={otherAmount} onChange={event => { setOtherAmount(event.target.value); setEdited(true); }} /></label>
-        <label>Caixa para o restante<select value={otherBox} onChange={event => setOtherBox(event.target.value)}>{CASH_BOXES.map(box=><option key={box}>{box}</option>)}</select></label>
+        <label>Caixa para o restante<SearchSelect value={otherBox} onChange={event => setOtherBox(event.target.value)}>{CASH_BOXES.map(box=><option key={box}>{box}</option>)}</SearchSelect></label>
       </div><button type="button" className="link" onClick={() => recalculate(amount)}>Recalcular sugestão</button><p>Distribuído: {formatMoney((reaisToCents(materialAmount) + reaisToCents(otherAmount)) / 100)}</p></div>}
       <div className="receipt-date-method"><label>Data<input type="date" value={date} max={today()} onChange={event=>setDate(event.target.value)} required /></label>
-      <label>Forma<select value={method} onChange={event=>setMethod(event.target.value)}><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option><option value="outro">Outro</option></select></label></div>
+      <label>Forma<SearchSelect value={method} onChange={event=>setMethod(event.target.value)}><option value="pix">Pix</option><option value="dinheiro">Dinheiro</option><option value="cartao">Cartão</option><option value="transferencia">Transferência</option><option value="outro">Outro</option></SearchSelect></label></div>
       <label>Observação<input value={note} onChange={event=>setNote(event.target.value)} /></label>
     </fieldset>
     {error && <p className="negative" role="alert">{error}</p>}

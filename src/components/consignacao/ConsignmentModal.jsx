@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import CaixaSelect from "../CaixaSelect.jsx";
 import { useEffect, useRef, useState } from "react";
@@ -89,7 +90,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
         {["venda", "pagamento"].includes(mode) && <CaixaSelect label={mode === "pagamento" ? "Caixa do repasse" : "Caixa da venda"} value={form.caixa} onChange={update} />}
         {mode === "vinculo" ? <>
           <p>Escolha um local já cadastrado ou crie um local exclusivo para este vendedor. Isso evita misturar o estoque de pessoas diferentes.</p>
-          <label>Local<select name="local_id" value={form.local_id} onChange={update}><option value="">Criar local exclusivo para este vendedor</option>{data.locais.filter(row => row.ativo && !partnerLocations.has(row.id)).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>
+          <label>Local<SearchSelect name="local_id" value={form.local_id} onChange={update}><option value="">Criar local exclusivo para este vendedor</option>{data.locais.filter(row => row.ativo && !partnerLocations.has(row.id)).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</SearchSelect></label>
         </> : mode === "pagamento" ? <>
           <p>Selecione as vendas cujo repasse está sendo quitado integralmente.</p>
           <div className="consignment-payment-options">{pending.map(sale => <label key={sale.id} className="checkbox-line"><input type="checkbox" checked={selected.includes(sale.id)} onChange={event => setSelected(event.target.checked ? [...selected, sale.id] : selected.filter(id => id !== sale.id))} /><span><strong>{data.materiais.find(row => row.id === sale.material_id)?.nome || "Produto"}</strong><small>{new Date(sale.data + "T12:00:00").toLocaleDateString("pt-BR")} · {formatNumber(sale.quantidade)} un.</small></span><b>{money(sale.repasse_total_centavos)}</b></label>)}</div>
@@ -98,7 +99,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
           <ProductSearchSelect items={data.materiais} value={form.material_id} onChange={value => chooseProduct({ target: { value } })} required disabled={Boolean(product)} />
           <p>Disponível neste local: <strong>{formatNumber(available)} un.</strong></p>
           {mode !== "acordo" && <label>{mode === "venda" ? "Quantidade vendida" : mode === "ajuste" ? "Variação de estoque (+ entrada / − saída)" : "Quantidade"}<input type="number" step="1" min={mode === "ajuste" ? -available : 1} max={mode === "venda" || mode === "retirada" ? available : 1000000} name="quantidade" value={form.quantidade} onChange={update} required /></label>}
-          {["entrada", "retirada"].includes(mode) && <label>{mode === "entrada" ? "Retirar do estoque de origem" : "Devolver ao estoque de destino"}<select name="outro_local_id" value={form.outro_local_id} onChange={update} required><option value="">Selecione o local</option>{data.locais.filter(row => row.ativo && row.id !== data.localId).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>}
+          {["entrada", "retirada"].includes(mode) && <label>{mode === "entrada" ? "Retirar do estoque de origem" : "Devolver ao estoque de destino"}<SearchSelect name="outro_local_id" value={form.outro_local_id} onChange={update} required><option value="">Selecione o local</option>{data.locais.filter(row => row.ativo && row.id !== data.localId).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</SearchSelect></label>}
           {["entrada", "acordo", "venda"].includes(mode) && <label>{mode === "venda" ? "Valor de venda por unidade (R$)" : "Preço sugerido de venda (R$)"}<input inputMode="decimal" name="preco" value={form.preco} onChange={update} required /></label>}
           {["entrada", "acordo"].includes(mode) && <label>Repasse por unidade (R$)<input inputMode="decimal" name="repasse" value={form.repasse} onChange={update} required /></label>}
           {mode === "venda" && <div className="consignment-preview"><span>Valor total da venda <strong>{preview(form.preco, form.quantidade)}</strong></span><span>Repasse desta venda <strong>{money(Number(agreement?.repasse_centavos || 0) * Number(form.quantidade || 0))}</strong></span></div>}

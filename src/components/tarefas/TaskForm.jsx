@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { taskAssignees } from "../../lib/tasks.js";
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
@@ -27,7 +28,7 @@ export default function TaskForm({ task, onSaved, onCancel, show, onSavingChange
   return <form className="panel form task-form" onSubmit={save}>
     <h2 id="task-form-title">{task ? "Editar tarefa" : "Nova tarefa"}</h2>
     <label>Título da tarefa<input name="titulo" value={form.titulo} onChange={update} required maxLength={150} placeholder="Ex.: Organizar materiais de impressão" /></label>
-    <label>Pessoa encarregada (opcional)<select name="pessoa_encarregada" value={form.pessoa_encarregada} onChange={update}><option value="">Não informado</option>{taskAssignees.map(person => <option key={person} value={person}>{person}</option>)}</select></label>
+    <label>Pessoa encarregada (opcional)<SearchSelect name="pessoa_encarregada" value={form.pessoa_encarregada} onChange={update}><option value="">Não informado</option>{taskAssignees.map(person => <option key={person} value={person}>{person}</option>)}</SearchSelect></label>
     {!task?.pessoa_encarregada && task?.responsavel && !form.pessoa_encarregada && <p>Responsável do cadastro antigo: <strong>{task.responsavel}</strong>. Será mantido enquanto você não selecionar uma pessoa.</p>}
     <label>Descrição da tarefa<textarea name="descricao" value={form.descricao} onChange={update} required maxLength={5000} rows={5} placeholder="Descreva o que precisa ser feito" /></label>
     <label>Previsão de entrega<input type="date" name="previsao_entrega" value={form.previsao_entrega} onChange={update} required /></label>

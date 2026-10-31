@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { bonecosTransferCost } from '../lib/vendas.js';
 import StatusBadge from './StatusBadge.jsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
@@ -83,7 +84,7 @@ export default function VendasComLocal({
       <div className="split">
         <form className="panel form" onSubmit={save}>
           <h2>Nova venda</h2>
-          <label>Status do pagamento<select value={form.pago} onChange={event => setForm({ ...form, pago: event.target.value })}><option value="false">Pendente</option><option value="true">Pago</option></select></label>
+          <label>Status do pagamento<SearchSelect value={form.pago} onChange={event => setForm({ ...form, pago: event.target.value })}><option value="false">Pendente</option><option value="true">Pago</option></SearchSelect></label>
           <p>Apenas vendas pagas entram no caixa. Em pedidos, use os recebimentos do pedido.</p>
           {form.pago === "true" && <label>Data do recebimento<input type="date" value={form.data_recebimento || today()} min={form.data} max={today()} onChange={e=>setForm({...form,data_recebimento:e.target.value})} required /></label>}
           <CaixaSelect value={form.caixa} onChange={event => setForm({ ...form, caixa: event.target.value })} />
@@ -96,7 +97,7 @@ export default function VendasComLocal({
           />
           <label>
             Vendido a partir de
-            <select
+            <SearchSelect
               value={form.local_estoque_id}
               onChange={(e) =>
                 setForm({ ...form, local_estoque_id: e.target.value })
@@ -115,11 +116,11 @@ export default function VendasComLocal({
                     {item.locais_estoque?.nome} — {fmtNumber(item.quantidade)}
                   </option>
                 ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Quem vendeu
-            <select
+            <SearchSelect
               value={form.vendedor_id}
               onChange={(e) =>
                 setForm({ ...form, vendedor_id: e.target.value })
@@ -131,7 +132,7 @@ export default function VendasComLocal({
                   {vendedor.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <div className="form-grid">
             <label>
@@ -181,11 +182,11 @@ export default function VendasComLocal({
         <h2>Vendas</h2>
         <div className="sales-filters">
           <label>Produto<input type="search" name="produto" placeholder="Buscar pelo nome do produto" value={filters.produto} onChange={updateFilter} /></label>
-          <label>Categoria do produto<select name="categoria" value={filters.categoria} onChange={updateFilter}><option value="">Todas as categorias</option>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
+          <label>Categoria do produto<SearchSelect name="categoria" value={filters.categoria} onChange={updateFilter}><option value="">Todas as categorias</option>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</SearchSelect></label>
           <label>De<input type="date" name="inicio" value={filters.inicio} onChange={updateFilter} /></label>
           <label>Até<input type="date" name="fim" value={filters.fim} onChange={updateFilter} /></label>
-          <label>Local<select name="local" value={filters.local} onChange={updateFilter}><option value="">Todos os locais</option>{locais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-          <label>Vendedor<select name="vendedor" value={filters.vendedor} onChange={updateFilter}><option value="">Todos os vendedores</option><option value="sem-vendedor">Não informado</option>{vendedores.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label>Local<SearchSelect name="local" value={filters.local} onChange={updateFilter}><option value="">Todos os locais</option>{locais.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label>
+          <label>Vendedor<SearchSelect name="vendedor" value={filters.vendedor} onChange={updateFilter}><option value="">Todos os vendedores</option><option value="sem-vendedor">Não informado</option>{vendedores.map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label>
           <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
         </div>
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}

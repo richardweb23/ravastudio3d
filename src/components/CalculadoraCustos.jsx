@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import ProductSearchSelect from "./ProductSearchSelect.jsx";
 import StatusBadge from './StatusBadge.jsx';
 import DataTable from "./DataTable.jsx";
@@ -342,7 +343,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                     </label>
                     <label className="calculator-field">
                       Material
-                      <select
+                      <SearchSelect
                         value={item.type}
                         onChange={(event) =>
                           updateList(
@@ -358,7 +359,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                             <option key={type}>{type}</option>
                           ),
                         )}
-                      </select>
+                      </SearchSelect>
                     </label>
                     <label className="calculator-field">
                       Cor <small>opcional</small>
@@ -591,7 +592,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                     />
                     <label className="calculator-field">
                       Aplicação
-                      <select
+                      <SearchSelect
                         value={item.scope}
                         onChange={(event) =>
                           updateList(
@@ -604,7 +605,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                       >
                         <option value="unit">Por unidade</option>
                         <option value="project">Por lote/projeto</option>
-                      </select>
+                      </SearchSelect>
                     </label>
                     <button
                       className="remove-button"
@@ -652,13 +653,13 @@ export default function CalculadoraCustos({ materiais, show }) {
               )}
               <label className="calculator-field">
                 Rateio de custos fixos
-                <select
+                <SearchSelect
                   value={form.fixedMode}
                   onChange={(event) => update("fixedMode", event.target.value)}
                 >
                   <option value="value">Valor fixo</option>
                   <option value="percent">Percentual sobre custos</option>
-                </select>
+                </SearchSelect>
               </label>
               <NumberInput
                 label="Rateio"
@@ -668,7 +669,7 @@ export default function CalculadoraCustos({ materiais, show }) {
               />
               <label className="calculator-field">
                 Modelagem
-                <select
+                <SearchSelect
                   value={form.modelingMode}
                   onChange={(event) =>
                     update("modelingMode", event.target.value)
@@ -676,7 +677,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                 >
                   <option value="fixed">Valor fixo</option>
                   <option value="hours">Horas trabalhadas</option>
-                </select>
+                </SearchSelect>
               </label>
               {form.modelingMode === "hours" ? (
                 <>
@@ -709,7 +710,7 @@ export default function CalculadoraCustos({ materiais, show }) {
               />
               <label className="calculator-field">
                 Arredondamento
-                <select
+                <SearchSelect
                   value={form.roundTo}
                   onChange={(event) => update("roundTo", event.target.value)}
                 >
@@ -717,7 +718,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                   <option value="0.5">Para R$ 0,50</option>
                   <option value="1">Para R$ 1,00</option>
                   <option value="5">Para R$ 5,00</option>
-                </select>
+                </SearchSelect>
               </label>
               <label className="calculator-toggle">
                 <input

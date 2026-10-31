@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
@@ -103,7 +104,7 @@ export default function PedidoEditor({
         <div className="form-grid">
           <label>
             Local de saída
-            <select
+            <SearchSelect
               value={draft.local_estoque_id || ""}
               onChange={(e) => update({ local_estoque_id: e.target.value })}
             >
@@ -113,11 +114,11 @@ export default function PedidoEditor({
                   {local.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Vendedor
-            <select
+            <SearchSelect
               value={draft.vendedor_id || ""}
               onChange={(e) => update({ vendedor_id: e.target.value })}
             >
@@ -127,7 +128,7 @@ export default function PedidoEditor({
                   {vendedor.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
         </div>
         <label>

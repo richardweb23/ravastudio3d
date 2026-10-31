@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import ProductSearchSelect from "./ProductSearchSelect.jsx";
 import { useMemo, useState } from "react";
 import { formatMoney, formatNumber } from "../lib/formatters.js";
@@ -66,7 +67,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
       <section className="panel local-stock-controls">
         <label>
           Local atual
-          <select
+          <SearchSelect
             value={activeLocalId}
             onChange={(event) => {
               setLocalId(event.target.value);
@@ -78,7 +79,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
             {locais.map((local) => (
               <option key={local.id} value={local.id}>{local.nome}</option>
             ))}
-          </select>
+          </SearchSelect>
         </label>
         <ProductSearchSelect items={materiais} value={materialId} onChange={setMaterialId} />
       </section>

@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { orderAdvanceWarning } from "../../lib/orderBoard.js";
 import StatusBadge from '../StatusBadge.jsx';
 import RecebimentoModal from "./RecebimentoModal.jsx";
@@ -160,18 +161,18 @@ export default function PedidosComLocal({
           <label className="order-search">Buscar cliente<input type="search" placeholder="Nome do cliente" value={search} onChange={event => setSearch(event.target.value)} /></label>
           <label>
             Status do pedido
-            <select className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <SearchSelect className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="todos">Todos</option>
               <option value="recebido">Recebidos</option>
               <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
               <option value="pronto">Prontos para entrega</option>
               <option value="entregue">Entregues</option>
-            </select>
+            </SearchSelect>
           </label>
           <label>Status pagamento
-            <select className="filter-select" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}>
+            <SearchSelect className="filter-select" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}>
               <option value="todos">Todos</option><option value="pendente">Pendente</option><option value="parcial">Parcial</option><option value="pago">Quitado</option>
-            </select>
+            </SearchSelect>
           </label>
           <button type="button" disabled={statusFilter === "todos" && paymentFilter === "todos" && !search} onClick={() => { setStatusFilter("todos"); setPaymentFilter("todos"); setSearch(""); }}>Limpar filtros</button>
         </div>
@@ -188,12 +189,12 @@ export default function PedidosComLocal({
               <td>
                 <div className="order-table-status">
                   <Status value={order.status} />
-                  <select className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
+                  <SearchSelect className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
                     <option value="recebido">Recebido</option>
                     <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
                     <option value="pronto">Pronto para entrega</option>
                     <option value="entregue">Entregue</option>
-                  </select>
+                  </SearchSelect>
                 </div>
               </td>
               <td className="order-money"><strong>{fmtMoney(order.valor_total)}</strong></td>

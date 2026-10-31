@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import DataTable from "../DataTable.jsx";
 import { saleTotal, saleQuantity } from "../../lib/vendas.js";
@@ -61,7 +62,7 @@ export default function HistoricoPage({
         <div className="history-filter-grid">
           <label>
             Mês
-            <select
+            <SearchSelect
               value={filters.mes}
               onChange={(event) => updateFilter("mes", event.target.value)}
             >
@@ -74,12 +75,12 @@ export default function HistoricoPage({
                   )}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <ProductSearchSelect items={materiais} value={filters.material} emptyValue={all} onChange={value => updateFilter("material", value)} />
           <label>
             Vendedor
-            <select
+            <SearchSelect
               value={filters.vendedor}
               onChange={(event) => updateFilter("vendedor", event.target.value)}
             >
@@ -89,11 +90,11 @@ export default function HistoricoPage({
                   {vendedor.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Local de venda
-            <select
+            <SearchSelect
               value={filters.local}
               onChange={(event) => updateFilter("local", event.target.value)}
             >
@@ -103,7 +104,7 @@ export default function HistoricoPage({
                   {local.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
         </div>
         <div className="history-summary">

@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import DataTable from "./DataTable.jsx";
@@ -50,10 +51,10 @@ export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSa
             <input type="search" placeholder="Buscar produto pelo nome" value={productSearch} onChange={event => setProductSearch(event.target.value)} />
           </label>
           <label>Filtrar por categoria
-            <select value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
+            <SearchSelect value={categoryFilter} onChange={event => setCategoryFilter(event.target.value)}>
               <option value="">Todas as categorias</option>
               {PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}
-            </select>
+            </SearchSelect>
           </label>
           <button type="button" disabled={!productSearch && !categoryFilter} onClick={() => { setProductSearch(""); setCategoryFilter(""); }}>Limpar filtros</button>
         </div>

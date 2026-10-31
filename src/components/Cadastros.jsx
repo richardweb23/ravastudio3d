@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 
@@ -131,7 +132,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
           </label>
           <label>
             Tipo
-            <select
+            <SearchSelect
               value={local.tipo}
               onChange={(e) => setLocal({ ...local, tipo: e.target.value })}
             >
@@ -140,7 +141,7 @@ export default function Cadastros({ locais, vendedores, onSaved, show, onNavigat
               <option value="estabelecimento">Estabelecimento</option>
               <option value="rua">Venda na rua</option>
               <option value="outro">Outro</option>
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Responsável

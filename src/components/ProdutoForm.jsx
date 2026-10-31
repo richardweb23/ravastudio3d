@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { formatMoney } from "../lib/formatters.js";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 import { filamentProductionCost, updateProductFilament } from "../lib/productCost.js";
@@ -65,12 +66,12 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
               required
             />
           </label>
-          <label>Categoria do produto<select value={form.categoria} onChange={event => setForm({ ...form, categoria: event.target.value })} required>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</select></label>
+          <label>Categoria do produto<SearchSelect value={form.categoria} onChange={event => setForm({ ...form, categoria: event.target.value })} required>{PRODUCT_CATEGORIES.map(category => <option key={category} value={category}>{category}</option>)}</SearchSelect></label>
           {!editing && (
             <>
               <label>
                 Local atual
-                <select
+                <SearchSelect
                   value={form.local_id}
                   onChange={(e) =>
                     setForm({ ...form, local_id: e.target.value })
@@ -83,7 +84,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
                       {local.nome}
                     </option>
                   ))}
-                </select>
+                </SearchSelect>
               </label>
               <label>
                 Quantidade inicial de produtos
@@ -117,7 +118,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
               </label>
               <label>
                 Local para aplicar o ajuste
-                <select
+                <SearchSelect
                   value={form.local_id}
                   onChange={(e) =>
                     setForm({ ...form, local_id: e.target.value })
@@ -130,7 +131,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
                       {local.nome}
                     </option>
                   ))}
-                </select>
+                </SearchSelect>
                 <small>
                   A alteração será adicionada ou retirada somente deste local.
                 </small>

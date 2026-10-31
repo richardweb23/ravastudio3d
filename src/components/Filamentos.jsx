@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabase.js';
 import Header from './Header.jsx';
@@ -140,13 +141,13 @@ export default function Filamentos() {
     <form className="panel form" onSubmit={saveEntry}>
       <div className="panel-title"><h2>Entrada de filamento</h2><span>1 kg = 1.000 g</span></div>
       <fieldset disabled={busy || loading} className="filament-fields">
-        <label>Marca<select aria-label="Marca" name="marca_id" value={entry.marca_id} required onChange={e => { const b = brands.find(b => b.id === e.target.value); setEntry(v => ({ ...v, marca_id: e.target.value, valor: b ? (Number(b.valor_medio_centavos) / 100).toFixed(2) : '' })); }}><option value="">Selecione a marca</option>{brands.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}</select></label>
+        <label>Marca<SearchSelect aria-label="Marca" name="marca_id" value={entry.marca_id} required onChange={e => { const b = brands.find(b => b.id === e.target.value); setEntry(v => ({ ...v, marca_id: e.target.value, valor: b ? (Number(b.valor_medio_centavos) / 100).toFixed(2) : '' })); }}><option value="">Selecione a marca</option>{brands.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}</SearchSelect></label>
         <div className="filament-brand-action"><button type="button" disabled={!entry.marca_id} onClick={() => { const b = brands.find(b => b.id === entry.marca_id); setBrand({ id: b.id, nome: b.nome, valor: (Number(b.valor_medio_centavos) / 100).toFixed(2) }); open('marca'); }}>Editar marca / valor médio</button></div>
         <label>Nome da cor<input name="cor_nome" value={entry.cor_nome} onChange={update} required maxLength={100} placeholder="Ex.: Azul oceano" /></label>
         <label>Cor<div className="filament-color"><input type="color" aria-label="Cor" name="cor_hex" value={entry.cor_hex} onChange={update} /><span>{entry.cor_hex.toUpperCase()}</span></div></label>
-        <label>Tipo<select aria-label="Tipo" name="tipo" value={entry.tipo} onChange={update}>{['PLA', 'PETG'].map(v => <option key={v}>{v}</option>)}</select></label>
-        <label>Categoria<select aria-label="Categoria" name="categoria" value={entry.categoria} onChange={update}>{categories.map(v => <option key={v}>{v}</option>)}</select></label>
-        <label>Caixa<select aria-label="Caixa" name="caixa" value={entry.caixa} onChange={update} required><option value="">Selecione o caixa</option>{SALES_BOXES.map(v => <option key={v}>{v}</option>)}</select></label>
+        <label>Tipo<SearchSelect aria-label="Tipo" name="tipo" value={entry.tipo} onChange={update}>{['PLA', 'PETG'].map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
+        <label>Categoria<SearchSelect aria-label="Categoria" name="categoria" value={entry.categoria} onChange={update}>{categories.map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
+        <label>Caixa<SearchSelect aria-label="Caixa" name="caixa" value={entry.caixa} onChange={update} required><option value="">Selecione o caixa</option>{SALES_BOXES.map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
         <label>Quantidade (kg)<input type="number" name="quantidade" min="0.001" max="1000000" step="0.001" value={entry.quantidade} onChange={update} required placeholder="Ex.: 1,000" /></label>
         <label>Valor por kg (R$)<input type="number" name="valor" min="0" max="1000000" step="0.01" value={entry.valor} onChange={update} required /></label>
         <label>Data da entrada<input type="date" name="data" max={today()} value={entry.data} onChange={update} required /></label>
@@ -159,11 +160,11 @@ export default function Filamentos() {
       <div className="panel-title"><h2>Estoque de filamentos</h2><button onClick={load} disabled={loading || busy}>Atualizar</button></div>
       <div className="filament-filters">
         <label>Buscar marca ou cor<input name="busca" value={filters.busca} onChange={filter} type="search" placeholder="Digite para filtrar" /></label>
-        <label>Filtrar marca<select aria-label="Filtrar marca" name="marca" value={filters.marca} onChange={filter}><option value="">Todas</option>{brands.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}</select></label>
-        <label>Filtrar tipo<select aria-label="Filtrar tipo" name="tipo" value={filters.tipo} onChange={filter}><option value="">Todos</option>{['PLA', 'PETG'].map(v => <option key={v}>{v}</option>)}</select></label>
-        <label>Filtrar categoria<select aria-label="Filtrar categoria" name="categoria" value={filters.categoria} onChange={filter}><option value="">Todas</option>{categories.map(v => <option key={v}>{v}</option>)}</select></label>
-        <label>Filtrar caixa<select aria-label="Filtrar caixa" name="caixa" value={filters.caixa} onChange={filter}><option value="">Todos</option>{SALES_BOXES.map(v => <option key={v}>{v}</option>)}</select></label>
-        <label>Saldo<select aria-label="Saldo" name="saldo" value={filters.saldo} onChange={filter}><option value="disponivel">Com estoque</option><option value="">Todos</option><option value="zerado">Sem estoque</option></select></label>
+        <label>Filtrar marca<SearchSelect aria-label="Filtrar marca" name="marca" value={filters.marca} onChange={filter}><option value="">Todas</option>{brands.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}</SearchSelect></label>
+        <label>Filtrar tipo<SearchSelect aria-label="Filtrar tipo" name="tipo" value={filters.tipo} onChange={filter}><option value="">Todos</option>{['PLA', 'PETG'].map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
+        <label>Filtrar categoria<SearchSelect aria-label="Filtrar categoria" name="categoria" value={filters.categoria} onChange={filter}><option value="">Todas</option>{categories.map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
+        <label>Filtrar caixa<SearchSelect aria-label="Filtrar caixa" name="caixa" value={filters.caixa} onChange={filter}><option value="">Todos</option>{SALES_BOXES.map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
+        <label>Saldo<SearchSelect aria-label="Saldo" name="saldo" value={filters.saldo} onChange={filter}><option value="disponivel">Com estoque</option><option value="">Todos</option><option value="zerado">Sem estoque</option></SearchSelect></label>
       </div>
       <div className="actions"><button className="link" onClick={() => setFilters(emptyFilters)}>Limpar filtros</button><span>{filtered.length} combinações · {kg(filtered.reduce((s, r) => s + Number(r.quantidade_gramas), 0))}</span></div>
       {loading ? <p role="status">Carregando estoque…</p> : <DataTable heads={['Marca', 'Cor', 'Tipo', 'Categoria', 'Caixa', 'Saldo', 'Custo médio / kg', 'Valor em estoque', 'Ações']} rows={filtered.map(row => <tr key={row.id}>

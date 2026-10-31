@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useRef, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";
@@ -37,9 +38,9 @@ export default function CorrecaoValorPedido({ order, items, paid, onClose, onSav
     <form className="panel form modal-card" role="dialog" aria-modal="true" aria-labelledby="correcao-valor-title" onSubmit={save}>
       <div className="modal-heading"><h2 id="correcao-valor-title">Corrigir valores</h2><button type="button" className="close-modal" disabled={saving} onClick={onClose} aria-label="Fechar">×</button></div>
       <p>{order.cliente} · Pedido entregue</p>
-      <label>Item<select value={itemId} disabled={saving} onChange={event => { const selected = items.find(row => row.id === event.target.value); setItemId(selected.id); setPrice(String(selected.preco_unitario)); }}>
+      <label>Item<SearchSelect value={itemId} disabled={saving} onChange={event => { const selected = items.find(row => row.id === event.target.value); setItemId(selected.id); setPrice(String(selected.preco_unitario)); }}>
         {items.map(row => <option key={row.id} value={row.id}>{row.materiais?.nome || "Produto"}{row.subtitulo ? ` — ${row.subtitulo}` : ""} · {formatNumber(row.quantidade)} un. · {formatMoney(row.preco_unitario)}</option>)}
-      </select></label>
+      </SearchSelect></label>
       <label>Novo valor unitário<input autoFocus type="number" min="0" max="10000000" step="0.01" required value={price} disabled={saving} onChange={event => setPrice(event.target.value)} /></label>
       <p>Total atual: <strong>{formatMoney(order.valor_total)}</strong> · Novo total: <strong>{formatMoney(total)}</strong><br />Desconto mantido: {formatMoney(order.desconto)} · Já recebido: {formatMoney(paid)}</p>
       {total < paid && <p role="alert">O novo total é menor que o valor recebido. Estorne o recebimento em Financeiro antes de corrigir.</p>}

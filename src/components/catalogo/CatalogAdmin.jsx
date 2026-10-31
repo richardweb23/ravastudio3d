@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabase.js";
@@ -74,8 +75,8 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
     <section className="panel table-panel">
       <div className="sales-filters">
         <label>Nome ou código<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar produto" /></label>
-        <label>Categoria do site<select value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas</option>{data.categories.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
-        <label>Status<select value={status} onChange={e => setStatus(e.target.value)}><option value="">Todos</option><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></select></label>
+        <label>Categoria do site<SearchSelect value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas</option>{data.categories.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
+        <label>Status<SearchSelect value={status} onChange={e => setStatus(e.target.value)}><option value="">Todos</option><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></SearchSelect></label>
       </div>
       {loading ? <p role="status">Carregando catálogo…</p> : <DataTable heads={["Produto", "Categoria do site", "Preço", "Status", "Ordem", "Ações"]} empty="Nenhum produto encontrado." rows={products.map(item => {
         const record = records.get(item.id);

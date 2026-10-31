@@ -1,0 +1,7 @@
+.shared-select { display: block; position: relative; min-width: 0; width: 100%; }
+.shared-select > input { display: block; width: 100%; padding-right: 36px !important; }
+.shared-select-arrow { position: absolute; right: 13px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); pointer-events: none; color: #716a60; }
+.shared-select-menu { position: absolute; display: block; z-index: 50; left: 0; right: 0; top: 100%; max-height: 240px; overflow-y: auto; padding: 5px; margin-top: 4px; border: 1px solid #dcd5cb; border-radius: 9px; background: #fff; box-shadow: 0 8px 24px #0002; color: #252b39; }
+.shared-select-menu > span { display: block; padding: 10px 12px; border-radius: 6px; font-size: 13px; line-height: 1.4; cursor: pointer; }
+.shared-select-menu > span.active, .shared-select-menu > span:hover { background: #f4efe8; }
+.shared-select-menu > span.disabled, .shared-select-menu > span.shared-select-empty { color: #888; cursor: default; }

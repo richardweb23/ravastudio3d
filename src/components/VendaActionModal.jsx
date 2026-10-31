@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import CaixaSelect from "./CaixaSelect.jsx";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase.js";
@@ -51,15 +52,15 @@ export default function VendaActionModal({ sale, mode, locais, vendedores, onClo
       <p><strong>{sale.materiais?.nome}</strong> · {formatNumber(sale.quantidade)} un.</p>
       <fieldset disabled={busy}>
         {paymentOnly && form.pago === "true" && <label>Data do recebimento<input type="date" name="data_recebimento" value={form.data_recebimento} min={sale.data} max={today()} onChange={update} required /></label>}
-        {paymentOnly ? <label>Status do pagamento<select name="pago" value={form.pago} onChange={update}><option value="false">Pendente</option><option value="true">Pago</option></select><small>Marcar Pendente corrige um recebimento lançado por engano. Para devolver dinheiro ao cliente, use Caixa e extrato.</small></label> : categoryOnly ? <CaixaSelect value={form.caixa} onChange={update} /> : returning ? <>
-          <label>Retornar para<select name="local_id" value={form.local_id} onChange={update} required autoFocus><option value="">Selecione o estoque de destino</option>{locais.filter(item => item.ativo !== false).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+        {paymentOnly ? <label>Status do pagamento<SearchSelect name="pago" value={form.pago} onChange={update}><option value="false">Pendente</option><option value="true">Pago</option></SearchSelect><small>Marcar Pendente corrige um recebimento lançado por engano. Para devolver dinheiro ao cliente, use Caixa e extrato.</small></label> : categoryOnly ? <CaixaSelect value={form.caixa} onChange={update} /> : returning ? <>
+          <label>Retornar para<SearchSelect name="local_id" value={form.local_id} onChange={update} required autoFocus><option value="">Selecione o estoque de destino</option>{locais.filter(item => item.ativo !== false).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label>
           <p>A devolução é integral. A venda permanecerá no histórico como devolvida e deixará de somar nos totais e no repasse pendente.</p>
           {sale.pedido_id && <p>O pedido e seus pagamentos permanecem no histórico. Esta ação não realiza reembolso ao cliente.</p>}
         </> : <>
           <CaixaSelect value={form.caixa} onChange={update} />
           <label>Preço por produto (R$)<input autoFocus name="preco_unitario" type="number" min="0" max="10000000" step="0.01" required value={form.preco_unitario} onChange={update} /></label>
           <label>Data da venda<input name="data" type="date" max={today()} required value={form.data} onChange={update} /></label>
-          <label>Vendedor<select name="vendedor_id" value={form.vendedor_id} onChange={update}><option value="">Não informado</option>{vendedores.filter(item => item.ativo !== false || item.id === sale.vendedor_id).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label>Vendedor<SearchSelect name="vendedor_id" value={form.vendedor_id} onChange={update}><option value="">Não informado</option>{vendedores.filter(item => item.ativo !== false || item.id === sale.vendedor_id).map(item => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label>
           <p>Produto, quantidade e local de saída permanecem os mesmos. O repasse por unidade mantém o acordo registrado na venda.</p>
           <p>Novo total: <strong>{formatMoney(Number(form.preco_unitario) * Number(sale.quantidade))}</strong></p>
         </>}

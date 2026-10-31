@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
 import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../lib/catalogo.js";
@@ -88,7 +89,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
         <p>Nome na Gestão: <strong>{product.nome}</strong> · Código: <strong>{catalogCode(product.codigo)}</strong></p>
         <div className="form-grid">
           {field("Título no catálogo (opcional)", "titulo", { maxLength: 180, placeholder: product.nome })}
-          <label>Categoria do site<select value={form.categoria_id} onChange={e => change("categoria_id", e.target.value)}><option value="">Sem categoria</option>{categories.map(c => <option value={c.id} key={c.id}>{c.nome}{!c.ativa ? " (inativa)" : ""}</option>)}</select></label>
+          <label>Categoria do site<SearchSelect value={form.categoria_id} onChange={e => change("categoria_id", e.target.value)}><option value="">Sem categoria</option>{categories.map(c => <option value={c.id} key={c.id}>{c.nome}{!c.ativa ? " (inativa)" : ""}</option>)}</SearchSelect></label>
           {categories.find(c => c.id === form.categoria_id)?.marketplace && field("Link de compra no Marketplace", "link_marketplace", { type: "url", maxLength: 2048, placeholder: "https://..." })}
           {field("Preço de venda (R$)", "price", { type: "number", min: 0, max: 10000000, step: ".01", required: true })}
           {field("Preço promocional (R$)", "promo", { type: "number", min: 0, max: 10000000, step: ".01" })}
@@ -109,7 +110,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
             <small id={`catalog-slug-help-${product.id}`}>Sugerido automaticamente pelo título e código do produto: <strong>{suggestedLink}</strong>. Você também pode personalizar usando letras minúsculas, números e hífens.</small>
             {!automaticLink && <button type="button" onClick={applySuggestedLink}>Usar sugestão automática</button>}
           </div>
-          <label>Status<select value={form.status} onChange={e => change("status", e.target.value)}><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></select></label>
+          <label>Status<SearchSelect value={form.status} onChange={e => change("status", e.target.value)}><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></SearchSelect></label>
         </div>
         <div className="catalog-checks"><label><input type="checkbox" checked={form.status === "publicado"} onChange={e => change("status", e.target.checked ? "publicado" : "rascunho")} />Exibir no site</label><label><input type="checkbox" checked={form.personalizavel} onChange={e => change("personalizavel", e.target.checked)} />Personalizável</label><label><input type="checkbox" checked={form.destaque} onChange={e => change("destaque", e.target.checked)} />Destaque</label></div>
         <div className="actions"><button className="primary" type="submit">Salvar produto</button><button type="button" onClick={showPreview}>Visualizar prévia</button><button type="button" onClick={close}>Fechar</button></div>

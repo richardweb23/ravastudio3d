@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useState } from 'react';
 import { supabase } from '../../supabase.js';
 import { catalogCents, catalogSlug, marketplaceUrl } from '../../lib/catalogo.js';
@@ -23,13 +24,13 @@ export default function MarketplaceEditor({ record, categories, onClose, onSaved
     <p>Este produto aparece somente no catálogo e não cria produto nem estoque na Gestão.</p>
     <form className="catalog-admin-form" onSubmit={save}><fieldset disabled={busy}>
       <label>Nome do produto<input required maxLength={180} value={form.titulo} onChange={e=>change('titulo',e.target.value)} /></label>
-      <label>Categoria Marketplace<select required value={form.categoria_id} onChange={e=>change('categoria_id',e.target.value)}><option value="">Selecione uma categoria</option>{categories.filter(c=>c.marketplace && (c.ativa || c.id===form.categoria_id)).map(c=><option key={c.id} value={c.id}>{c.nome}{!c.ativa?' (inativa)':''}</option>)}</select></label>
+      <label>Categoria Marketplace<SearchSelect required value={form.categoria_id} onChange={e=>change('categoria_id',e.target.value)}><option value="">Selecione uma categoria</option>{categories.filter(c=>c.marketplace && (c.ativa || c.id===form.categoria_id)).map(c=><option key={c.id} value={c.id}>{c.nome}{!c.ativa?' (inativa)':''}</option>)}</SearchSelect></label>
       <label>Link de compra<input type="url" required maxLength={2048} placeholder="https://..." value={form.link_marketplace} onChange={e=>change('link_marketplace',e.target.value)} /></label>
       <label>Link da imagem (opcional)<input type="url" maxLength={2048} placeholder="https://..." value={form.imagem_externa} onChange={e=>change('imagem_externa',e.target.value)} /></label>
       <label>Preço de referência (R$)<input type="number" min="0" step="0.01" required value={form.price} onChange={e=>change('price',e.target.value)} /></label>
       <label>Resumo<input maxLength={300} value={form.resumo} onChange={e=>change('resumo',e.target.value)} /></label>
       <label>Descrição<textarea maxLength={10000} value={form.descricao} onChange={e=>change('descricao',e.target.value)} /></label>
-      <label>Status<select value={form.status} onChange={e=>change('status',e.target.value)}><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></select></label>
+      <label>Status<SearchSelect value={form.status} onChange={e=>change('status',e.target.value)}><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></SearchSelect></label>
     </fieldset>{error && <p role="alert" className="catalog-admin-error">{error}</p>}<div className="actions"><button className="primary" disabled={busy}>{busy ? 'Salvando…' : 'Salvar indicação'}</button><button type="button" disabled={busy} onClick={onClose}>Cancelar</button></div></form>
   </CatalogDialog>;
 }

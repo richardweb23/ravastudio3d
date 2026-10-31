@@ -1,3 +1,4 @@
+import SearchSelect from '../SearchSelect.jsx';
 import { useEffect, useState } from "react";
 import { deliveryAlert } from "../../lib/deliveryAlert.js";
 
@@ -37,7 +38,7 @@ export default function TaskBoard({ tarefas = [], error, onStatusChange, onCreat
                 <small>Entrega: {new Date(task.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR")}</small>
                 {alert && <span>{alert === "overdue" ? "Entrega atrasada" : "Entrega próxima"}</span>}
               </div>
-              <div className="task-actions"><label>Etapa<select value={task.status} disabled={busy} onChange={event => move(task, event.target.value)}>{taskStatuses.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>
+              <div className="task-actions"><label>Etapa<SearchSelect value={task.status} disabled={busy} onChange={event => move(task, event.target.value)}>{taskStatuses.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</SearchSelect></label>
                 {onEdit && <button className="link" disabled={busy} onClick={() => onEdit(task)}>Editar</button>}
               </div>
                 {status === "terminado" && <button type="button" className="deliver-button" disabled={busy} onClick={() => move(task, "concluido")}>Concluir</button>}

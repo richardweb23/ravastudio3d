@@ -1,3 +1,4 @@
+import SearchSelect from './SearchSelect.jsx';
 import { useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatNumber as fmtNumber, today } from "../lib/formatters.js";
@@ -76,7 +77,7 @@ export default function ComprasComLocal({
           />
           <label>
             Guardar em
-            <select
+            <SearchSelect
               value={form.local_estoque_id}
               onChange={(e) =>
                 setForm({ ...form, local_estoque_id: e.target.value })
@@ -89,7 +90,7 @@ export default function ComprasComLocal({
                   {local.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Origem / observação
@@ -154,7 +155,7 @@ export default function ComprasComLocal({
           />
           <label>
             De
-            <select
+            <SearchSelect
               value={transfer.origem_id}
               onChange={(e) =>
                 setTransfer({ ...transfer, origem_id: e.target.value })
@@ -173,11 +174,11 @@ export default function ComprasComLocal({
                     {item.locais_estoque?.nome} — {fmtNumber(item.quantidade)}
                   </option>
                 ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Para
-            <select
+            <SearchSelect
               value={transfer.destino_id}
               onChange={(e) =>
                 setTransfer({ ...transfer, destino_id: e.target.value })
@@ -190,7 +191,7 @@ export default function ComprasComLocal({
                   {local.nome}
                 </option>
               ))}
-            </select>
+            </SearchSelect>
           </label>
           <label>
             Quantidade
