@@ -1,3 +1,4 @@
+import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import DataTable from "../DataTable.jsx";
 import { saleTotal, saleQuantity } from "../../lib/vendas.js";
 import { useMemo, useState } from "react";
@@ -75,20 +76,7 @@ export default function HistoricoPage({
               ))}
             </select>
           </label>
-          <label>
-            Produto
-            <select
-              value={filters.material}
-              onChange={(event) => updateFilter("material", event.target.value)}
-            >
-              <option value={all}>Todos os produtos</option>
-              {materiais.map((material) => (
-                <option key={material.id} value={material.id}>
-                  {material.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+          <ProductSearchSelect items={materiais} value={filters.material} emptyValue={all} onChange={value => updateFilter("material", value)} />
           <label>
             Vendedor
             <select

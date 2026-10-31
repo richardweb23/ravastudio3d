@@ -1,3 +1,4 @@
+import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import StatusBadge from '../StatusBadge.jsx';
 import { useRef, useState } from "react";
 import Header from "../Header.jsx";
@@ -92,7 +93,7 @@ export default function LocalDetails({ type, id, onNavigate, onSaved, show }) {
       </tr>)} />
     </section>
     <section className="panel table-panel" ref={movementsRef}>
-      <div className="panel-title"><h2>Histórico de movimentações</h2><label className="consignment-search">Produto<select value={movementProduct} onChange={event => setMovementProduct(event.target.value)}><option value="">Todos os produtos</option>{report.products.map(product => <option key={product.id} value={product.id}>{product.nome}</option>)}</select></label></div>
+      <div className="panel-title"><h2>Histórico de movimentações</h2><ProductSearchSelect items={report.products} value={movementProduct} onChange={setMovementProduct} /></div>
       <DataTable heads={["Data", "Produto", "Tipo", "Quantidade", "Saldo após", "Motivo"]} empty="Nenhuma movimentação registrada." rows={movements.map(movement => <tr key={movement.id}>
         <td>{date(movement.created_at)}</td><td>{name(movement.material_id)}</td><td>{movementLabels[movement.tipo]}</td><td>{Number(movement.quantidade) > 0 ? "+" : ""}{qty(movement.quantidade)}</td><td>{qty(movement.saldo_apos)}</td><td>{movement.observacoes || "—"}</td>
       </tr>)} />

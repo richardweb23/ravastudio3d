@@ -1,3 +1,4 @@
+import ProductSearchSelect from "./ProductSearchSelect.jsx";
 import { useMemo, useState } from "react";
 import { formatMoney, formatNumber } from "../lib/formatters.js";
 import DataTable from "./DataTable.jsx";
@@ -79,17 +80,7 @@ export default function EstoquePorLocal({ materiais, locais, estoqueLocal }) {
             ))}
           </select>
         </label>
-        <label>
-          Produto
-          <select value={materialId} onChange={(event) => setMaterialId(event.target.value)}>
-            <option value="">Todos os produtos</option>
-            {materiais.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ProductSearchSelect items={materiais} value={materialId} onChange={setMaterialId} />
       </section>
       <section className="panel table-panel">
         <h2>Saldo por local</h2>

@@ -1,3 +1,4 @@
+import ProductSearchSelect from "./ProductSearchSelect.jsx";
 import StatusBadge from './StatusBadge.jsx';
 import DataTable from "./DataTable.jsx";
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
@@ -256,32 +257,7 @@ export default function CalculadoraCustos({ materiais, show }) {
               <h2>Dados do projeto</h2>
             </div>
             <div className="calculator-grid calculator-grid-project">
-              <label className="calculator-field calculator-wide">
-                Vincular a produto cadastrado <small>opcional</small>
-                <select
-                  value={form.materialId || ""}
-                  onChange={(event) => {
-                    const material = materiais.find(
-                      (item) => item.id === event.target.value,
-                    );
-                    setForm((current) => ({
-                      ...current,
-                      materialId: event.target.value,
-                      projectName:
-                        material && !current.projectName
-                          ? material.nome
-                          : current.projectName,
-                    }));
-                  }}
-                >
-                  <option value="">Projeto livre / ainda não cadastrado</option>
-                  {materiais.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="calculator-field calculator-wide"><ProductSearchSelect label="Vincular a produto cadastrado (opcional)" items={materiais} value={form.materialId || ""} emptyLabel="Projeto livre / ainda não cadastrado" onChange={value => { const product = materiais.find(item => item.id === value); setForm(current => ({ ...current, materialId: value, projectName: product && !current.projectName ? product.nome : current.projectName })); }} /></div>
               <label className="calculator-field calculator-wide">
                 Nome do projeto
                 <input

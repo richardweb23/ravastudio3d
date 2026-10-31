@@ -35,3 +35,21 @@
 .catalog-category-list li { display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #d8d0c6; }
 .catalog-category-list li span { flex:1; }
 @media(max-width:640px) { .catalog-admin-image-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-admin-form .form-grid{grid-template-columns:1fr}.catalog-category-list li{flex-wrap:wrap} }
+
+/* Espaçamento das tabelas de produtos e indicações do catálogo. */
+.catalog-admin .data-table table { min-width: 920px; table-layout: auto; }
+.catalog-admin .data-table th,
+.catalog-admin .data-table td { padding: 16px 20px; vertical-align: middle; line-height: 1.5; }
+.catalog-admin .data-table th:first-child,
+.catalog-admin .data-table td:first-child { min-width: 230px; }
+.catalog-admin .data-table th:nth-child(2),
+.catalog-admin .data-table td:nth-child(2) { min-width: 150px; }
+.catalog-admin .data-table .table-actions-cell { min-width: 250px; }
+.catalog-admin .data-table .row-actions { flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.catalog-admin .data-table .row-actions a,
+.catalog-admin .data-table .row-actions button { white-space: nowrap; }
+.catalog-admin .table-panel + .table-panel { margin-top: 24px; }
+@media (max-width: 700px) {
+  .catalog-admin .data-table th,
+  .catalog-admin .data-table td { padding: 14px 16px; }
+}

@@ -2593,3 +2593,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 @media (max-width: 400px) { .receipt-date-method { grid-template-columns: 1fr; } }
 .receipt-value-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 400px) { .receipt-value-box { grid-template-columns: 1fr; } }
+.product-search-field { position: relative; display: grid; gap: 7px; min-width: 0; }
+.product-search-field > label { font-size: 12px; font-weight: 600; }
+.product-search-control { position: relative; min-width: 0; }
+.product-search-control input { width: 100%; padding-right: 42px !important; }
+.product-search-clear { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); border: 0; background: transparent; width: 34px; height: 34px; color: #68665f; font-size: 22px; cursor: pointer; }
+.product-search-options { position: absolute; z-index: 30; top: 100%; left: 0; right: 0; max-height: 240px; overflow-y: auto; padding: 5px; margin: 4px 0 0; list-style: none; border: 1px solid #dcd5cb; border-radius: 9px; background: #fff; box-shadow: 0 8px 24px #0002; }
+.product-search-options li { padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #252b39; display: flex; justify-content: space-between; gap: 10px; }
+.product-search-options li.active, .product-search-options li:hover { background: #f4efe8; }
+.product-search-options li small { color: #716a60; white-space: nowrap; }
+.product-search-options li.product-search-empty { color: #777; cursor: default; }

@@ -1,3 +1,4 @@
+import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import { useState } from "react";
 
 export function OrderItemModal({ item, materiais, onClose, onSave }) {
@@ -27,23 +28,7 @@ export function OrderItemModal({ item, materiais, onClose, onSave }) {
             ×
           </button>
         </div>
-        <label>
-          Produto
-          <select
-            value={draft.material_id}
-            onChange={(e) =>
-              setDraft({ ...draft, material_id: e.target.value })
-            }
-            required
-          >
-            <option value="">Selecione</option>
-            {materiais.map((material) => (
-              <option key={material.id} value={material.id}>
-                {material.nome}
-              </option>
-            ))}
-          </select>
-        </label>
+        <ProductSearchSelect items={materiais} value={draft.material_id} onChange={material_id => setDraft({ ...draft, material_id })} required />
         <label>
           Detalhe / variação
           <input

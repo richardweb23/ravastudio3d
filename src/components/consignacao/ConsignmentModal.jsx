@@ -1,3 +1,4 @@
+import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import CaixaSelect from "../CaixaSelect.jsx";
 import { useEffect, useRef, useState } from "react";
 import { consignmentAction } from "../../services/consignacao.js";
@@ -94,7 +95,7 @@ export default function ConsignmentModal({ mode, product, data, onClose, onSaved
           <div className="consignment-payment-options">{pending.map(sale => <label key={sale.id} className="checkbox-line"><input type="checkbox" checked={selected.includes(sale.id)} onChange={event => setSelected(event.target.checked ? [...selected, sale.id] : selected.filter(id => id !== sale.id))} /><span><strong>{data.materiais.find(row => row.id === sale.material_id)?.nome || "Produto"}</strong><small>{new Date(sale.data + "T12:00:00").toLocaleDateString("pt-BR")} · {formatNumber(sale.quantidade)} un.</small></span><b>{money(sale.repasse_total_centavos)}</b></label>)}</div>
           <div className="consignment-preview">Total selecionado <strong>{money(total)}</strong></div>
         </> : <>
-          <label>Produto<select name="material_id" value={form.material_id} onChange={chooseProduct} required disabled={Boolean(product)}><option value="">Selecione um produto</option>{data.materiais.map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>
+          <ProductSearchSelect items={data.materiais} value={form.material_id} onChange={value => chooseProduct({ target: { value } })} required disabled={Boolean(product)} />
           <p>Disponível neste local: <strong>{formatNumber(available)} un.</strong></p>
           {mode !== "acordo" && <label>{mode === "venda" ? "Quantidade vendida" : mode === "ajuste" ? "Variação de estoque (+ entrada / − saída)" : "Quantidade"}<input type="number" step="1" min={mode === "ajuste" ? -available : 1} max={mode === "venda" || mode === "retirada" ? available : 1000000} name="quantidade" value={form.quantidade} onChange={update} required /></label>}
           {["entrada", "retirada"].includes(mode) && <label>{mode === "entrada" ? "Retirar do estoque de origem" : "Devolver ao estoque de destino"}<select name="outro_local_id" value={form.outro_local_id} onChange={update} required><option value="">Selecione o local</option>{data.locais.filter(row => row.ativo && row.id !== data.localId).map(row => <option key={row.id} value={row.id}>{row.nome}</option>)}</select></label>}
