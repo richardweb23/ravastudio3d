@@ -154,6 +154,32 @@ test('caixa e reembolsos: migração, saldos, integridade e recebimentos',async 
   await op('estorno',{data:date,movimento_id:receipt.movimento_id,descricao:'Duplicação corrigida'});
   assert.equal(await saldo('Rivoxel'),before+13000);
  });
+ await t.test('recebimento dividido é único, idempotente e estornado integralmente',async()=>{
+  const order=(await one("insert into public.pedidos(cliente,valor_total) values('Rateio',150) returning id")).id;
+  const base1=await saldo('Bonecos'), base2=await saldo('Materiais Bonecos');
+  const payload={pedido_id:order,data:date,valor_centavos:7500,metodo:'pix',descricao:'Recebimento dividido',rateio:[{caixa:'Materiais Bonecos',valor_centavos:1750},{caixa:'Bonecos',valor_centavos:5750}]};
+  await assert.rejects(op('receber_pedido',{...payload,rateio:[{caixa:'Bonecos',valor_centavos:1}]}),/soma/);
+  await assert.rejects(op('receber_pedido',{...payload,rateio:[{caixa:'Desconhecido',valor_centavos:7500}]}),/caixas válidos/);
+  const key=randomUUID(), receipt=await op('receber_pedido',payload,key);
+  assert.deepEqual(await op('receber_pedido',payload,key),receipt);
+  assert.equal(await saldo('Bonecos'),base1+5750); assert.equal(await saldo('Materiais Bonecos'),base2+1750);
+  assert.equal(Number((await one('select count(*) n from public.pedido_pagamentos where pedido_id=$1',[order])).n),1);
+  const rows=(await db.query("select * from public.financeiro_movimentos where tipo='pedido' and origem_id=$1",[receipt.id])).rows;
+  assert.equal(rows.length,2);
+  const detail=(await one("select public.financeiro_origem('pedido',$1) r",[receipt.id])).r;
+  assert.equal(detail.rateio.length,2);
+  const spend=await op('saida',{data:date,caixa:'Materiais Bonecos',valor_centavos:1750,descricao:'Usado'});
+  await assert.rejects(op('estorno',{data:date,movimento_id:rows[0].id,descricao:'Estorno'}),/insuficiente/);
+  assert.equal(await saldo('Bonecos'),base1+5750);
+  assert.equal((await one('select estornado_em from public.pedido_pagamentos where id=$1',[receipt.id])).estornado_em,null);
+  await op('estorno',{data:date,movimento_id:spend.movimento_id,descricao:'Correção'});
+  await op('estorno',{data:date,movimento_id:rows[0].id,descricao:'Estorno integral'});
+  assert.equal(await saldo('Bonecos'),base1); assert.equal(await saldo('Materiais Bonecos'),base2);
+  await assert.rejects(op('estorno',{data:date,movimento_id:rows[1].id,descricao:'Duplicado'}),/estornado/);
+  const same=await op('receber_pedido',{...payload,rateio:[{caixa:'Rava',valor_centavos:1750},{caixa:'Rava',valor_centavos:5750}]});
+  assert.equal(Number((await one("select count(*) n from public.financeiro_movimentos where tipo='pedido' and origem_id=$1",[same.id])).n),1);
+  await op('estorno',{data:date,movimento_id:same.movimento_id,descricao:'Limpar teste'});
+ });
  await t.test('venda recebe na data real; devolução do estoque não devolve dinheiro',async()=>{
   const source=(await one("select id from public.locais_estoque where tipo='principal' limit 1")).id;
   const product=(await one("select public.salvar_material(null,'Boneco',2,2,$1) id",[source])).id;

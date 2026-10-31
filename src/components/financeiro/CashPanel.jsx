@@ -88,6 +88,7 @@ export default function CashPanel({ view='cash', onNavigate }) {
    {modal.action==='transferencia'&&<label>Caixa de destino<select name="caixa_destino" value={form.caixa_destino} onChange={update} required><option value="">Selecione a caixa</option>{CASH_BOXES.filter(c=>c!==form.caixa).map(c=><option key={c} value={c}>{c}</option>)}</select></label>}
    {modal.action!=='estorno'&&<label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" value={form.valor} onChange={update} required/></label>}
    <label>{modal.action==='estorno'?'Motivo do estorno':'Descrição / observação'}<textarea name="descricao" value={form.descricao} onChange={update} maxLength={2000} required/></label>
+   {modal.action==='estorno'&&modal.row?.tipo==='pedido'&&modal.row?.origem?.rateio?.length > 1&&<p>O estorno desfará todos os destinos deste recebimento.</p>}
    {modal.action==='estorno'&&modal.row?.tipo?.startsWith('transferencia_')&&<p>O estorno desfará os dois lados da transferência.</p>}
    {modal.action==='estorno'&&<p>Correção de lançamento: registra o movimento inverso e preserva o histórico. Para devolver dinheiro ao cliente, use a ação específica.</p>}
    {modal.action==='devolucao_cliente'&&<p>A saída será feita pelo caixa {modal.row.caixa}. Isso não altera o estoque nem marca a venda como não paga.</p>}

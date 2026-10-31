@@ -2498,7 +2498,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 }
 
 .order-details-items .order-item-completed { width: 20px; height: 20px; accent-color: #238257; cursor: pointer; }
-.order-board .kanban-columns { grid-template-columns: repeat(4, minmax(270px, 1fr)); overflow-x: auto; align-items: start; padding-bottom: 12px; }
+.order-board .kanban-columns { grid-template-columns: repeat(4, minmax(270px, 1fr)); overflow-x: auto; align-items: stretch; padding-bottom: 12px; }
 .order-board .kanban-column { min-width: 0; }
 .order-board .kanban-title { min-height: 40px; gap: 8px; align-items: flex-start; }
 .stage-help { display: inline-block; position: relative; font-weight: normal; }
@@ -2547,3 +2547,49 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
   .order-dialog-body { padding: 16px 18px; }
   .order-dialog-footer { padding: 12px 18px; }
 }
+.receipt-modal { width: min(800px, 100%); }
+.receipt-cost, .receipt-allocation { padding: 14px; border: 1px solid #e6dfd5; border-radius: 9px; background: #faf8f4; }
+.receipt-cost h3, .receipt-allocation h3 { margin: 0 0 10px; }
+.receipt-cost ul { padding-left: 20px; margin: 8px 0; }
+.receipt-cost p, .receipt-allocation p { margin: 8px 0 0; font-size: 12px; }
+.receipt-allocation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.receipt-allocation .link { margin-top: 10px; }
+@media (max-width: 600px) { .receipt-allocation-grid { grid-template-columns: 1fr; } }
+
+.receipt-modal { width: min(860px, calc(100vw - 48px)); max-height: min(85vh, 900px); max-height: min(85dvh, 900px); padding: 0; overflow: hidden; display: flex; flex-direction: column; gap: 0; }
+.receipt-heading { margin: 0; padding: 20px 26px; border-bottom: 1px solid #eae3d9; flex: none; align-items: flex-start; }
+.receipt-heading h2 { margin: 4px 0 5px; }
+.receipt-heading p { margin: 0; color: #777064; font-size: 13px; }
+.receipt-eyebrow { color: #907255; font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.receipt-heading .close-modal { flex: 0 0 40px; width: 40px; height: 40px; cursor: pointer; }
+.receipt-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 26px 26px; display: grid; gap: 20px; }
+.receipt-summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; }
+.receipt-summary > div { display: grid; gap: 5px; }
+.receipt-summary span { color: #79736a; font-size: 12px; }
+.receipt-summary strong { color: #27251f; font-size: 15px; overflow-wrap: anywhere; }
+.receipt-summary > div:last-child strong { color: #8f6d4e; font-size: 18px; }
+.receipt-cost, .receipt-allocation { padding: 18px; border: 1px solid #e6dfd5; border-radius: 12px; background: #faf8f4; }
+.receipt-cost h3, .receipt-allocation h3 { margin: 0 0 12px; font-size: 15px; }
+.receipt-cost ul { margin: 0 0 12px; padding-left: 18px; color: #57534c; line-height: 1.7; font-size: 13px; }
+.receipt-cost > strong { display: block; font-size: 14px; }
+.receipt-cost p, .receipt-allocation p { margin: 10px 0 0; color: #777064; font-size: 12px; line-height: 1.5; }
+.receipt-modal fieldset { display: grid; gap: 18px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.receipt-modal fieldset label { display: grid; gap: 7px; min-width: 0; }
+.receipt-allocation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.receipt-allocation .link { margin-top: 14px; }
+.receipt-footer { flex: none; justify-content: flex-end; padding: 16px 26px; border-top: 1px solid #eae3d9; background: #fff; }
+.receipt-modal button:focus-visible { outline: 2px solid #a78158; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .receipt-modal { width: calc(100vw - 24px); max-height: 88vh; max-height: 88dvh; }
+  .receipt-heading { padding: 16px 18px; }
+  .receipt-body { padding: 18px; gap: 16px; }
+  .receipt-summary > div:last-child { text-align: right; margin-left: auto; }
+  .receipt-cost, .receipt-allocation { padding: 15px; }
+  .receipt-allocation-grid { grid-template-columns: 1fr; gap: 12px; }
+  .receipt-footer { padding: 12px 18px; }
+  .receipt-footer button { flex: 1; }
+}
+.receipt-date-method { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 400px) { .receipt-date-method { grid-template-columns: 1fr; } }
+.receipt-value-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 400px) { .receipt-value-box { grid-template-columns: 1fr; } }
