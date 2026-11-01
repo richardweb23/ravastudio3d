@@ -73,27 +73,30 @@ export default function PedidosComLocal({
     );
 
   async function changeStatus(order, status) {
-    if (order.status === "entregue")
-      return show("Pedidos entregues não podem voltar de status.", "error");
+    if (order.status === "entregue") {
+      show("Pedidos entregues não podem voltar de status.", "error");
+      return false;
+    }
     const warning = orderAdvanceWarning(order, subtarefas, status);
-    if (status === 'pronto' && warning && !window.confirm(warning + '\n\nAvançar mesmo assim?')) return;
+    if (status === 'pronto' && warning && !window.confirm(warning + '\n\nAvançar mesmo assim?')) return false;
     if (status === "entregue") {
       const info = financial(order);
       if (info.balance > 0 && !window.confirm(`Restam ${fmtMoney(info.balance)}. Entregar mesmo assim?`))
-        return;
-      if (!window.confirm([warning, "Confirmar entrega e baixa de estoque?"].filter(Boolean).join("\n\n"))) return;
+        return false;
+      if (!window.confirm([warning, "Confirmar entrega e baixa de estoque?"].filter(Boolean).join("\n\n"))) return false;
     }
     const caixa = status === "entregue" ? await requestCaixa() : null;
-    if (status === "entregue" && !caixa) return;
+    if (status === "entregue" && !caixa) return false;
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
       p_status: status,
       ...(caixa ? { p_caixa: caixa } : {}),
     });
-    if (error) show(error.message, "error");
+    if (error) { show(error.message, "error"); return false; }
     else {
       show("Status atualizado.");
       onSaved();
+      return true;
     }
   }
   async function removeOrder(order) {
@@ -151,7 +154,7 @@ export default function PedidosComLocal({
           show={show}
         />
       )}
-      {detailOrder && <PedidoDetalhes key={detailOrder.id} subtasks={subtarefas.filter(task => task.pedido_id === detailId)} order={detailOrder} items={itens.filter(item => item.pedido_id === detailId)} financial={financial(detailOrder)} onClose={() => setDetailId(null)} />}
+      {detailOrder && <PedidoDetalhes key={detailOrder.id} subtasks={subtarefas.filter(task => task.pedido_id === detailId)} onStatusChange={changeStatus} order={detailOrder} items={itens.filter(item => item.pedido_id === detailId)} financial={financial(detailOrder)} onClose={() => setDetailId(null)} />}
       {paymentOrder && <RecebimentoModal key={paymentOrder.id} order={paymentOrder} items={itens.filter(item => item.pedido_id === paymentOrder.id)} materiais={materiais} balance={financial(paymentOrder).balance} onClose={() => setPaymentOrder(null)} onSaved={() => { setPaymentOrder(null); show('Pagamento registrado.'); onSaved(); }} />}
       <section className="panel table-panel orders-table">
         <div className="panel-title">
@@ -177,7 +180,7 @@ export default function PedidosComLocal({
           </label>
           <button type="button" disabled={statusFilter === "todos" && paymentFilter === "todos" && !search} onClick={() => { setStatusFilter("todos"); setPaymentFilter("todos"); setSearch(""); }}>Limpar filtros</button>
         </div>
-        <DataTable heads={["Cliente", "Entrega", "Status do pedido", "Total", "Status pagamento", "Pago", "Restante", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
+        <DataTable heads={["Cliente", "Entrega", "Etapa", "Pagamento", "Total", "Pago", "Restante", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
           const info = financial(order);
           return (
             <tr key={order.id}>
@@ -187,23 +190,11 @@ export default function PedidosComLocal({
               <td className="order-date">
                 {order.previsao_entrega ? new Date(order.previsao_entrega + "T12:00:00").toLocaleDateString("pt-BR") : "Não informada"}
               </td>
+              <td><Status value={order.status} /></td>
               <td>
-                <div className="order-table-status">
-                  <Status value={order.status} />
-                  <SearchSelect className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
-                    <option value="recebido">Recebido</option>
-                    <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
-                    <option value="embalagem">Embalagem</option>
-                    <option value="pronto">Pronto para entrega</option>
-                    <option value="entregue">Entregue</option>
-                  </SearchSelect>
-                </div>
+                <StatusBadge value={info.status}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</StatusBadge>
               </td>
               <td className="order-money"><strong>{fmtMoney(order.valor_total)}</strong></td>
-              <td className="order-money">
-                <StatusBadge value={info.status}>{info.status === "pago" ? "Quitado" : info.status === "parcial" ? "Parcial" : "Pendente"}</StatusBadge>
-
-              </td>
               <td className="order-money">{fmtMoney(info.paid)}</td>
               <td className="order-money"><strong className={info.balance ? "negative" : ""}>{fmtMoney(info.balance)}</strong></td>
               <td>

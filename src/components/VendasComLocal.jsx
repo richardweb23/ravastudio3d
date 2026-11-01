@@ -4,7 +4,8 @@ import StatusBadge from './StatusBadge.jsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
 import CaixaSelect from "./CaixaSelect.jsx";
 import VendaActionModal from "./VendaActionModal.jsx";
-import { saleTotal, saleCostCents, salesCostTotal } from "../lib/vendas.js";
+import VendaDetalhesModal from "./VendaDetalhesModal.jsx";
+import { saleTotal, salesCostTotal } from "../lib/vendas.js";
 import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../lib/formatters.js";
@@ -25,6 +26,8 @@ export default function VendasComLocal({
   const request=useRef(null);
   const [saving,setSaving]=useState(false);
   const [action, setAction] = useState(null);
+  const [detailId, setDetailId] = useState(null);
+  const detailSale = vendas.find(sale => sale.id === detailId);
   const [filters, setFilters] = useState({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" });
   const updateFilter = (event) => setFilters(current => ({ ...current, [event.target.name]: event.target.value }));
   const invalidPeriod = filters.inicio && filters.fim && filters.inicio > filters.fim;
@@ -81,13 +84,15 @@ export default function VendasComLocal({
         title="Vendas"
         subtitle="Registre quem vendeu, de onde saiu e por qual valor."
       />
-      <div className="split">
-        <form className="panel form" onSubmit={save}>
+      <div className="split sales-entry">
+        <form className="panel form sale-entry-form" onSubmit={save}>
           <h2>Nova venda</h2>
+          <fieldset className="sale-entry-group"><legend>Pagamento</legend><div className="sale-entry-fields">
           <label>Status do pagamento<SearchSelect value={form.pago} onChange={event => setForm({ ...form, pago: event.target.value })}><option value="false">Pendente</option><option value="true">Pago</option></SearchSelect></label>
-          <p>Apenas vendas pagas entram no caixa. Em pedidos, use os recebimentos do pedido.</p>
-          {form.pago === "true" && <label>Data do recebimento<input type="date" value={form.data_recebimento || today()} min={form.data} max={today()} onChange={e=>setForm({...form,data_recebimento:e.target.value})} required /></label>}
           <CaixaSelect value={form.caixa} onChange={event => setForm({ ...form, caixa: event.target.value })} />
+          {form.pago === "true" && <label>Data do recebimento<input type="date" value={form.data_recebimento || today()} min={form.data} max={today()} onChange={e=>setForm({...form,data_recebimento:e.target.value})} required /></label>}
+          </div><p>Apenas vendas pagas entram no caixa. Para pedidos, registre o recebimento no pedido.</p></fieldset>
+          <fieldset className="sale-entry-group"><legend>Produto e venda</legend><div className="sale-entry-fields">
           <MaterialSelect
             materiais={materiais}
             value={form.material_id}
@@ -134,7 +139,6 @@ export default function VendasComLocal({
               ))}
             </SearchSelect>
           </label>
-          <div className="form-grid">
             <label>
               Quantidade de produtos
               <input
@@ -161,9 +165,8 @@ export default function VendasComLocal({
                 required
               />
             </label>
-          </div>
           <label>
-            Data
+            Data da venda
             <input
               type="date"
               value={form.data}
@@ -171,14 +174,15 @@ export default function VendasComLocal({
               required
             />
           </label>
+          </div></fieldset>
           <button className="primary" disabled={saving}>{saving?"Registrando…":"Registrar venda"}</button>
         </form>
         <Info
           title="Pedidos entregues"
-          text="Na tela de pedidos também é possível escolher o local de saída e o vendedor. Ao entregar, o Supabase gera a venda automaticamente."
+          text="Na tela de pedidos você também pode escolher o local de saída e o vendedor. A venda é gerada automaticamente ao entregar o pedido."
         />
       </div>
-      <section className="panel table-panel">
+      <section className="panel table-panel sales-table">
         <h2>Vendas</h2>
         <div className="sales-filters">
           <label>Produto<input type="search" name="produto" placeholder="Buscar pelo nome do produto" value={filters.produto} onChange={updateFilter} /></label>
@@ -190,33 +194,33 @@ export default function VendasComLocal({
           <button type="button" className="link" onClick={() => setFilters({ inicio: "", fim: "", categoria: "", produto: "", local: "", vendedor: "" })}>Limpar filtros</button>
         </div>
         {invalidPeriod && <p className="negative" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
-        <p>Total das vendas filtradas: <strong>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</strong></p>
-        <p>Total dos custos dos itens filtrados: <strong>{fmtMoney(salesCostTotal(filteredSales))}</strong></p>
-        <p className="sales-cost-note">O total de custos usa o custo de produção atual do produto. Para Bonecos, a referência de transferência abaixo usa o custo registrado na venda. Vendas devolvidas não entram no total de custos.</p>
+        <section className="sales-summary" aria-labelledby="sales-summary-title">
+          <div className="sales-summary-heading"><h3 id="sales-summary-title">Resumo das vendas</h3><span>Conforme os filtros selecionados</span></div>
+          <dl className="sales-summary-metrics">
+            <div><dt>Total das vendas</dt><dd>{fmtMoney(filteredSales.reduce((total, sale) => total + saleTotal(sale), 0))}</dd><span>Inclui vendas pagas e pendentes</span></div>
+            <div><dt>Custo dos produtos</dt><dd>{fmtMoney(salesCostTotal(filteredSales))}</dd><span>Baseado no custo de produção atual</span></div>
+          </dl>
+          <p className="sales-cost-note">Vendas devolvidas não entram nos totais. Para Bonecos, a referência de transferência na tabela usa o custo registrado na venda.</p>
+        </section>
         <DataTable
-          heads={["Data", "Produto", "Categoria do produto", "Local", "Vendedor", "Quantidade", "Custo unitário", "Custo total", "Referência materiais Bonecos", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
+          heads={["Data", "Produto", "Qtd.", "Total", "Caixa", "Pagamento", "Status", "Ações"]}
           rows={filteredSales.map((item) => (
             <tr key={item.id}>
               <td>
                 {new Date(item.data + "T12:00:00").toLocaleDateString("pt-BR")}
               </td>
-              <td>{item.materiais?.nome}</td>
-              <td>{saleProductCategory(item)}</td>
-              <td>{item.locais_estoque?.nome || "—"}</td>
-              <td>{item.vendedores?.nome || "—"}</td>
-              <td>{fmtNumber(item.quantidade)}</td>
-              <td>{fmtMoney(item.materiais?.custo_medio || 0)}</td>
-              <td>{fmtMoney(saleCostCents(item) / 100)}</td>
-              <td>{item.caixa !== 'Bonecos' ? '—' : bonecosTransferCost(item) ? <><strong>{fmtMoney(bonecosTransferCost(item).total)}</strong><small>{fmtMoney(bonecosTransferCost(item).unit)} por unidade · referência para transferência{item.devolvida_em ? ' · venda devolvida; ajuste manual' : ''}</small></> : <small>Custo histórico indisponível</small>}</td>
-              <td>
+              <td className="sale-product"><strong>{item.materiais?.nome || 'Produto'}</strong><small>{saleProductCategory(item)}</small>{item.caixa === 'Bonecos' && <small>{bonecosTransferCost(item) ? `Referência materiais: ${fmtMoney(bonecosTransferCost(item).total)}${item.devolvida_em ? ' · ajuste manual' : ''}` : 'Custo histórico indisponível'}</small>}</td>
+              <td className="sale-number">{fmtNumber(item.quantidade)}</td>
+              <td className="sale-number">
                 {fmtMoney(
                   saleTotal(item),
                 )}
               </td>
-              <td><button type="button" className="link" title="Alterar caixa da venda" aria-label={"Alterar caixa da venda de " + item.materiais?.nome} onClick={() => setAction({ sale: item, mode: "caixa" })}>{item.caixa || "Rivoxel"} ✎</button></td>
-              <td>{item.pedido_id ? <a href="#/pedidos"><StatusBadge value={item.pagamento_pedido || "pendente"}>{{pago:"Pago",parcial:"Parcial",pendente:"Pendente"}[item.pagamento_pedido] || "Pendente"}</StatusBadge> · ver pedido</a> : <button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}><StatusBadge value={item.pago === true ? "pago" : "pendente"}>{item.pago === true ? "Pago" : "Pendente"}</StatusBadge> ✎</button>}</td>
-              <td>{item.devolvida_em ? <><StatusBadge value="devolvida">Devolvida</StatusBadge><small>Retorno: {locais.find(local => local.id === item.retorno_local_id)?.nome || "Local registrado"}</small></> : <StatusBadge value="ativa">Ativa</StatusBadge>}</td>
+              <td>{item.caixa || "Rivoxel"}</td>
+              <td>{item.pedido_id ? <StatusBadge value={item.pagamento_pedido || "pendente"}>{{pago:"Pago",parcial:"Parcial",pendente:"Pendente"}[item.pagamento_pedido] || "Pendente"}</StatusBadge> : <button type="button" className="link" disabled={Boolean(item.devolvida_em)} onClick={() => setAction({ sale: item, mode: "pagamento" })}><StatusBadge value={item.pago === true ? "pago" : "pendente"}>{item.pago === true ? "Pago" : "Pendente"}</StatusBadge> ✎</button>}</td>
+              <td>{item.devolvida_em ? <StatusBadge value="devolvida">Devolvida</StatusBadge> : <StatusBadge value="ativa">Ativa</StatusBadge>}</td>
               <td><div className="product-table-actions">
+                <button type="button" className="registration-icon-button" title="Ver detalhes" aria-label={"Ver detalhes da venda de " + (item.materiais?.nome || 'produto')} onClick={() => setDetailId(item.id)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg></button>
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : item.pedido_id ? "Venda vinculada a pedido" : "Editar venda"} aria-label={"Editar venda de " + item.materiais?.nome} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id || item.pedido_id)} onClick={() => setAction({ sale: item, mode: "edicao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z" /><path d="m13 6 5 5" /></svg></button>
                 <button type="button" className="registration-icon-button" title={item.devolvida_em ? "Venda já devolvida" : item.consignacao_vendas?.pagamento_id ? "Repasse já pago" : "Retornar venda ao estoque"} aria-label={"Retornar venda de " + item.materiais?.nome + " ao estoque"} disabled={Boolean(item.devolvida_em || item.consignacao_vendas?.pagamento_id)} onClick={() => setAction({ sale: item, mode: "devolucao" })}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 4 9l5 5M4 9h10a6 6 0 0 1 0 12" /></svg></button>
               </div></td>
@@ -225,6 +229,7 @@ export default function VendasComLocal({
           empty="Nenhuma venda encontrada para os filtros selecionados."
         />
       </section>
+      {detailSale && <VendaDetalhesModal sale={detailSale} locais={locais} onEditBox={() => { setDetailId(null); setAction({ sale: detailSale, mode: "caixa" }); }} onClose={() => setDetailId(null)} />}
       {action && <VendaActionModal {...action} locais={locais} vendedores={vendedores} onClose={() => setAction(null)} onSaved={onSaved} show={show} />}
     </>
   );

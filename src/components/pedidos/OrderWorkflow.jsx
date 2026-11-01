@@ -13,7 +13,11 @@ export default function OrderWorkflow({ order, onStatusChange, onSituationSave }
     try { await action(); } catch (err) { setMessage({ error: true, text: err.message || 'Não foi possível salvar.' }); }
     finally { lock.current = false; setBusy(false); }
   }
-  if (!onSituationSave) return <section className="order-workflow"><h3>Situação: {orderSituations[order.situacao || 'normal']}</h3>{order.situacao_descricao && <p>{order.situacao_descricao}</p>}</section>;
+  if (!onSituationSave) return <section className="order-workflow" aria-busy={busy}>
+    {onStatusChange && <fieldset disabled={busy || order.status === 'entregue'}><legend>Etapa do pedido</legend><label>Etapa<SearchSelect value={order.status} onChange={event => run(() => onStatusChange(order, event.target.value))}>{orderStages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}<option value="entregue">Entregue</option></SearchSelect></label></fieldset>}
+    <div className="workflow-current-situation"><h3>Situação: {orderSituations[order.situacao || 'normal']}</h3>{order.situacao_descricao && <p>{order.situacao_descricao}</p>}</div>
+    {busy && <p role="status">Salvando…</p>}{message && <p role="alert">{message.text}</p>}
+  </section>;
   return <section className="order-workflow" aria-busy={busy}>
     <fieldset disabled={busy || order.status === 'entregue'}>
       <legend>Etapa e situação atual</legend>
