@@ -4,7 +4,8 @@ import { orderAdvanceWarning, orderTooltip, orderStages } from './orderBoard.js'
 test('avisos de avanço consideram apenas pendências do pedido e preservam liberdade de etapa', () => {
  const order = {id:'a', situacao:'bloqueado', situacao_descricao:'Falta filamento'};
  const tasks = [{pedido_id:'a',concluido:false},{pedido_id:'a',concluido:true},{pedido_id:'b',concluido:false}];
- assert.equal(orderStages.length,4);
+ assert.deepEqual(orderStages.map(([status]) => status), ['recebido', 'em_preparacao', 'em_producao', 'embalagem', 'pronto']);
+ assert.equal(orderAdvanceWarning(order,tasks,'embalagem'),'');
  assert.equal(orderAdvanceWarning(order,tasks,'em_preparacao'),'');
  for(const status of ['pronto','entregue']) {
   assert.match(orderAdvanceWarning(order,tasks,status),/^1 subtarefa/);

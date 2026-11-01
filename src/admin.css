@@ -2498,7 +2498,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 }
 
 .order-details-items .order-item-completed { width: 20px; height: 20px; accent-color: #238257; cursor: pointer; }
-.order-board .kanban-columns { grid-template-columns: repeat(4, minmax(270px, 1fr)); overflow-x: auto; align-items: stretch; padding-bottom: 12px; }
+.order-board .kanban-columns { grid-template-columns: repeat(5, minmax(270px, 1fr)); overflow-x: auto; align-items: stretch; padding-bottom: 12px; }
 .order-board .kanban-column { min-width: 0; }
 .order-board .kanban-title { min-height: 40px; gap: 8px; align-items: flex-start; }
 .stage-help { display: inline-block; position: relative; font-weight: normal; }
@@ -2527,7 +2527,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .order-workflow textarea { width: 100%; resize: vertical; }
 .order-workflow form > button { display: block; margin-top: 10px; }
 .order-details-dialog .order-subtasks { padding-inline: 0; }
-@media (max-width: 1100px) { .order-board .kanban-columns { grid-template-columns: repeat(4, 290px); } }
+@media (max-width: 1100px) { .order-board .kanban-columns { grid-template-columns: repeat(5, 290px); } }
 
 /* Keep the order dialog actions visible while its contents scroll. */
 .order-details-dialog { width: min(960px, calc(100vw - 48px)); max-width: none; max-height: min(80vh, 850px); max-height: min(80dvh, 850px); padding: 0; overflow: hidden; }
@@ -2593,6 +2593,37 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 @media (max-width: 400px) { .receipt-date-method { grid-template-columns: 1fr; } }
 .receipt-value-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 400px) { .receipt-value-box { grid-template-columns: 1fr; } }
+
+/* Order details: keep each group of information easy to scan. */
+.order-details-dialog .order-dialog-body { display: grid; align-content: start; gap: 16px; background: #f8f6f2; }
+.order-details-dialog .order-details-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 16px 18px; border: 1px solid #eee7de; border-radius: 10px; background: white; }
+.order-details-dialog .order-details-meta > div { min-width: 0; }
+.order-details-dialog :is(.order-details-section, .order-subtasks, .order-workflow) { min-width: 0; margin: 0; padding: 18px; border: 1px solid #eee7de; border-radius: 10px; background: white; }
+.order-details-dialog :is(.order-details-section, .order-subtasks) h3 { margin: 0 0 14px; font-size: 15px; }
+.order-details-dialog .order-workflow fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.order-details-dialog .order-workflow legend { padding: 0; margin-bottom: 14px; color: #252b39; font-size: 15px; font-weight: 700; }
+.order-details-dialog .order-workflow form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.order-details-dialog .order-workflow label { min-width: 0; margin: 0; }
+.order-details-dialog .workflow-description, .order-details-dialog .workflow-actions { grid-column: 1 / -1; }
+.order-details-dialog .workflow-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.order-details-dialog .workflow-actions small { color: #657084; }
+.order-details-dialog .workflow-actions button { margin: 0; }
+.order-details-dialog .order-details-products .table-wrap { margin: 0; }
+.order-details-dialog .order-details-items th, .order-details-dialog .order-details-items td { padding: 11px 10px; }
+.order-details-dialog .order-details-totals { margin: 0; padding: 0; gap: 18px; }
+.order-details-dialog .order-details-note textarea { width: 100%; resize: vertical; }
+.order-details-dialog .order-details-note .actions { margin-top: 12px; }
+.order-details-dialog .order-subtasks > p { margin: -6px 0 12px; color: #657084; }
+.order-details-dialog .order-subtasks ul:empty { display: none; }
+.order-details-dialog .order-subtask-row { padding: 10px 12px; border: 1px solid #eee7de; border-radius: 8px; background: #fcfbf9; }
+.order-details-dialog .subtask-add { margin-top: 14px; }
+@media (max-width: 600px) {
+  .order-details-dialog .order-details-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .order-details-dialog :is(.order-details-section, .order-subtasks, .order-workflow) { padding: 16px; }
+  .order-details-dialog .order-workflow form { grid-template-columns: minmax(0, 1fr); }
+  .order-details-dialog .workflow-description, .order-details-dialog .workflow-actions { grid-column: auto; }
+  .order-details-dialog .order-details-totals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .product-search-field { position: relative; display: grid; gap: 7px; min-width: 0; }
 .product-search-field > label { font-size: 12px; font-weight: 600; }
 .product-search-control { position: relative; min-width: 0; }

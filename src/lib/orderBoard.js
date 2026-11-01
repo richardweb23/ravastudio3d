@@ -3,6 +3,7 @@ export const orderStages = [
   ['recebido', 'Recebidos', 'Pedido cadastrado, aguardando preparação.'],
   ['em_preparacao', 'Em preparação', 'Conferir peças do kit, cores, arquivos e materiais antes de produzir.'],
   ['em_producao', 'Em produção', 'Impressão, acabamento e montagem em andamento.'],
+  ['embalagem', 'Embalagem', 'Produtos prontos, aguardando embalagem antes da entrega.'],
   ['pronto', 'Prontos para entrega', 'Pedido conferido, embalado e disponível para entregar.'],
 ];
 export const orderSituations = { normal: 'Normal', aguardando: 'Aguardando', bloqueado: 'Bloqueado' };

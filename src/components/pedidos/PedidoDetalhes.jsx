@@ -54,8 +54,8 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
       <div><span>Previsão de entrega</span><strong>{dateLabel(order.previsao_entrega)}</strong></div>
     </div>
     <OrderWorkflow order={order} onStatusChange={onStatusChange} onSituationSave={onSituationSave} />
-    <OrderSubtasks order={order} tasks={subtasks} onChange={onSubtaskChange} editable />
-    <h3>Itens do pedido</h3>
+    <section className="order-details-section order-details-products" aria-labelledby="order-items-title">
+    <h3 id="order-items-title">Itens do pedido</h3>
     <div className="table-wrap"><table className="order-details-items">
       <thead><tr><th scope="col">Item</th><th scope="col">Quantidade</th><th scope="col">Valor unitário</th><th scope="col">Subtotal</th>{onItemStatusChange && <th scope="col">Concluído</th>}</tr></thead>
       <tbody>{items.length ? items.map(item => <tr key={item.id}>
@@ -64,6 +64,9 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
         {onItemStatusChange && <td><input className="order-item-completed" type="checkbox" checked={Boolean(item.concluido)} disabled={busy || order.status === "entregue"} aria-label={`Concluído: ${item.materiais?.nome || "Produto"} ${item.subtitulo || ""}`} onChange={event => changeCompletion(item, event.target.checked)} /></td>}
       </tr>) : <tr><td colSpan={onItemStatusChange ? 5 : 4}>Nenhum item neste pedido.</td></tr>}</tbody>
     </table></div>
+    </section>
+    <section className="order-details-section order-details-financial" aria-labelledby="order-financial-title">
+    <h3 id="order-financial-title">Resumo financeiro</h3>
     <dl className="order-details-totals">
       <div><dt>Desconto</dt><dd>{formatMoney(order.desconto || 0)}</dd></div>
       <div><dt>Total do pedido</dt><dd>{formatMoney(order.valor_total)}</dd></div>
@@ -71,12 +74,14 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
       <div><dt>Pago</dt><dd>{formatMoney(financial.paid)}</dd></div>
       <div><dt>Restante</dt><dd className={financial.balance ? "negative" : ""}>{formatMoney(financial.balance)}</dd></div>
     </dl>
-    {onDescriptionSave ? <form className="order-details-note" onSubmit={saveDescription}>
+    </section>
+    {onDescriptionSave ? <form className="order-details-note order-details-section" onSubmit={saveDescription}>
       <h3><label htmlFor="order-description">Descrição do pedido / observações</label></h3>
       <textarea id="order-description" rows={4} value={description} onChange={event => { setDescription(event.target.value); setDescriptionMessage(null); }} placeholder="Descreva os detalhes e a personalização do pedido" />
       <div className="actions"><button className="primary" type="submit" disabled={busy || description === (order.observacao || "")}>Salvar descrição</button></div>
       {descriptionMessage && <p role={descriptionMessage.error ? "alert" : "status"}>{descriptionMessage.text}</p>}
-    </form> : order.observacao && <section className="order-details-note"><h3>Observação / personalização</h3><p>{order.observacao}</p></section>}
+    </form> : order.observacao && <section className="order-details-note order-details-section"><h3>Observação / personalização</h3><p>{order.observacao}</p></section>}
+    <OrderSubtasks order={order} tasks={subtasks} onChange={onSubtaskChange} editable />
     </div>
     <div className="actions order-dialog-footer"><button type="button" onClick={onClose}>Fechar</button></div>
     </div>

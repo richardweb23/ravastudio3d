@@ -11,6 +11,7 @@ export const orderStatusLabel = {
   recebido: "Recebido",
   em_preparacao: "Em preparação",
   em_producao: "Em produção",
+  embalagem: "Embalagem",
   pronto: "Pronto para entrega",
   entregue: "Entregue",
 };

@@ -25,6 +25,8 @@ test('board: migrações, subtarefas, isolamento, permissões e entrega', async 
  assert.equal(a.situacao,'normal');
  await db.query("select public.alterar_status_pedido($1,'em_preparacao')",[a.id]);
  assert.equal((await one('select status from public.pedidos where id=$1',[a.id])).status,'em_preparacao');
+ await db.query("select public.alterar_status_pedido($1,'embalagem')",[a.id]);
+ assert.equal((await one('select status from public.pedidos where id=$1',[a.id])).status,'embalagem');
  const task=await one("insert into public.pedido_subtarefas(pedido_id,titulo) values($1,'  Imprimir tampa  ') returning *",[a.id]);
  assert.equal(task.titulo,'Imprimir tampa');
  assert.equal((await one('select count(*)::int n from public.pedido_subtarefas where pedido_id=$1',[b.id])).n,0);

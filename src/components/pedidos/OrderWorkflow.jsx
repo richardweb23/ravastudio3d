@@ -17,12 +17,11 @@ export default function OrderWorkflow({ order, onStatusChange, onSituationSave }
   return <section className="order-workflow" aria-busy={busy}>
     <fieldset disabled={busy || order.status === 'entregue'}>
       <legend>Etapa e situação atual</legend>
-      {onStatusChange && <label>Etapa<SearchSelect value={order.status} onChange={event => run(async () => { const ok = await onStatusChange(order, event.target.value); if (ok === false) throw new Error('Não foi possível alterar a etapa.'); })}>{orderStages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}{order.status === 'entregue' && <option value="entregue">Entregue</option>}</SearchSelect></label>}
       <form onSubmit={event => { event.preventDefault(); run(async () => { await onSituationSave(order, situation, description.trim()); setMessage({ text: 'Situação salva.' }); }); }}>
+        {onStatusChange && <label>Etapa<SearchSelect value={order.status} onChange={event => run(async () => { const ok = await onStatusChange(order, event.target.value); if (ok === false) throw new Error('Não foi possível alterar a etapa.'); })}>{orderStages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}{order.status === 'entregue' && <option value="entregue">Entregue</option>}</SearchSelect></label>}
         <label>Situação<SearchSelect value={situation} onChange={event => { setSituation(event.target.value); setMessage(null); }}>{Object.entries(orderSituations).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</SearchSelect></label>
-        <label>Descrição da situação<textarea rows={2} maxLength={250} required={situation !== 'normal'} value={description} onChange={event => { setDescription(event.target.value); setMessage(null); }} placeholder="Ex.: Aguardando filamento branco para imprimir a tampa" /></label>
-        <small>{description.length}/250 caracteres</small>
-        <button className="primary" type="submit" disabled={situation !== 'normal' && !description.trim()}>Salvar situação</button>
+        <label className="workflow-description">Descrição da situação<textarea rows={2} maxLength={250} required={situation !== 'normal'} value={description} onChange={event => { setDescription(event.target.value); setMessage(null); }} placeholder="Ex.: Aguardando filamento branco para imprimir a tampa" /></label>
+        <div className="workflow-actions"><small>{description.length}/250 caracteres</small><button className="primary" type="submit" disabled={situation !== 'normal' && !description.trim()}>Salvar situação</button></div>
       </form>
     </fieldset>
     {busy && <p role="status">Salvando…</p>}

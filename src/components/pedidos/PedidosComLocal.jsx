@@ -13,7 +13,7 @@ import Status from "../Status.jsx";
 import PedidoEditor from "./PedidoEditor.jsx";
 import PedidoDetalhes from "./PedidoDetalhes.jsx";
 
-const statusPriority = { recebido: 0, em_preparacao: 1, em_producao: 2, pronto: 3, entregue: 4 };
+const statusPriority = { recebido: 0, em_preparacao: 1, em_producao: 2, embalagem: 3, pronto: 4, entregue: 5 };
 
 export default function PedidosComLocal({
   subtarefas = [],
@@ -165,6 +165,7 @@ export default function PedidosComLocal({
               <option value="todos">Todos</option>
               <option value="recebido">Recebidos</option>
               <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
+              <option value="embalagem">Embalagem</option>
               <option value="pronto">Prontos para entrega</option>
               <option value="entregue">Entregues</option>
             </SearchSelect>
@@ -192,6 +193,7 @@ export default function PedidosComLocal({
                   <SearchSelect className="filter-select" aria-label={`Alterar status do pedido de ${order.cliente}`} value={order.status} disabled={order.status === "entregue"} onChange={(e) => changeStatus(order, e.target.value)}>
                     <option value="recebido">Recebido</option>
                     <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
+                    <option value="embalagem">Embalagem</option>
                     <option value="pronto">Pronto para entrega</option>
                     <option value="entregue">Entregue</option>
                   </SearchSelect>
