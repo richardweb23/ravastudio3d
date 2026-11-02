@@ -1,9 +1,10 @@
 import SearchSelect from './components/SearchSelect.jsx';
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
 import { publicCatalog, catalogImageUrl } from "./services/catalogo.js";
 import { catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
+import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
 import ProductDetail from "./components/catalogo/ProductDetail.jsx";
 import CatalogDialog from "./components/catalogo/CatalogDialog.jsx";
 export default function CatalogPage() {
@@ -18,6 +19,8 @@ export default function CatalogPage() {
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [slug, setSlug] = useState(() => new URLSearchParams(window.location.search).get("produto"));
+  const directEntry = useRef(new URLSearchParams(window.location.search).get("produto"));
+  const lastSearch = useRef("");
   const [detail, setDetail] = useState(null);
   const [detailStatus, setDetailStatus] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
@@ -27,11 +30,20 @@ export default function CatalogPage() {
   }, [search]);
   useEffect(() => {
     let current = true;
+    let analyticsTimer;
     setLoading(true); setError("");
     publicCatalog({ p_busca: query, p_categoria: category || null, p_ordem: order, p_offset: offset }).then(data => {
-      if (current) setResult(previous => ({ ...data, produtos: offset ? [...new Map([...previous.produtos, ...data.produtos].map(p => [p.id, p])).values()] : data.produtos }));
+      if (current) {
+        setResult(previous => ({ ...data, produtos: offset ? [...new Map([...previous.produtos, ...data.produtos].map(p => [p.id, p])).values()] : data.produtos }));
+        if (!query) lastSearch.current = '';
+        const term = catalogSearchTerm(query);
+        if (!offset && term && term !== lastSearch.current) analyticsTimer = window.setTimeout(() => {
+          lastSearch.current = term;
+          trackCatalogEvent('catalogo_busca', { termo_busca: term, resultado_busca: data.total ? 'com_resultados' : 'sem_resultados' });
+        }, 1000);
+      }
     }).catch(() => { if (current) setError("Não foi possível carregar os produtos. Tente novamente."); }).finally(() => { if (current) setLoading(false); });
-    return () => { current = false; };
+    return () => { current = false; window.clearTimeout(analyticsTimer); };
   }, [query, category, order, offset, retry]);
   useEffect(() => {
     const change = () => setSlug(new URLSearchParams(window.location.search).get("produto"));
@@ -47,6 +59,10 @@ export default function CatalogPage() {
     publicCatalog({ p_slug: slug }).then(data => {
       if (!current) return;
       const product = data.produtos[0];
+      if (product && directEntry.current === slug) {
+        directEntry.current = null;
+        trackCatalogEvent('catalogo_acesso_direto', catalogClickParameters(product, 'acesso_direto', 'detalhes'));
+      }
       setDetail(product || null);
       setDetailStatus(product ? "" : "Este produto não está disponível no catálogo.");
       if (product && product.slug !== slug) {
@@ -57,6 +73,8 @@ export default function CatalogPage() {
     return () => { current = false; };
   }, [slug, retry]);
   function open(product) {
+    directEntry.current = null;
+    trackCatalogClick(product, 'ver_detalhes', 'lista');
     setDetail(null); setDetailLoading(true); setDetailStatus("");
     const url = new URL(window.location.href); url.searchParams.set("produto", product.slug);
     window.history.pushState(null, "", url); setSlug(product.slug);
@@ -73,7 +91,7 @@ export default function CatalogPage() {
       <section id="produtos" className="catalog-products">
         <div className="catalog-filters">
           <label>Buscar produto<input type="search" maxLength={150} placeholder="O que você procura?" value={search} onChange={e => setSearch(e.target.value)} /></label>
-          <label>Categoria<SearchSelect value={category} onChange={e => { setCategory(e.target.value); setOffset(0); }}><option value="">Todas as categorias</option>{result.categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
+          <label>Categoria<SearchSelect value={category} onChange={e => { const value = e.target.value; if (value !== category) trackCatalogEvent('catalogo_filtro_categoria', { produto_categoria: result.categorias.find(c => String(c.id) === value)?.nome || 'Todas as categorias' }); setCategory(value); setOffset(0); }}><option value="">Todas as categorias</option>{result.categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
           <label>Ordenar por<SearchSelect value={order} onChange={e => { setOrder(e.target.value); setOffset(0); }}><option value="novos">Mais recentes</option><option value="destaque">Destaques</option><option value="preco_asc">Menor preço</option><option value="preco_desc">Maior preço</option></SearchSelect></label>
         </div>
         <div className="catalog-toolbar">
@@ -90,14 +108,14 @@ export default function CatalogPage() {
               <div className={`catalog-card-photo${product.marketplace ? ' catalog-card-photo-marketplace' : ''}`}>{product.imagens[0] || product.imagem_externa ? <img loading="lazy" decoding="async" src={product.imagens[0] ? catalogImageUrl(product.imagens[0].miniatura) : product.imagem_externa} alt={product.imagens[0]?.alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
               <div className="catalog-card-copy"><p className="catalog-eyebrow">{product.categoria || "Feito em 3D"}</p><h2>{product.nome}</h2>{product.resumo && <p>{product.resumo}</p>}{!product.marketplace && <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>}<span className="catalog-view">Ver detalhes +</span></div>
             </button>
-            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer">Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer">Pedir pelo WhatsApp ↗</a>}
+            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'comprar_marketplace', 'lista')}>Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'pedir_whatsapp', 'lista')}>Pedir pelo WhatsApp ↗</a>}
           </article>)}</div>
-          {result.produtos.length < result.total && <button className="catalog-more" disabled={loading} onClick={() => setOffset(result.produtos.length)}>Carregar mais produtos</button>}
+          {result.produtos.length < result.total && <button className="catalog-more" disabled={loading} onClick={() => { trackCatalogEvent('catalogo_carregar_mais'); setOffset(result.produtos.length); }}>Carregar mais produtos</button>}
         </>}
       </section>
       <section className="catalog-review" aria-labelledby="catalog-review-title">
         <div><span className="catalog-review-star" aria-hidden="true">☆</span><h2 id="catalog-review-title">Sua experiência merece ser compartilhada</h2><p>Já comprou com a RAVA? Conte como foi e ajude outras pessoas a conhecer nosso trabalho.</p></div>
-        <a href="https://g.page/r/CaRNI72q_6jFEBI/review" target="_blank" rel="noopener noreferrer" aria-label="Avalie a RAVA no Google (abre em nova aba)">Avalie a RAVA no Google ↗</a>
+        <a href="https://g.page/r/CaRNI72q_6jFEBI/review" target="_blank" rel="noopener noreferrer" aria-label="Avalie a RAVA no Google (abre em nova aba)" onClick={() => trackCatalogEvent('catalogo_avaliacao_google')}>Avalie a RAVA no Google ↗</a>
       </section>
     </main>
     <footer className="catalog-footer"><span>RAVA Studio 3D © {new Date().getFullYear()}</span><span>Feito com criatividade, camada por camada.</span><a href="/">Conheça nosso site ↗</a></footer>

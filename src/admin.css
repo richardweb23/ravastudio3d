@@ -2548,6 +2548,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .order-details-items .order-item-completed { width: 20px; height: 20px; accent-color: #238257; cursor: pointer; }
 .order-board .kanban-columns { grid-template-columns: repeat(5, minmax(270px, 1fr)); overflow-x: auto; align-items: stretch; padding-bottom: 12px; }
 .order-board .kanban-column { min-width: 0; }
+.order-board .kanban-column.drop-enabled { outline-color: #cfbca4; transition: background-color 160ms ease, outline-color 160ms ease; }
+.order-board .kanban-column.drop-target { background: #f6eee2; outline: 2px solid #a67d50; outline-offset: -2px; }
+.order-board .order-drop-placeholder { display: grid; gap: 4px; min-height: 76px; margin-bottom: 8px; padding: 14px; border: 2px dashed #a67d50; border-radius: 8px; background: #fffaf2; color: #6f5135; pointer-events: none; }
+.order-board .order-drop-placeholder strong { font-size: 13px; }
+.order-board .order-drop-placeholder span { overflow-wrap: anywhere; font-size: 12px; }
+.order-board .kanban-card.drop-before { box-shadow: inset 0 5px 0 #a67d50; border-color: #a67d50; }
+.order-board .order-drop-end { height: 5px; margin: 2px 0 8px; border-radius: 4px; background: #a67d50; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .order-board .kanban-column.drop-enabled { transition: none; } }
 .order-board .kanban-title { min-height: 40px; gap: 8px; align-items: flex-start; }
 .stage-help { display: inline-block; position: relative; font-weight: normal; }
 .stage-help > button { border: 0; background: transparent; color: #63503f; padding: 4px 6px; min-height: 30px; cursor: help; }

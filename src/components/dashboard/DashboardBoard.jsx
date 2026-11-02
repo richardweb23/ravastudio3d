@@ -4,7 +4,7 @@ import StageHelp from './StageHelp.jsx';
 import OrderSubtasks from '../pedidos/OrderSubtasks.jsx';
 import { saleTotal } from "../../lib/vendas.js";
 import { CashBalances } from "../financeiro/CashPanel.jsx";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
 import Header from "../Header.jsx";
@@ -37,7 +37,10 @@ export default function DashboardBoard({
 }) {
   const { materiais, vendas, pedidos } = data;
   const [dragged, setDragged] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null);
   const [savingPriority, setSavingPriority] = useState(false);
+  const boardRef = useRef(null);
+  const priorityAnimation = useRef(null);
   const [clock, setClock] = useState(() => new Date());
   const [selectedOrder, setDetailOrder] = useState(null);
   const detailOrder = selectedOrder
@@ -55,6 +58,23 @@ export default function DashboardBoard({
         b.previsao_entrega || "9999-12-31",
       ),
     );
+  useLayoutEffect(() => {
+    const pending = priorityAnimation.current;
+    if (!pending) return;
+    const ordered = [...pedidos].filter(order => order.status === pending.status).sort((a, b) =>
+      (a.prioridade ?? Infinity) - (b.prioridade ?? Infinity) ||
+      (a.previsao_entrega || '9999-12-31').localeCompare(b.previsao_entrega || '9999-12-31'));
+    if (ordered.map(order => order.id).join('|') !== pending.ids.join('|')) return;
+    priorityAnimation.current = null;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    boardRef.current?.querySelectorAll('[data-order-id]').forEach(card => {
+      const previousTop = pending.positions.get(card.dataset.orderId);
+      if (previousTop == null) return;
+      const offset = previousTop - card.getBoundingClientRect().top;
+      if (Math.abs(offset) < 1) return;
+      card.animate([{ transform: `translateY(${offset}px)` }, { transform: 'translateY(0)' }], { duration: 350, easing: 'ease-out' });
+    });
+  }, [pedidos]);
   const stockValue = materiais.reduce(
     (sum, item) =>
       sum + Number(item.quantidade_atual) * Number(item.custo_medio),
@@ -70,24 +90,42 @@ export default function DashboardBoard({
     );
 
   const open = byPriority(pedidos.filter((item) => item.status !== "entregue"));
+  async function savePriority(status, reordered) {
+    const positions = new Map();
+    boardRef.current?.querySelectorAll('[data-order-id]').forEach(card => positions.set(card.dataset.orderId, card.getBoundingClientRect().top));
+    priorityAnimation.current = { status, ids: reordered.map(order => order.id), positions };
+    setSavingPriority(true);
+    try {
+      const saved = await onPriorityChange(status, reordered.map((order) => order.id));
+      if (!saved) priorityAnimation.current = null;
+    } finally {
+      setSavingPriority(false);
+    }
+  }
   async function movePriority(cards, index, direction) {
     if (savingPriority) return;
     const reordered = [...cards];
     const target = index + direction;
     if (target < 0 || target >= cards.length) return;
     [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
-    setSavingPriority(true);
-    try {
-      await onPriorityChange(cards[index].status, reordered.map((order) => order.id));
-    } finally {
-      setSavingPriority(false);
-    }
+    await savePriority(cards[index].status, reordered);
   }
   const low = materiais.filter((item) => Number(item.quantidade_atual) <= 0);
-  async function drop(status) {
-    if (savingPriority || !dragged || dragged.status === status) return setDragged(null);
-    await onStatusChange(dragged, status);
+  async function drop(status, cards) {
+    const target = dropTarget;
+    setDropTarget(null);
+    if (savingPriority || !dragged) return setDragged(null);
+    const order = dragged;
     setDragged(null);
+    if (order.status === status) {
+      if (target?.status !== status) return;
+      const reordered = cards.filter(card => card.id !== order.id);
+      reordered.splice(target.index, 0, order);
+      if (reordered.every((card, index) => card.id === cards[index].id)) return;
+      await savePriority(status, reordered);
+      return;
+    }
+    await onStatusChange(order, status);
   }
   async function deliver(order) {
     await onStatusChange(order, "entregue");
@@ -121,7 +159,7 @@ export default function DashboardBoard({
         />
       </div>
       <CashBalances refreshKey={data} />
-      <section className="panel kanban order-board">
+      <section ref={boardRef} className="panel kanban order-board">
         <div className="panel-title">
           <h2>Pedidos em andamento</h2>
           <button className="link" onClick={() => onNavigate("pedidos")}>
@@ -129,33 +167,43 @@ export default function DashboardBoard({
           </button>
         </div>
         <p className="kanban-help">
-          Use as setas para definir a prioridade em cada coluna: 1 é a maior
-          prioridade. Arraste um pedido para alterar sua etapa.
+          Arraste os pedidos ou use as setas para ajustar a prioridade: 1 é a maior.
+          Arraste para outra coluna para alterar a etapa.
         </p>
         <div className="kanban-columns">
           {orderStages.map(([status, label, help]) => {
             const cards = byPriority(
               open.filter((order) => order.status === status),
             );
+            const isTarget = dragged && dropTarget?.status === status;
+            const sameColumn = isTarget && dragged.status === status;
+            const remaining = sameColumn ? cards.filter(card => card.id !== dragged.id) : [];
+            const displayedCards = isTarget && !sameColumn ? byPriority(open
+              .filter(order => order.status === status || order.id === dragged.id)
+              .map(order => order.id === dragged.id ? { ...order, status, prioridade: null } : order)) : cards;
             return (
               <section
-                className={`kanban-column ${dragged ? "drop-enabled" : ""}`}
+                className={`kanban-column ${dragged ? "drop-enabled" : ""} ${isTarget ? "drop-target" : ""}`}
                 key={status}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => drop(status)}
+                onDragOver={event => { if (!dragged) return; event.preventDefault(); event.dataTransfer.dropEffect = 'move'; const nodes = [...event.currentTarget.querySelectorAll('[data-order-id]')].filter(card => card.dataset.orderId !== dragged.id); const index = dragged.status === status ? nodes.findIndex(card => event.clientY < card.getBoundingClientRect().top + card.getBoundingClientRect().height / 2) : -1; const next = index < 0 ? nodes.length : index; setDropTarget(current => current?.status === status && current.index === next ? current : { status, index: next }); }}
+                onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget)) setDropTarget(current => current?.status === status ? null : current); }}
+                onDrop={event => { event.preventDefault(); drop(status, cards); }}
               >
                 <div className="kanban-title">
                   <span>{label} <StageHelp label={label}>{help}</StageHelp></span>
                   <b>{cards.length}</b>
                 </div>
-                {cards.map((order, index) => (
+                {displayedCards.map((order) => {
+                  if (order.id === dragged?.id && isTarget && !sameColumn) return <div key={`placeholder-${order.id}`} className="order-drop-placeholder" aria-hidden="true"><strong>Solte para mover</strong><span>{order.cliente}</span></div>;
+                  const index = cards.findIndex(card => card.id === order.id);
+                  return (
                   <article
                     draggable={!savingPriority}
-                    className={`kanban-card situation-${order.situacao || "normal"} ${deliveryAlert(order.previsao_entrega, order.status === "pronto", clock)} ${dragged?.id === order.id ? "dragging" : ""}`}
+                    className={`kanban-card situation-${order.situacao || "normal"} ${deliveryAlert(order.previsao_entrega, order.status === "pronto", clock)} ${dragged?.id === order.id ? "dragging" : ""} ${sameColumn && remaining[dropTarget.index]?.id === order.id ? "drop-before" : ""}`}
                     key={order.id}
                     data-order-id={order.id}
-                    onDragStart={event => { if (event.target.closest(".order-subtasks, .order-priority")) { event.preventDefault(); return; } setDragged(order); }}
-                    onDragEnd={() => setDragged(null)}
+                    onDragStart={event => { if (event.target.closest(".order-subtasks, .order-priority")) { event.preventDefault(); return; } event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', order.id); setDragged(order); }}
+                    onDragEnd={() => { setDragged(null); setDropTarget(null); }}
                   >
                     <div className="order-priority">
                       <span aria-label={`Prioridade ${index + 1}`}>#{index + 1} · Prioridade</span>
@@ -195,8 +243,10 @@ export default function DashboardBoard({
                       </button>
                     )}
                   </article>
-                ))}
-                {!cards.length && <p className="kanban-empty">Solte aqui</p>}
+                  );
+                })}
+                {sameColumn && dropTarget.index === remaining.length && <div className="order-drop-end" aria-hidden="true" />}
+                {!displayedCards.length && <p className="kanban-empty">Solte aqui</p>}
               </section>
             );
           })}

@@ -59,7 +59,7 @@ test('custos usam quantidade, custo atual e apenas as vendas filtradas, sem devo
  assert.equal(saleCostCents({...sale,materiais:{custo_medio:0}}),0);
 });
 test('custo histórico de Bonecos é referência estável sem alterar caixas de venda', () => {
- assert.ok(CASH_BOXES.includes('Materiais Bonecos')); assert.ok(!SALES_BOXES.includes('Materiais Bonecos'));
+ assert.ok(CASH_BOXES.includes('Materiais')); assert.ok(!SALES_BOXES.includes('Materiais'));
  assert.deepEqual(bonecosTransferCost({caixa:'Bonecos',custo_producao_venda:2.5432,quantidade:2,materiais:{custo_medio:999}}),{unit:2.5432,total:5.09});
  assert.equal(bonecosTransferCost({caixa:'Bonecos',custo_producao_venda:null}),null);
  assert.equal(bonecosTransferCost({caixa:'Rava',custo_producao_venda:2}),null);

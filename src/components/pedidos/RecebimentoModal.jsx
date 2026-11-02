@@ -11,7 +11,7 @@ export default function RecebimentoModal({ order, items, materiais, balance, onC
   const [receiptBox, setReceiptBox] = useState('');
   const [materialAmount, setMaterialAmount] = useState('');
   const [otherAmount, setOtherAmount] = useState('');
-  const [materialBox, setMaterialBox] = useState('Materiais Bonecos');
+  const [materialBox, setMaterialBox] = useState('Materiais');
   const [otherBox, setOtherBox] = useState('Bonecos');
   const [edited, setEdited] = useState(false);
   const [date, setDate] = useState(today());

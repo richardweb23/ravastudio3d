@@ -24,7 +24,7 @@ export default function CashPanel({ view='cash', onNavigate }) {
  const [month,setMonth]=useState(currentMonthKey),[box,setBox]=useState(''),[kind,setKind]=useState(view==='partners'?'reembolso':''),[offset,setOffset]=useState(0);
  const [modal,setModal]=useState(null),[busy,setBusy]=useState(false),[detail,setDetail]=useState(null);
  const submitting=useRef(false),request=useRef(null);
- const [form,setForm]=useState({data:today(),caixa:'',valor:'',descricao:'',socio_id:'',caixa_legado:'',Rivoxel:'0',Rava:'0',Bonecos:'0','Materiais Bonecos':'0'});
+ const [form,setForm]=useState({data:today(),caixa:'',valor:'',descricao:'',socio_id:'',caixa_legado:'',Rivoxel:'0',Rava:'0',Bonecos:'0',Materiais:'0'});
  const update=e=>setForm(s=>({...s,[e.target.name]:e.target.value}));
  const [tableLoading,setTableLoading]=useState(false);
  const sequence=useRef(0);

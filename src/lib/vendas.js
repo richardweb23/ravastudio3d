@@ -6,7 +6,7 @@ export function saleQuantity(sale) {
 }
 
 export const SALES_BOXES = ['Rivoxel', 'Rava', 'Bonecos'];
-export const CASH_BOXES = [...SALES_BOXES, 'Materiais Bonecos'];
+export const CASH_BOXES = [...SALES_BOXES, 'Materiais'];
 
 export function bonecosTransferCost(sale) {
   if (sale.caixa !== 'Bonecos' || sale.custo_producao_venda == null) return null;
