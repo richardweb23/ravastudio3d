@@ -3,10 +3,11 @@ import SearchSelect from './components/SearchSelect.jsx';
 import { useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
 import { publicCatalog, catalogImageUrl } from "./services/catalogo.js";
-import { catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
+import { catalogLink, catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
 import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
 import ProductDetail from "./components/catalogo/ProductDetail.jsx";
 import CatalogDialog from "./components/catalogo/CatalogDialog.jsx";
+const currentSlug = () => new URLSearchParams(window.location.search).get("produto") || window.location.pathname.match(/^\/produto\/([a-z0-9-]+)\/?$/)?.[1] || null;
 export default function CatalogPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
@@ -18,12 +19,14 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [slug, setSlug] = useState(() => new URLSearchParams(window.location.search).get("produto"));
-  const directEntry = useRef(new URLSearchParams(window.location.search).get("produto"));
+  const [slug, setSlug] = useState(currentSlug);
+  const [publishedPages, setPublishedPages] = useState([]);
+  const directEntry = useRef(currentSlug());
   const lastSearch = useRef("");
   const [detail, setDetail] = useState(null);
   const [detailStatus, setDetailStatus] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  useEffect(() => { fetch('/catalogo-paginas.json', { cache: 'no-cache' }).then(response => response.ok ? response.json() : []).then(data => { if (Array.isArray(data)) setPublishedPages(data); }).catch(() => {}); }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => { setQuery(search.trim()); setOffset(0); }, 300);
     return () => window.clearTimeout(timer);
@@ -46,7 +49,7 @@ export default function CatalogPage() {
     return () => { current = false; window.clearTimeout(analyticsTimer); };
   }, [query, category, order, offset, retry]);
   useEffect(() => {
-    const change = () => setSlug(new URLSearchParams(window.location.search).get("produto"));
+    const change = () => setSlug(currentSlug());
     window.addEventListener("popstate", change);
     return () => window.removeEventListener("popstate", change);
   }, []);
@@ -66,8 +69,7 @@ export default function CatalogPage() {
       setDetail(product || null);
       setDetailStatus(product ? "" : "Este produto não está disponível no catálogo.");
       if (product && product.slug !== slug) {
-        const url = new URL(window.location.href); url.searchParams.set("produto", product.slug);
-        window.history.replaceState(null, "", url);
+        window.history.replaceState(null, "", catalogLink(product.slug));
       }
     }).catch(() => { if (current) setDetailStatus("Não foi possível abrir este produto. Tente novamente."); }).finally(() => { if (current) setDetailLoading(false); });
     return () => { current = false; };
@@ -76,12 +78,10 @@ export default function CatalogPage() {
     directEntry.current = null;
     trackCatalogClick(product, 'ver_detalhes', 'lista');
     setDetail(null); setDetailLoading(true); setDetailStatus("");
-    const url = new URL(window.location.href); url.searchParams.set("produto", product.slug);
-    window.history.pushState(null, "", url); setSlug(product.slug);
+    window.history.pushState(null, "", catalogLink(product.slug, window.location.origin, publishedPages.includes(product.slug))); setSlug(product.slug);
   }
   function close() {
-    const url = new URL(window.location.href); url.searchParams.delete("produto");
-    window.history.replaceState(null, "", url); setSlug(null);
+    window.history.replaceState(null, "", "/catalogo/"); setSlug(null);
   }
   return <div className="catalog-site">
     <a className="catalog-skip" href="#produtos">Ir para os produtos</a>
@@ -104,11 +104,11 @@ export default function CatalogPage() {
         {error ? <div className="catalog-message" role="alert">{error}<button onClick={() => setRetry(r => r + 1)}>Tentar novamente</button></div> : <>
           {!loading && !result.produtos.length && <div className="catalog-empty"><h2>{query || category ? "Nenhum produto encontrado" : "Novas criações estão chegando"}</h2><p>{query || category ? "Experimente outro nome ou categoria." : "Converse com a gente para conhecer as possibilidades."}</p></div>}
           <div className={`catalog-grid${view === "list" ? " catalog-list" : ""}`} aria-busy={loading}>{result.produtos.map(product => <article className="catalog-card" key={product.id}>
-            <button className="catalog-card-open" onClick={() => open(product)} aria-label={`Ver detalhes de ${product.nome}`}>
+            <a className="catalog-card-open" href={catalogLink(product.slug, window.location.origin, publishedPages.includes(product.slug))} onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); open(product); } }} aria-label={`Ver detalhes de ${product.nome}`}>
               <div className={`catalog-card-photo${product.marketplace ? ' catalog-card-photo-marketplace' : ''}`}>{product.imagens[0] || product.imagem_externa ? <img loading="lazy" decoding="async" src={product.imagens[0] ? catalogImageUrl(product.imagens[0].miniatura) : product.imagem_externa} alt={product.imagens[0]?.alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
               <div className="catalog-card-copy"><p className="catalog-eyebrow">{product.categoria || "Feito em 3D"}</p><h2>{product.nome}</h2>{product.resumo && <p>{product.resumo}</p>}{!product.marketplace && <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>}<span className="catalog-view">Ver detalhes +</span></div>
-            </button>
-            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'comprar_marketplace', 'lista')}>Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp(product)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'pedir_whatsapp', 'lista')}>Pedir pelo WhatsApp ↗</a>}
+            </a>
+            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'comprar_marketplace', 'lista')}>Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp({ ...product, pagina_publicada: publishedPages.includes(product.slug) })} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'pedir_whatsapp', 'lista')}>Pedir pelo WhatsApp ↗</a>}
           </article>)}</div>
           {result.produtos.length < result.total && <button className="catalog-more" disabled={loading} onClick={() => { trackCatalogEvent('catalogo_carregar_mais'); setOffset(result.produtos.length); }}>Carregar mais produtos</button>}
         </>}
@@ -119,7 +119,7 @@ export default function CatalogPage() {
       </section>
     </main>
     <footer className="catalog-footer"><span>RAVA Studio 3D © {new Date().getFullYear()}</span><span>Feito com criatividade, camada por camada.</span><a href="/">Conheça nosso site ↗</a></footer>
-    {detail && <ProductDetail key={detail.id} product={detail} onClose={close} />}
+    {detail && <ProductDetail key={detail.id} product={{ ...detail, pagina_publicada: publishedPages.includes(detail.slug) }} onClose={close} />}
     {slug && !detail && <CatalogDialog title={detailLoading ? "Carregando produto" : "Detalhes do produto"} onClose={close}>
       {detailLoading ? <div className="catalog-product-loading" role="status">
         <span className="catalog-spinner" aria-hidden="true" />

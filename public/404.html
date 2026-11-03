@@ -8,6 +8,11 @@
     <script>
       (function redirectLegacyManagementRoute() {
         var path = window.location.pathname;
+        var product = path.match(/^\/produto\/([a-z0-9-]+)\/?$/);
+        if (product) {
+          window.location.replace('/catalogo/?produto=' + encodeURIComponent(product[1]));
+          return;
+        }
         var marker = "/gestao/";
         var markerIndex = path.toLowerCase().indexOf(marker);
         if (markerIndex !== -1) {

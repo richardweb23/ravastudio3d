@@ -9,6 +9,7 @@ test("catálogo: centavos, códigos permanentes e links de pedido", () => {
   assert.equal(catalogCode(1),"001");assert.equal(catalogCode(1000),"1000");
   assert.equal(catalogSlug("Coração & Café!"),"coracao-cafe");
   assert.equal(catalogLink("peca-001","https://ravastudio3d.com.br"),"https://ravastudio3d.com.br/catalogo/?produto=peca-001");
+  assert.equal(catalogLink("peca-001","https://ravastudio3d.com.br",true),"https://ravastudio3d.com.br/produto/peca-001/");
   const url=new URL(catalogWhatsapp({nome:"Peça & presente",codigo:7,descricao:"Descrição",slug:"peca-007",preco_centavos:2590,promocional_centavos:1990},"https://ravastudio3d.com.br"));
   assert.equal(url.hostname,"wa.me");assert.equal(url.pathname,"/5521984470594");
   const text=url.searchParams.get("text");

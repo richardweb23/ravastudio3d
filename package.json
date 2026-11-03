@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",
-    "test": "node --test src/lib/*.test.js",
+    "test": "node --test src/lib/*.test.js tests/catalogo-seo.test.mjs",
     "check": "npm run test && npm run test:db && npm run lint && npm run build",
     "test:db": "node --test tests/*-db.test.mjs",
     "dev:local": "vite --mode localtest --host 127.0.0.1 --port 5173 --strictPort",

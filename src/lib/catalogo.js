@@ -9,12 +9,12 @@ export function catalogCents(value) {
   if (!Number.isSafeInteger(cents) || cents > 1000000000) throw Error("Preço fora do limite permitido.");
   return cents;
 }
-export function catalogLink(slug, origin = window.location.origin) {
-  return `${origin}/catalogo/?produto=${encodeURIComponent(slug)}`;
+export function catalogLink(slug, origin = window.location.origin, publishedPage = false) {
+  return publishedPage ? `${origin}/produto/${encodeURIComponent(slug)}/` : `${origin}/catalogo/?produto=${encodeURIComponent(slug)}`;
 }
 export function catalogWhatsapp(product, origin) {
   return "https://wa.me/5521984470594?text=" + encodeURIComponent(
-    `Oi! Vi o produto ${product.nome} no catálogo da RAVA e gostaria de mais informações.\n\n${catalogLink(product.slug, origin)}`
+    `Oi! Vi o produto ${product.nome} no catálogo da RAVA e gostaria de mais informações.\n\n${catalogLink(product.slug, origin, product.pagina_publicada)}`
   );
 }
 
