@@ -11,7 +11,7 @@ export default function ProductDetail({ product, onClose, preview = false }) {
     {preview && <p role="status">Prévia — as alterações precisam ser salvas para aparecer no site.</p>}
     <div className="catalog-detail-grid">
       <div>
-        {image || product.imagem_externa ? <img className="catalog-detail-image" src={image ? catalogImageUrl(image.caminho) : product.imagem_externa} alt={image?.alt || product.nome} /> : <div className="catalog-no-image">Imagem em breve</div>}
+        <div className="catalog-detail-photo">{image || product.imagem_externa ? <img className="catalog-detail-image" src={image ? catalogImageUrl(image.caminho) : product.imagem_externa} alt={image?.alt || product.nome} /> : <div className="catalog-no-image">Imagem em breve</div>}</div>
         <div className="catalog-thumbnails">{images.map((item, index) => <button type="button" key={item.id} aria-label={`Ver foto ${index + 1}`} aria-pressed={selected === index} onClick={() => setSelected(index)}><img src={catalogImageUrl(item.miniatura)} alt="" /></button>)}</div>
       </div>
       <div className="catalog-detail-info">
