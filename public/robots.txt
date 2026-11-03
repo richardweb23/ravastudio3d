@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ravastudio3d.com.br/sitemap.xml
