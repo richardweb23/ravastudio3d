@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap");
 /* All page styles are scoped so importing the shared modal in Gestão does not reset it. */
-.catalog-site { color:#171714;background:#f4efe8;min-height:100vh;font-family:"Instrument Sans",sans-serif; }
+.catalog-site { position:relative;isolation:isolate;color:#171714;background:#f4efe8;min-height:100vh;font-family:"Instrument Sans",sans-serif; }
+.catalog-site::before { content:"";position:absolute;z-index:-1;inset:0 0 auto;height:clamp(420px,65vw,760px);pointer-events:none;background-image:linear-gradient(to bottom,rgba(248,241,230,.3),#f4efe8 96%),url('./assets/hero-vaso.png');background-size:100% 100%,300% auto;background-position:left top;background-repeat:no-repeat; }
 body:has(.catalog-site) { margin:0; }
 .catalog-site *, .catalog-dialog * { box-sizing:border-box; }
 .catalog-site button,.catalog-site input,.catalog-site select { font:inherit; }

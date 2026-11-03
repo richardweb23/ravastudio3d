@@ -41,3 +41,23 @@
 @keyframes links-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @media (max-width: 360px) { .links-shell { padding: 32px 16px 24px; }.links-card { padding: 16px 12px; gap: 10px; }.links-card strong { font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .links-shell *, .links-dialog[open] { animation: none; transition: none; } }
+
+/* Warm light and foliage shadows shared with the public catalog. */
+.rava-links-body { color:#30251d; color-scheme:light; background-color:#f4efe8; background-image:linear-gradient(to bottom,rgba(248,241,230,.28),#f4efe8 760px),url('./assets/hero-vaso.png'); background-size:100% 100%,300% auto; background-position:left top; background-repeat:no-repeat; }
+.links-shell { background:none; }
+.links-shell :focus-visible { outline-color:#956b41; }
+.links-logo { background:#f6ede1; border-color:#d6c4b2; box-shadow:0 12px 32px #6d4b2414; }
+.links-eyebrow { color:#986744; }
+.links-tagline { color:#695b4d; }
+.links-card { color:#30251d; background:#fffaf4ed; border-color:#dfcdbb; box-shadow:0 5px 18px #6343290d; }
+.links-card small { color:#716154; }
+.links-icon { color:#a45a2a; }
+.links-feedback { color:#765239; }
+.links-footer { color:#716154; }
+.links-footer p:last-child { color:#817467; }
+.links-card.links-card-copied { border-color:#43845d; box-shadow:0 0 0 1px #43845d; }
+.links-card-copied .links-icon,.links-card-copied strong,.links-card-copied .links-card-end { color:#28633e; }
+.links-feedback-success { color:#24553a; background:#e3f2e8; border-color:#91bc9f; }
+.links-dialog { color-scheme:dark; }
+.links-dialog .links-eyebrow { color:#c2a786; }
+@media (hover:hover) { .links-card:hover { background:#fffdf9; border-color:#b99473; } }

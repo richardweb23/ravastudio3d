@@ -1,508 +1,68 @@
-import { useEffect, useState } from "react";
-import logo from "../logo.svg";
-import casaImage from "./assets/colecao-casa.webp";
-import corporativaImage from "./assets/colecao-corporativa.webp";
-import natalImage from "./assets/colecao-natal.webp";
+import { useEffect, useState } from 'react';
+import logo from '../logo.svg';
+import catalogQr from './assets/catalog-qr.svg';
+import jewelry from './assets/produtos/joias-limpo.jpg';
+import lamp from './assets/produtos/luminaria-limpo.jpg';
+import home from './assets/produtos/home-limpo.jpg';
+import dinner from './assets/produtos/jantar-harmony.jpg';
+import natal from './assets/produtos/natal-limpo.jpg';
 
-const contactEmail = "contato@ravastudio3d.com.br";
-const quoteHref = `mailto:${contactEmail}?subject=${encodeURIComponent("Orçamento — RAVA Studio 3D")}`;
-
-const collections = [
-  {
-    number: "01",
-    label: "Casa & decoração",
-    title: "Objetos que transformam espaços.",
-    description:
-      "Vasos orgânicos, luminárias, cachepôs geométricos e organizadores com design autoral.",
-    image: casaImage,
-    alt: "Vasos, luminária e organizadores produzidos em impressão 3D",
-    tone: "light",
-  },
-  {
-    number: "02",
-    label: "Brindes corporativos",
-    title: "Sua marca em outra dimensão.",
-    description:
-      "Chaveiros, placas, displays e kits personalizados para experiências de marca memoráveis.",
-    image: corporativaImage,
-    alt: "Brindes corporativos personalizados em preto e dourado",
-    tone: "dark",
-  },
-  {
-    number: "03",
-    label: "Coleções especiais",
-    title: "Pequenas séries. Grandes detalhes.",
-    description:
-      "Coleções sazonais e edições limitadas produzidas com cuidado em cada acabamento.",
-    image: natalImage,
-    alt: "Coleção natalina de peças decorativas impressas em 3D",
-    tone: "green",
-  },
+const whatsapp = 'https://wa.me/5521984470594';
+const pieces = [
+  { image: lamp, title: 'Decoração', note: 'Peças que valorizam e transformam ambientes.', alt: 'Luminária escultural com cúpula ondulada' },
+  { image: jewelry, title: 'Organizadores', note: 'Soluções para deixar seu dia a dia mais bonito.', alt: 'Organizador de joias em tons terrosos' },
+  { image: dinner, title: 'Conjunto Jantar Costela de Adão Harmony', note: 'Um toque de natureza para a sua mesa.', alt: 'Mesa posta com o Conjunto Jantar Costela de Adão Harmony' },
+  { image: natal, title: 'Peças temáticas', note: 'Detalhes especiais para celebrar cada ocasião.', alt: 'Conjunto decorativo de Natal' },
 ];
 
-const pillars = [
-  ["01", "Impressão de qualidade", "Acabamento preciso e materiais selecionados."],
-  ["02", "Tecnologia e precisão", "Equipamentos atuais para resultados consistentes."],
-  ["03", "Design que ganha forma", "Do conceito digital ao objeto real."],
-  ["04", "Ideias em 3 dimensões", "Soluções sob medida, sem formatos prontos."],
-];
-
-function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M4 10h11M11 5l5 5-5 5" />
-    </svg>
-  );
-}
-
-function UserIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="8" r="3.5" />
-      <path d="M5.5 20c.6-4 2.8-6 6.5-6s5.9 2 6.5 6" />
-    </svg>
-  );
-}
-
-function CubeIcon({ index = 0 }) {
-  const paths = [
-    <g key="layers">
-      <path d="m12 3 8 4.6-8 4.6L4 7.6 12 3Z" />
-      <path d="m4 12 8 4.6 8-4.6" />
-      <path d="m4 16.4 8 4.6 8-4.6" />
-    </g>,
-    <g key="cube">
-      <path d="m12 3 8 4.6v8.8L12 21l-8-4.6V7.6L12 3Z" />
-      <path d="m4 7.6 8 4.6 8-4.6M12 12.2V21" />
-    </g>,
-    <g key="precision">
-      <circle cx="12" cy="12" r="7" />
-      <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-10-7v14M5 12h14" />
-    </g>,
-    <g key="spark">
-      <path d="m12 2 1.6 5.2L19 9l-5.4 1.8L12 16l-1.6-5.2L5 9l5.4-1.8L12 2Z" />
-      <path d="m18 15 .7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7L18 15Z" />
-    </g>,
-  ];
-
-  return (
-    <svg className="line-icon" viewBox="0 0 24 24" aria-hidden="true">
-      {paths[index]}
-    </svg>
-  );
-}
+function Arrow() { return <span aria-hidden="true">↗</span>; }
 
 function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  const closeMenu = () => setMenuOpen(false);
-
-  return (
-    <header className="site-header">
-      <a className="brand" href="#inicio" onClick={closeMenu} aria-label="RAVA Studio 3D — início">
-        <img src={logo} alt="RAVA Studio 3D" />
-      </a>
-
-      <button
-        className={menuOpen ? "menu-toggle is-open" : "menu-toggle"}
-        type="button"
-        aria-label={menuOpen ? "Fechar menu" : "Abrir menu"}
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((open) => !open)}
-      >
-        <span />
-        <span />
-      </button>
-
-      <nav className={menuOpen ? "nav is-open" : "nav"} aria-label="Navegação principal">
-        <a href="/catalogo/" onClick={closeMenu}>Catálogo</a>
-        <a href="#colecoes" onClick={closeMenu}>Coleções</a>
-        <a href="#sobre" onClick={closeMenu}>O estúdio</a>
-        <a href="#processo" onClick={closeMenu}>Processo</a>
-        <a href="#contato" onClick={closeMenu}>Contato</a>
-        <a className="nav-cta" href={quoteHref} onClick={closeMenu}>
-          Solicitar orçamento <ArrowIcon />
-        </a>
-        <a
-          className="nav-management-link"
-          href="./gestao/#/"
-          onClick={closeMenu}
-          aria-label="Acessar área de gestão"
-          title="Área de gestão"
-        >
-          <UserIcon />
-        </a>
-      </nav>
-    </header>
-  );
-}
-
-function CollectionCard({ item, index }) {
-  return (
-    <article
-      className={`collection-card collection-${item.tone} reveal`}
-      data-reveal="scale"
-      data-parallax
-      style={{ "--reveal-delay": `${index * 100}ms` }}
-    >
-      <img src={item.image} alt={item.alt} loading="lazy" />
-      <div className="collection-overlay" />
-      <div className="collection-topline">
-        <span>{item.number}</span>
-        <span>{item.label}</span>
-      </div>
-      <div className="collection-copy">
-        <h3>{item.title}</h3>
-        <p>{item.description}</p>
-        <a href={quoteHref} aria-label={`Solicitar orçamento para ${item.label}`}>
-          Quero um projeto <ArrowIcon />
-        </a>
-      </div>
-    </article>
-  );
+  const [open, setOpen] = useState(false);
+  return <header className="site-header">
+    <a className="brand" href="#inicio" aria-label="RAVA Studio 3D — início" onClick={() => setOpen(false)}><img src={logo} alt="RAVA Studio 3D" /></a>
+    <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="site-nav" onClick={() => setOpen(!open)}>{open ? 'Fechar' : 'Menu'} <span aria-hidden="true">{open ? '×' : '☰'}</span></button>
+    <nav id="site-nav" className={`nav${open ? ' is-open' : ''}`} aria-label="Navegação principal">
+      <a href="#inicio" onClick={() => setOpen(false)}>Início</a><a href="/catalogo/" onClick={() => setOpen(false)}>Catálogo</a><a href="/links/" onClick={() => setOpen(false)}>Links</a><a href="#colecoes" onClick={() => setOpen(false)}>Produtos</a><a href="#sobre" onClick={() => setOpen(false)}>Sobre</a><a href="#contato" onClick={() => setOpen(false)}>Contato</a>
+      <a className="nav-management-link" href="/gestao/#/" aria-label="Acessar área de gestão" title="Área de gestão"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5.5 20c.6-4 2.8-6 6.5-6s5.9 2 6.5 6" /></svg></a>
+    </nav>
+  </header>;
 }
 
 export default function App() {
   useEffect(() => {
-    const elements = document.querySelectorAll(".reveal");
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    let observer = null;
-
-    if (!("IntersectionObserver" in window)) {
-      elements.forEach((element) => element.classList.add("is-visible"));
-    } else {
-      observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("is-visible");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.06, rootMargin: "0px 0px -3% 0px" },
-      );
-
-      elements.forEach((element) => observer.observe(element));
-    }
-
-    const root = document.documentElement;
-    const header = document.querySelector(".site-header");
-    const heroCopy = document.querySelector(".hero-copy");
-    const heroImage = document.querySelector(".hero-image-frame");
-    const statementMark = document.querySelector(".statement-mark");
-    const parallaxElements = document.querySelectorAll("[data-parallax]");
-    let animationFrame = null;
-    let navigationAnimationFrame = null;
-
-    const updateScrollEffects = () => {
-      const scrollTop = window.scrollY;
-      const viewportHeight = window.innerHeight;
-      const scrollableHeight = Math.max(
-        root.scrollHeight - viewportHeight,
-        1,
-      );
-
-      root.style.setProperty(
-        "--scroll-progress",
-        String(Math.min(scrollTop / scrollableHeight, 1)),
-      );
-      header?.classList.toggle("is-scrolled", scrollTop > 36);
-
-      if (!prefersReducedMotion) {
-        const heroProgress = Math.min(scrollTop / (viewportHeight * 0.9), 1);
-        heroCopy?.style.setProperty(
-          "--hero-copy-shift",
-          `${scrollTop * -0.055}px`,
-        );
-        heroCopy?.style.setProperty(
-          "--hero-content-opacity",
-          String(Math.max(0.25, 1 - heroProgress * 0.9)),
-        );
-        heroImage?.style.setProperty(
-          "--hero-image-y",
-          `${Math.min(scrollTop * 0.08, 64)}px`,
-        );
-        statementMark?.style.setProperty(
-          "--mark-rotation",
-          `${scrollTop * 0.055}deg`,
-        );
-
-        parallaxElements.forEach((element) => {
-          const rect = element.getBoundingClientRect();
-          const distance =
-            (rect.top + rect.height / 2 - viewportHeight / 2) / viewportHeight;
-          const movement = Math.max(-1, Math.min(1, distance)) * -46;
-          element.style.setProperty("--parallax-y", `${movement}px`);
-        });
-      }
-
-      animationFrame = null;
-    };
-
-    const scheduleScrollEffects = () => {
-      if (animationFrame === null) {
-        animationFrame = window.requestAnimationFrame(updateScrollEffects);
-      }
-    };
-
-    const handleAnchorNavigation = (event) => {
-      const anchor = event.target.closest?.('a[href^="#"]');
-      const targetSelector = anchor?.getAttribute("href");
-
-      if (!targetSelector || targetSelector === "#") return;
-
-      const target = document.querySelector(targetSelector);
-      if (!target) return;
-
-      event.preventDefault();
-
-      if (navigationAnimationFrame !== null) {
-        window.cancelAnimationFrame(navigationAnimationFrame);
-      }
-
-      const startPosition = window.scrollY;
-      const headerOffset = header?.getBoundingClientRect().height ?? 0;
-      const targetPosition = Math.max(
-        target.getBoundingClientRect().top + startPosition - headerOffset + 1,
-        0,
-      );
-      const distance = targetPosition - startPosition;
-
-      if (prefersReducedMotion) {
-        window.scrollTo(0, targetPosition);
-        window.history.pushState(null, "", targetSelector);
-        return;
-      }
-
-      const immediateStep =
-        Math.sign(distance) * Math.min(Math.abs(distance), 72);
-      const animationStart = startPosition + immediateStep;
-      const remainingDistance = targetPosition - animationStart;
-
-      window.scrollTo(0, animationStart);
-
-      if (Math.abs(remainingDistance) < 1) {
-        window.history.pushState(null, "", targetSelector);
-        return;
-      }
-
-      const duration = Math.min(
-        760,
-        Math.max(420, Math.abs(remainingDistance) * 0.2),
-      );
-      let startTime = null;
-
-      const animateNavigation = (currentTime) => {
-        if (startTime === null) startTime = currentTime;
-
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = 1 - (1 - progress) ** 2;
-
-        window.scrollTo(
-          0,
-          animationStart + remainingDistance * easedProgress,
-        );
-
-        if (progress < 1) {
-          navigationAnimationFrame =
-            window.requestAnimationFrame(animateNavigation);
-        } else {
-          navigationAnimationFrame = null;
-          window.history.pushState(null, "", targetSelector);
-        }
-      };
-
-      navigationAnimationFrame =
-        window.requestAnimationFrame(animateNavigation);
-    };
-
-    updateScrollEffects();
-    window.addEventListener("scroll", scheduleScrollEffects, { passive: true });
-    window.addEventListener("resize", scheduleScrollEffects);
-    document.addEventListener("click", handleAnchorNavigation);
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("scroll", scheduleScrollEffects);
-      window.removeEventListener("resize", scheduleScrollEffects);
-      document.removeEventListener("click", handleAnchorNavigation);
-      if (animationFrame !== null) {
-        window.cancelAnimationFrame(animationFrame);
-      }
-      if (navigationAnimationFrame !== null) {
-        window.cancelAnimationFrame(navigationAnimationFrame);
-      }
-    };
+    if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const root = document.querySelector('.site-shell');
+    const elements = root.querySelectorAll('[data-reveal]');
+    const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }
+    }), { threshold: 0.08 });
+    root.classList.add('motion-ready');
+    elements.forEach(element => observer.observe(element));
+    return () => { observer.disconnect(); root.classList.remove('motion-ready'); };
   }, []);
-
-  return (
-    <div className="site-shell">
-      <div className="scroll-progress" aria-hidden="true" />
-      <Header />
-
-      <main>
-        <section className="hero" id="inicio">
-          <div className="hero-grain" />
-          <div className="hero-copy reveal is-visible" data-reveal="left">
-            <p className="eyebrow"><span /> RAVA Studio 3D</p>
-            <h1>
-              Design que<br />
-              <em>ganha forma.</em>
-            </h1>
-            <p className="hero-lead">
-              Criamos objetos, experiências e produtos personalizados através da impressão 3D.
-            </p>
-            <div className="hero-actions">
-              <a className="button button-dark" href="#colecoes">
-                Explorar coleções <ArrowIcon />
-              </a>
-              <a className="text-link" href={quoteHref}>
-                Fale sobre sua ideia <ArrowIcon />
-              </a>
-            </div>
-          </div>
-
-          <div className="hero-visual reveal is-visible" data-reveal="scale">
-            <div className="hero-image-frame">
-              <img src={casaImage} alt="Objetos de decoração produzidos pela RAVA Studio 3D" fetchPriority="high" />
-              <div className="hero-stamp">
-                <span>feito em</span>
-                <strong>3D</strong>
-                <span>com precisão</span>
-              </div>
-            </div>
-            <div className="hero-caption">
-              <span>Coleção Casa</span>
-              <span>2026 — 01</span>
-            </div>
-          </div>
-
-          <div className="hero-index" aria-hidden="true">01</div>
-        </section>
-
-        <section className="statement" aria-label="Manifesto RAVA">
-          <div className="statement-mark reveal" data-reveal="scale">
-            <CubeIcon />
-          </div>
-          <p className="reveal" data-reveal="clip">
-            Criamos. <em>Imprimimos.</em> Realizamos.
-          </p>
-          <small
-            className="reveal"
-            data-reveal="scale"
-            style={{ "--reveal-delay": "180ms" }}
-          >
-            Do conceito digital ao objeto real
-          </small>
-        </section>
-
-        <section className="collections section-pad" id="colecoes">
-          <div className="section-heading reveal" data-reveal="left">
-            <div>
-              <p className="eyebrow"><span /> Portfólio selecionado</p>
-              <h2>Feito para<br /><em>impressionar.</em></h2>
-            </div>
-            <p>
-              Coleções autorais e projetos sob medida que combinam tecnologia, matéria e um olhar atento aos detalhes.
-            </p>
-          </div>
-
-          <div className="collection-grid">
-            {collections.map((item, index) => (
-              <CollectionCard item={item} index={index} key={item.number} />
-            ))}
-          </div>
-        </section>
-
-        <section className="pillars section-pad" id="sobre">
-          <div className="pillars-intro reveal" data-reveal="left">
-            <p className="eyebrow eyebrow-light"><span /> Nossos pilares</p>
-            <h2>Ideias merecem<br /><em>boa execução.</em></h2>
-            <p>
-              A RAVA une repertório de design e fabricação digital para entregar peças que fazem sentido no uso, na forma e na presença.
-            </p>
-          </div>
-          <div className="pillar-list">
-            {pillars.map(([number, title, description], index) => (
-              <article
-                className="pillar reveal"
-                data-reveal="right"
-                style={{ "--reveal-delay": `${index * 90}ms` }}
-                key={number}
-              >
-                <span className="pillar-number">{number}</span>
-                <CubeIcon index={index} />
-                <div>
-                  <h3>{title}</h3>
-                  <p>{description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="process section-pad" id="processo">
-          <div className="process-title reveal" data-reveal="left">
-            <p className="eyebrow"><span /> Como trabalhamos</p>
-            <h2>Da ideia à peça,<br /><em>sem mistério.</em></h2>
-          </div>
-          <ol className="process-list">
-            <li className="reveal" data-reveal="right">
-              <span>01</span>
-              <div><h3>Você conta a ideia</h3><p>Entendemos o objetivo, as referências, quantidades e prazos.</p></div>
-            </li>
-            <li className="reveal" data-reveal="right" style={{ "--reveal-delay": "90ms" }}>
-              <span>02</span>
-              <div><h3>Nós desenhamos</h3><p>Transformamos o conceito em um modelo pronto para produção.</p></div>
-            </li>
-            <li className="reveal" data-reveal="right" style={{ "--reveal-delay": "180ms" }}>
-              <span>03</span>
-              <div><h3>A RAVA materializa</h3><p>Imprimimos, finalizamos e entregamos seu projeto com cuidado.</p></div>
-            </li>
-          </ol>
-        </section>
-
-        <section className="cta-section" id="contato">
-          <div className="cta-art" aria-hidden="true">
-            <span /><span /><span />
-          </div>
-          <div className="cta-copy reveal" data-reveal="clip">
-            <p className="eyebrow eyebrow-light"><span /> Seu projeto começa aqui</p>
-            <h2>Vamos tirar sua<br /><em>ideia do papel?</em></h2>
-            <a className="button button-light" href={quoteHref}>
-              Solicitar orçamento <ArrowIcon />
-            </a>
-          </div>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <div className="footer-brand reveal" data-reveal="left">
-          <img src={logo} alt="RAVA Studio 3D" />
-          <p>Design que ganha forma.</p>
-        </div>
-        <div className="footer-links reveal" data-reveal="right">
-          <div><span>Contato</span><a href={`mailto:${contactEmail}`}>{contactEmail}</a></div>
-          <div><span>Social</span><a href="https://www.instagram.com/ravastudio3d/" target="_blank" rel="noreferrer">@ravastudio3d</a></div>
-        </div>
-        <div
-          className="footer-bottom reveal"
-          data-reveal="scale"
-          style={{ "--reveal-delay": "120ms" }}
-        >
-          <span>© {new Date().getFullYear()} RAVA Studio 3D</span>
-          <div className="footer-bottom-links">
-            <a className="footer-management-link" href="./gestao/#/">
-              Área de gestão
-            </a>
-            <a href="#inicio">Voltar ao topo ↑</a>
-          </div>
-        </div>
-      </footer>
+  return <div className="site-shell" id="inicio">
+    <div className="landing-intro">
+    <Header />
+      <section className="hero" aria-labelledby="hero-title">
+        <div className="hero-copy"><h1 id="hero-title">Transformamos<br />ideias em peças<br />únicas com<br /><em>impressão 3D</em></h1><p className="hero-lead">Peças decorativas, organizadores e presentes criativos feitos em impressão 3D.</p><div className="hero-actions"><a className="button button-dark" href="/catalogo/"><span className="button-layers" aria-hidden="true">◇</span> Ver catálogo <Arrow /></a><a className="text-link" href="#colecoes">Conheça nossos produtos</a></div></div>
+        <div className="hero-scene" role="img" aria-label="Composição de produtos decorativos, organizadores e peças natalinas da RAVA" />
+      </section>
     </div>
-  );
+    <main>
+      <section className="collection-section section-pad" id="colecoes" aria-label="Produtos RAVA">
+        <div className="piece-grid">{pieces.map((piece, index) => <article className="piece" data-reveal key={piece.title}><a className="piece-image" href="/catalogo/" aria-label={`${piece.title}: conhecer o catálogo`}><img src={piece.image} alt={piece.alt} loading="lazy" /><span className="piece-index">0{index + 1}</span><span className="piece-arrow" aria-hidden="true">↗</span></a><div className="piece-heading"><h3>{piece.title}</h3><p>{piece.note}</p></div></article>)}</div>
+      </section>
+
+      <section className="about-rava" id="sobre" data-reveal aria-labelledby="about-title">
+        <div className="about-rava-image"><img src={home} alt="Conjunto decorativo Home em tons de bege" loading="lazy" /><span>CRIATIVIDADE EM CADA CAMADA</span></div>
+        <div className="about-rava-copy"><p className="about-rava-eyebrow">PRAZER, SOMOS A RAVA</p><h2 id="about-title">Ideias que ganham<br /><em>lugar na sua vida.</em></h2><p>Somos um estúdio criativo de impressão 3D. Transformamos ideias em peças decorativas, organizadores e presentes para trazer personalidade aos pequenos momentos do dia a dia.</p><div className="about-rava-values"><span>✧ Criatividade</span><span>◇ Impressão 3D</span><span>♡ Para presentear</span></div><a href="/catalogo/" className="under-link">Conheça nossas peças <Arrow /></a></div>
+      </section>
+
+      <section className="reviews-invitation" data-reveal aria-labelledby="reviews-title"><div className="reviews-invitation-icon" aria-hidden="true">✳</div><div className="reviews-invitation-copy"><p>FEITO COM CARINHO, COMPARTILHADO POR VOCÊ</p><h2 id="reviews-title">Sua experiência faz parte da nossa história.</h2><span>Conheça as avaliações da RAVA no Google e conte como foi a sua experiência.</span></div><a href="https://share.google/mbWULh1XzVSmqHxgr" target="_blank" rel="noopener noreferrer">Ver avaliações no Google <Arrow /></a></section>
+
+      <section className="catalog-invitation" data-reveal><a className="catalog-qr" href="/catalogo/" aria-label="Acessar o catálogo da RAVA"><img src={catalogQr} alt="QR Code para o catálogo da RAVA" /></a><div className="catalog-invitation-copy"><h2>Acesse nosso catálogo completo</h2><a href="/catalogo/">ravastudio3d.com.br/catalogo <Arrow /></a></div></section>
+    </main>
+    <footer className="footer" id="contato"><div className="footer-top"><div className="footer-brand"><img src={logo} alt="RAVA Studio 3D" /></div><p className="footer-description">Peças em impressão 3D que<br />decoram, organizam e inspiram.</p><div className="footer-contact"><strong>Acompanhe a RAVA</strong><a href="https://www.instagram.com/ravastudio3d/" target="_blank" rel="noopener noreferrer">Instagram ↗</a><a href={whatsapp} target="_blank" rel="noopener noreferrer">WhatsApp ↗</a><a href="tel:+5521984470594">(21) 98447-0594</a></div></div><div className="footer-bottom"><span>© {new Date().getFullYear()} RAVA Studio 3D</span><div><a href="/gestao/#/">Área de gestão</a><a href="#inicio">Voltar ao topo ↑</a></div></div></footer>
+  </div>;
 }
