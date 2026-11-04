@@ -1,4 +1,3 @@
-import SearchSelect from './components/SearchSelect.jsx';
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
@@ -13,6 +12,8 @@ export default function CatalogPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [order, setOrder] = useState("novos");
+  const [openMenu, setOpenMenu] = useState("");
+  const menuRef = useRef(null);
   const [view, setView] = useState(() => window.matchMedia("(max-width: 640px)").matches ? "list" : "grid");
   const [offset, setOffset] = useState(0);
   const [result, setResult] = useState({ produtos: [], categorias: [], total: 0 });
@@ -26,6 +27,19 @@ export default function CatalogPage() {
   const [detail, setDetail] = useState(null);
   const [detailStatus, setDetailStatus] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
+  useEffect(() => {
+    if (!openMenu) return;
+    const onPointerDown = event => { if (!menuRef.current?.contains(event.target)) setOpenMenu(""); };
+    const onKeyDown = event => {
+      if (event.key === "Escape") {
+        setOpenMenu("");
+        menuRef.current?.querySelector(`[data-catalog-trigger="${openMenu}"]`)?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => { document.removeEventListener("pointerdown", onPointerDown); document.removeEventListener("keydown", onKeyDown); };
+  }, [openMenu]);
   useEffect(() => { fetch('/catalogo-paginas.json', { cache: 'no-cache' }).then(response => response.ok ? response.json() : []).then(data => { if (Array.isArray(data)) setPublishedPages(data); }).catch(() => {}); }, []);
   useEffect(() => {
     const timer = window.setTimeout(() => { setQuery(search.trim()); setOffset(0); }, 300);
@@ -83,16 +97,26 @@ export default function CatalogPage() {
   function close() {
     window.history.replaceState(null, "", "/catalogo/"); setSlug(null);
   }
+  const orderOptions = [["novos", "Mais recentes"], ["destaque", "Destaques"], ["preco_asc", "Menor preço"], ["preco_desc", "Maior preço"]];
+  const categoryName = result.categorias.find(item => String(item.id) === category)?.nome || "Todas as categorias";
   return <div className="catalog-site">
     <a className="catalog-skip" href="#produtos">Ir para os produtos</a>
     <header className="catalog-site-header"><a href="/" aria-label="RAVA Studio 3D — início"><img src={logo} alt="RAVA Studio 3D" /></a><a href="https://wa.me/5521984470594" target="_blank" rel="noopener noreferrer">Vamos conversar ↗</a></header>
     <main>
       <section className="catalog-hero"><h1>Nosso catálogo</h1><p>Criações em 3D para você. Escolha sua próxima peça.</p></section>
       <section id="produtos" className="catalog-products">
-        <div className="catalog-filters">
-          <label>Buscar produto<input type="search" maxLength={150} placeholder="O que você procura?" value={search} onChange={e => setSearch(e.target.value)} /></label>
-          <label>Categoria<SearchSelect value={category} onChange={e => { const value = e.target.value; if (value !== category) trackCatalogEvent('catalogo_filtro_categoria', { produto_categoria: result.categorias.find(c => String(c.id) === value)?.nome || 'Todas as categorias' }); setCategory(value); setOffset(0); }}><option value="">Todas as categorias</option>{result.categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
-          <label>Ordenar por<SearchSelect value={order} onChange={e => { setOrder(e.target.value); setOffset(0); }}><option value="novos">Mais recentes</option><option value="destaque">Destaques</option><option value="preco_asc">Menor preço</option><option value="preco_desc">Maior preço</option></SearchSelect></label>
+        <div className="catalog-discovery">
+          <label className="catalog-search"><span className="catalog-visually-hidden">Buscar produto</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg><input type="search" maxLength={150} placeholder="Busque por produtos" value={search} onChange={e => setSearch(e.target.value)} /></label>
+          <div className="catalog-nav" ref={menuRef} aria-label="Navegar pelo catálogo">
+            <div className="catalog-menu">
+              <button className={`catalog-menu-trigger${category ? ' is-selected' : ''}`} type="button" data-catalog-trigger="category" aria-expanded={openMenu === 'category'} aria-controls="catalog-category-menu" onClick={() => setOpenMenu(openMenu === 'category' ? '' : 'category')}><span><small>Explorar</small><strong>{categoryName}</strong></span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg></button>
+              {openMenu === 'category' && <div className="catalog-menu-panel" id="catalog-category-menu" role="group" aria-label="Categorias"><p>Escolha uma categoria</p>{[{ id: '', nome: 'Todas as categorias' }, ...result.categorias].map(item => <button key={item.id || 'all'} type="button" className={String(item.id) === category ? 'is-current' : ''} aria-pressed={String(item.id) === category} onClick={() => { const value = String(item.id); if (value !== category) trackCatalogEvent('catalogo_filtro_categoria', { produto_categoria: item.nome }); setCategory(value); setOffset(0); menuRef.current?.querySelector('[data-catalog-trigger=category]')?.focus(); setOpenMenu(''); }}>{item.nome}{String(item.id) === category && <span aria-hidden="true">✓</span>}</button>)}</div>}
+            </div>
+            <div className="catalog-menu catalog-menu-sort">
+              <button className="catalog-menu-trigger" type="button" data-catalog-trigger="order" aria-expanded={openMenu === 'order'} aria-controls="catalog-order-menu" onClick={() => setOpenMenu(openMenu === 'order' ? '' : 'order')}><span><small>Ordenar</small><strong>{orderOptions.find(item => item[0] === order)?.[1]}</strong></span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg></button>
+              {openMenu === 'order' && <div className="catalog-menu-panel" id="catalog-order-menu" role="group" aria-label="Ordenação"><p>Ordenar produtos</p>{orderOptions.map(([value, label]) => <button key={value} type="button" className={value === order ? 'is-current' : ''} aria-pressed={value === order} onClick={() => { setOrder(value); setOffset(0); menuRef.current?.querySelector('[data-catalog-trigger=order]')?.focus(); setOpenMenu(''); }}>{label}{value === order && <span aria-hidden="true">✓</span>}</button>)}</div>}
+            </div>
+          </div>
         </div>
         <div className="catalog-toolbar">
           <p className="catalog-count" role="status">{loading ? "Carregando…" : `${result.total} produto${result.total === 1 ? "" : "s"}`}</p>
