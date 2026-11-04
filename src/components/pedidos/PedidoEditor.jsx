@@ -22,6 +22,7 @@ export default function PedidoEditor({
     previsao_entrega: "",
     desconto: "",
     observacao: "",
+    caixa_padrao: "",
   };
   const [draft, setDraft] = useState(() => ({
     ...blank,
@@ -64,6 +65,8 @@ export default function PedidoEditor({
       subtitulo: item.subtitulo || null,
       quantidade: Number(item.quantidade),
       preco_unitario: Number(item.preco_unitario),
+      local_estoque_id: item.local_estoque_id || null,
+      caixa: item.caixa || null,
     }));
     const { error } = await supabase.rpc("salvar_pedido", {
       p_pedido_id: order?.id || null,
@@ -103,7 +106,7 @@ export default function PedidoEditor({
         </label>
         <div className="form-grid">
           <label>
-            Local de saída
+            Local de saída padrão
             <SearchSelect
               value={draft.local_estoque_id || ""}
               onChange={(e) => update({ local_estoque_id: e.target.value })}
@@ -131,6 +134,7 @@ export default function PedidoEditor({
             </SearchSelect>
           </label>
         </div>
+        <label>Caixa padrão para novos itens<SearchSelect value={draft.caixa_padrao || ""} onChange={e => update({ caixa_padrao: e.target.value })}><option value="">Definir na entrega</option><option value="Rava">Rava</option><option value="Rivoxel">Rivoxel</option><option value="Bonecos">Bonecos</option></SearchSelect></label>
         <label>
           Previsão de entrega
           <input
@@ -157,6 +161,7 @@ export default function PedidoEditor({
                   subtitulo: "",
                   quantidade: "1",
                   preco_unitario: "",
+                  caixa: draft.caixa_padrao || "",
                 })
               }
             >
@@ -172,6 +177,7 @@ export default function PedidoEditor({
                   "Produto"}
                 {item.subtitulo ? ` — ${item.subtitulo}` : ""} ·{" "}
                 {fmtNumber(item.quantidade)} × {fmtMoney(item.preco_unitario)}
+                <small>Estoque: {locais.find(local => local.id === (item.local_estoque_id || draft.local_estoque_id))?.nome || "Estoque principal"} · Caixa: {item.caixa || "Definir na entrega"}</small>
               </span>
               <span>
                 <button type="button" onClick={() => setItemModal(item)}>
@@ -226,6 +232,7 @@ export default function PedidoEditor({
         <OrderItemModal
           item={itemModal}
           materiais={materiais}
+          locais={locais}
           onClose={() => setItemModal(null)}
           onSave={(item) => {
             saveItem(item);

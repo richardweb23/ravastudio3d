@@ -59,7 +59,7 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
     <div className="table-wrap"><table className="order-details-items">
       <thead><tr><th scope="col">Item</th><th scope="col">Quantidade</th><th scope="col">Valor unitário</th><th scope="col">Subtotal</th>{onItemStatusChange && <th scope="col">Concluído</th>}</tr></thead>
       <tbody>{items.length ? items.map(item => <tr key={item.id}>
-        <td><strong>{item.materiais?.nome || "Produto"}</strong>{item.subtitulo && <small>{item.subtitulo}</small>}</td>
+        <td><strong>{item.materiais?.nome || "Produto"}</strong>{item.subtitulo && <small>{item.subtitulo}</small>}<small>Estoque: {item.locais_estoque?.nome || order.locais_estoque?.nome || "Estoque principal"} · Caixa: {item.caixa || (order.status === 'entregue' ? 'Conforme venda' : 'Definir na entrega')}</small></td>
         <td>{formatNumber(item.quantidade)}</td><td>{formatMoney(item.preco_unitario)}</td><td>{formatMoney(Number(item.quantidade) * Number(item.preco_unitario))}</td>
         {onItemStatusChange && <td><input className="order-item-completed" type="checkbox" checked={Boolean(item.concluido)} disabled={busy || order.status === "entregue"} aria-label={`Concluído: ${item.materiais?.nome || "Produto"} ${item.subtitulo || ""}`} onChange={event => changeCompletion(item, event.target.checked)} /></td>}
       </tr>) : <tr><td colSpan={onItemStatusChange ? 5 : 4}>Nenhum item neste pedido.</td></tr>}</tbody>

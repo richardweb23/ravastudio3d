@@ -291,6 +291,26 @@ test('consignacao: migracao e fluxo transacional em PostgreSQL isolado', async t
     await assert.rejects(db.query('select public.alterar_pagamento_venda($1,true,2)',[paid]),/devolvida/i);
     await assert.rejects(db.query('update public.vendas set pago=true where id=$1',[id]),/permanente|permission/i);
   });
+  await t.test('pedido baixa itens de locais e caixas diferentes de forma atômica', async () => {
+    const another=(await one("insert into public.locais_estoque(nome,tipo) values('Estoque Rivoxel teste','outro') returning id")).id;
+    const first=(await one("select public.salvar_material(null,'Peça Rava',1,4,$1,'Rava') id",[source])).id;
+    const second=(await one("select public.salvar_material(null,'Peça Rivoxel',1,2,$1,'Rivoxel') id",[another])).id;
+    const rows=[{material_id:first,quantidade:2,preco_unitario:10,local_estoque_id:source,caixa:'Rava'},{material_id:second,quantidade:3,preco_unitario:20,local_estoque_id:another,caixa:'Rivoxel'}];
+    const order=(await one("select public.salvar_pedido(null,$1::jsonb,$2::jsonb) id",[JSON.stringify({cliente:'Pedido misto'}),JSON.stringify(rows)])).id;
+    await assert.rejects(db.query("select public.alterar_status_pedido($1,'entregue','Rava')",[order]),/Estoque insuficiente.*Peça Rivoxel/);
+    assert.equal(Number((await one('select quantidade from public.estoque_por_local where material_id=$1 and local_id=$2',[first,source])).quantidade),4);
+    assert.equal((await one('select count(*)::int n from public.vendas where pedido_id=$1',[order])).n,0);
+    rows[1].quantidade=2;
+    await db.query('select public.salvar_pedido($1,$2::jsonb,$3::jsonb)',[order,JSON.stringify({cliente:'Pedido misto'}),JSON.stringify(rows)]);
+    await db.query("select public.alterar_status_pedido($1,'entregue','Rava')",[order]);
+    const sales=(await db.query('select material_id,local_estoque_id,caixa from public.vendas where pedido_id=$1',[order])).rows;
+    assert.equal(sales.length,2);
+    assert.equal(sales.find(s=>s.material_id===first).caixa,'Rava');
+    assert.equal(sales.find(s=>s.material_id===second).caixa,'Rivoxel');
+    assert.equal(sales.find(s=>s.material_id===second).local_estoque_id,another);
+    assert.equal(Number((await one('select quantidade from public.estoque_por_local where material_id=$1 and local_id=$2',[second,another])).quantidade),0);
+    await assert.rejects(db.query("select public.alterar_status_pedido($1,'entregue','Rava')",[order]),/já foi entregue/);
+  });
   await t.test('usuário inativo não lê histórico e não executa pagamento', async () => {
     await db.exec('RESET ROLE'); await db.query('update public.profiles set ativo=false where id=$1',[user]); await db.exec('SET ROLE authenticated');
     assert.equal((await db.query('select * from public.consignacao_vendas')).rows.length,0);

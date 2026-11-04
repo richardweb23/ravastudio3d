@@ -147,8 +147,8 @@ export default function AdminApp() {
       loadAllTableRows(supabase.from("materiais").select("*").order("nome")),
       loadAllTableRows(supabase.from("compras").select("*, materiais(nome), locais_estoque(nome)").order("data", { ascending: false })),
       loadSales(),
-      loadAllTableRows(supabase.from("pedidos").select("*").order("data_pedido", { ascending: false })),
-      loadAllTableRows(supabase.from("pedido_itens").select("*, materiais(nome)")),
+      loadAllTableRows(supabase.from("pedidos").select("*, locais_estoque(nome)").order("data_pedido", { ascending: false })),
+      loadAllTableRows(supabase.from("pedido_itens").select("*, materiais(nome), locais_estoque(nome)")),
       loadAllTableRows(supabase.from("pedido_pagamentos").select("*").is("estornado_em", null).order("data", { ascending: false })),
       loadAllTableRows(supabase.from("locais_estoque").select("*").order("nome")),
       loadAllTableRows(supabase.from("vendedores").select("*").order("nome")),
@@ -257,7 +257,8 @@ export default function AdminApp() {
     if (status === "entregue") {
       if (!window.confirm([warning, 'Confirmar a entrega e baixa de estoque? O pedido sairá deste quadro.'].filter(Boolean).join('\n\n'))) return;
     } else if (warning && !window.confirm(warning + '\n\nMover para Prontos para entrega mesmo assim?')) return;
-    const caixa = status === "entregue" ? (order.caixa || await requestCaixa()) : null;
+    const orderItems = data.pedidoItens.filter(item => item.pedido_id === order.id);
+    const caixa = status === "entregue" ? (orderItems.length && orderItems.every(item => item.caixa) ? orderItems[0].caixa : await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return;
     return updateBoard(async () => {
     const { error } = await supabase.rpc("alterar_status_pedido", {

@@ -85,7 +85,8 @@ export default function PedidosComLocal({
         return false;
       if (!window.confirm([warning, "Confirmar entrega e baixa de estoque?"].filter(Boolean).join("\n\n"))) return false;
     }
-    const caixa = status === "entregue" ? await requestCaixa() : null;
+    const orderItems = itens.filter(item => item.pedido_id === order.id);
+    const caixa = status === "entregue" ? (orderItems.length && orderItems.every(item => item.caixa) ? orderItems[0].caixa : await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return false;
     const { error } = await supabase.rpc("alterar_status_pedido", {
       p_pedido_id: order.id,

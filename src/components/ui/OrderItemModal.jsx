@@ -1,7 +1,8 @@
 import ProductSearchSelect from "../ProductSearchSelect.jsx";
 import { useState } from "react";
+import SearchSelect from "../SearchSelect.jsx";
 
-export function OrderItemModal({ item, materiais, onClose, onSave }) {
+export function OrderItemModal({ item, materiais, locais = [], onClose, onSave }) {
   const [draft, setDraft] = useState({ ...item });
   function submit(event) {
     event.preventDefault();
@@ -36,6 +37,10 @@ export function OrderItemModal({ item, materiais, onClose, onSave }) {
             onChange={(e) => setDraft({ ...draft, subtitulo: e.target.value })}
           />
         </label>
+        <div className="form-grid">
+          <label>Estoque de saída<SearchSelect value={draft.local_estoque_id || ""} onChange={e => setDraft({ ...draft, local_estoque_id: e.target.value })}><option value="">Usar local padrão do pedido</option>{locais.map(local => <option key={local.id} value={local.id}>{local.nome}</option>)}</SearchSelect></label>
+          <label>Caixa da venda<SearchSelect value={draft.caixa || ""} onChange={e => setDraft({ ...draft, caixa: e.target.value })}><option value="">Definir na entrega</option><option value="Rava">Rava</option><option value="Rivoxel">Rivoxel</option><option value="Bonecos">Bonecos</option></SearchSelect></label>
+        </div>
         <div className="form-grid">
           <label>
             Quantidade
