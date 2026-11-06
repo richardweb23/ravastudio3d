@@ -1,4 +1,4 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useRef, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";

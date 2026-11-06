@@ -5,7 +5,7 @@ import "./admin.css";
 import "./admin-fields.css";
 import "./consignacao.css";
 
-createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AdminApp />
   </StrictMode>,

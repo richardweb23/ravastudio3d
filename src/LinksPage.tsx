@@ -5,7 +5,7 @@ const PIX = "21984470594";
 const QR = "/qr-pix-svg.svg";
 const WHATSAPP = "https://wa.me/5521984470594?text=Ol%C3%A1%21%20Conheci%20a%20RAVA%20Studio%203D%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.";
 
-function Icon({ name }) {
+function Icon({ name }: { name: "star" | "check" | "catalog" | "copy" | "qr" | "globe" | "arrow" | "download" | "whatsapp" }) {
   const paths = {
     star: <path d="m12 3 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2L3.2 9.6l6.3-.9L12 3Z" />,
     check: <path d="m5 12 4 4L19 6" />,
@@ -21,10 +21,10 @@ function Icon({ name }) {
 }
 
 export default function LinksPage() {
-  const dialog = useRef(null);
+  const dialog = useRef<HTMLDialogElement>(null);
   const backdropStart = useRef(false);
-  const manual = useRef(null);
-  const timer = useRef(null);
+  const manual = useRef<HTMLInputElement>(null);
+  const timer = useRef<number | undefined>(undefined);
   const [modalOpen, setModalOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [manualCopy, setManualCopy] = useState(false);
@@ -46,12 +46,12 @@ export default function LinksPage() {
       field.select();
       try { copied = document.execCommand("copy"); } catch { /* Manual option below. */ }
       field.remove();
-      previous?.focus();
+      if (previous instanceof HTMLElement) previous.focus();
     }
     clearTimeout(timer.current);
     setManualCopy(!copied);
     setFeedback(copied ? "Chave Pix copiada com sucesso!" : "Não foi possível copiar automaticamente. Selecione e copie a chave abaixo.");
-    if (copied) timer.current = setTimeout(() => setFeedback(""), 5000);
+    if (copied) timer.current = window.setTimeout(() => setFeedback(""), 5000);
   }
   const manualField = <label className="links-manual">Chave Pix<input ref={manual} value={PIX} readOnly onFocus={event => event.target.select()} /></label>;
   return <main className="links-shell">
@@ -65,15 +65,15 @@ export default function LinksPage() {
       <a className="links-card" href="/catalogo/"><span className="links-icon"><Icon name="catalog" /></span><span><strong>Conheça nosso catálogo</strong><small>Explore nossos produtos em impressão 3D</small></span><span className="links-card-end"><Icon name="arrow" /></span></a>
       <a className="links-card" href="https://g.page/r/CaRNI72q_6jFEBI/review" target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="star" /></span><span><strong>Avalie a RAVA no Google</strong><small>Conte como foi sua experiência com a gente</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
       <button className={`links-card${pixCopied ? " links-card-copied" : ""}`} onClick={copyPix}><span className="links-icon"><Icon name={pixCopied ? "check" : "copy"} /></span><span><strong>{pixCopied ? "Chave Pix copiada!" : "Copiar chave Pix"}</strong><small>{PIX}</small></span><span className="links-card-end" aria-hidden="true">{pixCopied ? "Copiado!" : "Copiar"}</span></button>
-      <button className="links-card" aria-haspopup="dialog" onClick={() => { setFeedback(""); setManualCopy(false); setModalOpen(true); dialog.current.showModal(); }}><span className="links-icon"><Icon name="qr" /></span><span><strong>QR Code Pix</strong><small>Abra, escaneie ou baixe</small></span><span className="links-card-end"><Icon name="qr" /></span></button>
+      <button className="links-card" aria-haspopup="dialog" onClick={() => { setFeedback(""); setManualCopy(false); setModalOpen(true); dialog.current?.showModal(); }}><span className="links-icon"><Icon name="qr" /></span><span><strong>QR Code Pix</strong><small>Abra, escaneie ou baixe</small></span><span className="links-card-end"><Icon name="qr" /></span></button>
       <a className="links-card" href={WHATSAPP} target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="whatsapp" /></span><span><strong>Fale conosco no WhatsApp</strong><small>+55 21 98447-0594</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
       <a className="links-card" href="https://ravastudio3d.com.br" target="_blank" rel="noopener noreferrer"><span className="links-icon"><Icon name="globe" /></span><span><strong>Conheça nosso site</strong><small>Ideias que ganham forma</small></span><span className="links-card-end"><Icon name="arrow" /></span><span className="links-sr-only"> (abre em nova aba)</span></a>
     </nav>
     <div className={`links-feedback${!modalOpen && pixCopied ? " links-feedback-success" : ""}`} role="status" aria-live="polite">{!modalOpen && feedback}</div>
     {manualCopy && !modalOpen && manualField}
     <footer className="links-footer"><span className="links-footer-line" /><p>RAVA Studio 3D © 2026</p><p>Feito com criatividade, camada por camada.</p></footer>
-    <dialog ref={dialog} className="links-dialog" aria-labelledby="pix-title" aria-describedby="pix-description" onClose={() => { setModalOpen(false); setManualCopy(false); setFeedback(""); }} onPointerDown={event => { const rect = dialog.current.getBoundingClientRect(); backdropStart.current = event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom); }} onClick={event => { const rect = dialog.current.getBoundingClientRect(); if (backdropStart.current && event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.current.close(); backdropStart.current = false; }}>
-      <button className="links-close" autoFocus onClick={() => dialog.current.close()} aria-label="Fechar QR Code">×</button>
+    <dialog ref={dialog} className="links-dialog" aria-labelledby="pix-title" aria-describedby="pix-description" onClose={() => { setModalOpen(false); setManualCopy(false); setFeedback(""); }} onPointerDown={event => { const rect = event.currentTarget.getBoundingClientRect(); backdropStart.current = event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom); }} onClick={event => { const rect = event.currentTarget.getBoundingClientRect(); if (backdropStart.current && event.target === dialog.current && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.current?.close(); backdropStart.current = false; }}>
+      <button className="links-close" autoFocus onClick={() => dialog.current?.close()} aria-label="Fechar QR Code">×</button>
       <p className="links-eyebrow">PAGAMENTO VIA PIX</p><h2 id="pix-title">QR Code Pix</h2><p id="pix-description">Escaneie com o aplicativo do seu banco.</p>
       {qrFailed ? <p className="links-qr-error" role="alert">Não foi possível carregar o QR Code. Use a chave Pix abaixo.</p> : <div className="links-qr"><img src={QR} alt="QR Code Pix da RAVA Studio 3D" width="300" height="300" onLoad={() => setQrLoaded(true)} onError={() => setQrFailed(true)} /></div>}
       <p className="links-pix-key">{PIX}</p>

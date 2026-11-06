@@ -1,4 +1,4 @@
-import DataTable from "./DataTable.jsx";
+import DataTable from "./DataTable.tsx";
 import { useMemo, useState } from "react";
 import {
   addMinutes,
@@ -10,7 +10,7 @@ import {
   formatDurationCompact,
   formatDurationFriendly,
 } from "../lib/printEstimate.js";
-import Header from "./Header.jsx";
+import Header from "./Header.tsx";
 
 const quickDurations = [1, 2, 4, 6, 8, 12, 24];
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {

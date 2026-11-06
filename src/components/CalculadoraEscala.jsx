@@ -1,7 +1,7 @@
-import DataTable from "./DataTable.jsx";
+import DataTable from "./DataTable.tsx";
 import { useMemo, useState } from "react";
 import { calculateScale, parseMeasurement } from "../lib/scale.js";
-import Header from "./Header.jsx";
+import Header from "./Header.tsx";
 
 const SIZES = [5, 10, 12, 15, 20, 25, 30, 35, 40, 50];
 const formatter = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });

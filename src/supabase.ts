@@ -6,6 +6,16 @@ const browserKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Postgres reports JSONB for this RPC; its public fields are defined by the catalog migrations.
+type PublicSchema = Database["public"];
+type CatalogRpc = PublicSchema["Functions"]["catalogo_publico"];
+type AppDatabase = Omit<Database, "public"> & {
+  public: Omit<PublicSchema, "Functions"> & {
+    Functions: Omit<PublicSchema["Functions"], "catalogo_publico"> & {
+      catalogo_publico: Omit<CatalogRpc, "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
+    };
+  };
+};
 export const isSupabaseConfigured = Boolean(
   url &&
     browserKey &&
@@ -14,7 +24,7 @@ export const isSupabaseConfigured = Boolean(
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient<Database>(url, browserKey, {
+  ? createClient<AppDatabase>(url, browserKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

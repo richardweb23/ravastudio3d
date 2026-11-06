@@ -1,4 +1,4 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useEffect, useState } from "react";
 import { deliveryAlert } from "../../lib/deliveryAlert.js";
 

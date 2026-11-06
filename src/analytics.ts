@@ -1,3 +1,12 @@
+export {};
+
+declare global {
+  interface Window {
+    dataLayer: IArguments[];
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
 // Shared by the public entry points only; the management app is not tracked.
 const measurementId = (import.meta.env.VITE_GA_MEASUREMENT_ID || "G-1WBT99GLQY").trim();
 const googleAdsId = "AW-18554751020";

@@ -1,5 +1,5 @@
-import SearchSelect from './SearchSelect.jsx';
-import CaixaSelect from "./CaixaSelect.jsx";
+import SearchSelect from './SearchSelect.tsx';
+import CaixaSelect from "./CaixaSelect.tsx";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney, formatNumber, today } from "../lib/formatters.js";

@@ -1,8 +1,8 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../supabase.js';
-import Header from './Header.jsx';
-import DataTable from './DataTable.jsx';
+import Header from './Header.tsx';
+import DataTable from './DataTable.tsx';
 import { today } from '../lib/formatters.js';
 import { SALES_BOXES } from '../lib/vendas.js';
 import './filamentos.css';

@@ -1,9 +1,9 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 
 
-import Header from "./Header.jsx";
+import Header from "./Header.tsx";
 import RegistrationTables from "./consignacao/RegistrationTables.jsx";
 
 

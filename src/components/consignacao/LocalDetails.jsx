@@ -1,10 +1,10 @@
-import ProductSearchSelect from "../ProductSearchSelect.jsx";
-import StatusBadge from '../StatusBadge.jsx';
+import ProductSearchSelect from "../ProductSearchSelect.tsx";
+import StatusBadge from '../StatusBadge.tsx';
 import { useRef, useState } from "react";
-import Header from "../Header.jsx";
-import Metric from "../Metric.jsx";
-import DataTable from "../DataTable.jsx";
-import FilterButtons from "../ui/FilterButtons.jsx";
+import Header from "../Header.tsx";
+import Metric from "../Metric.tsx";
+import DataTable from "../DataTable.tsx";
+import FilterButtons from "../ui/FilterButtons.tsx";
 import ConsignmentModal from "./ConsignmentModal.jsx";
 import useConsignment from "../../hooks/useConsignment.js";
 import { summarizeConsignment, filterConsignmentSales, movementLabels, repasseStatus, repasseLabels } from "../../lib/consignacao.js";

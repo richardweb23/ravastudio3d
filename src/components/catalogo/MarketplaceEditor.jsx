@@ -1,8 +1,8 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useState } from 'react';
 import { supabase } from '../../supabase.js';
 import { catalogCents, catalogSlug, marketplaceUrl } from '../../lib/catalogo.js';
-import CatalogDialog from './CatalogDialog.jsx';
+import CatalogDialog from './CatalogDialog.tsx';
 export default function MarketplaceEditor({ record, categories, onClose, onSaved }) {
   const [form,setForm]=useState(() => ({ titulo:record?.titulo || '', descricao:record?.descricao || '', resumo:record?.resumo || '', price:((record?.preco_centavos || 0)/100).toFixed(2), categoria_id:record?.categoria_id || '', link_marketplace:record?.link_marketplace || '', imagem_externa:record?.imagem_externa || '', status:record?.status || 'rascunho' }));
   const [busy,setBusy]=useState(false),[error,setError]=useState('');

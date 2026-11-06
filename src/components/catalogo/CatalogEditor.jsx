@@ -1,10 +1,10 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
 import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../lib/catalogo.js";
 import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, uploadCatalogImage } from "../../services/catalogo.js";
-import CatalogDialog from "./CatalogDialog.jsx";
-import ProductDetail from "./ProductDetail.jsx";
+import CatalogDialog from "./CatalogDialog.tsx";
+import ProductDetail from "./ProductDetail.tsx";
 export default function CatalogEditor({ product, record, images, categories, onClose, onSaved }) {
   const suggestLink = title => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
   const [saved, setSaved] = useState(record);

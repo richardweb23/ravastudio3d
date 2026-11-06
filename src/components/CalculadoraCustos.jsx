@@ -1,7 +1,7 @@
-import SearchSelect from './SearchSelect.jsx';
-import ProductSearchSelect from "./ProductSearchSelect.jsx";
-import StatusBadge from './StatusBadge.jsx';
-import DataTable from "./DataTable.jsx";
+import SearchSelect from './SearchSelect.tsx';
+import ProductSearchSelect from "./ProductSearchSelect.tsx";
+import StatusBadge from './StatusBadge.tsx';
+import DataTable from "./DataTable.tsx";
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import { calculatePricing, calculateTier, money } from "../lib/pricing.js";

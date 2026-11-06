@@ -1,6 +1,6 @@
-import StatusBadge from '../StatusBadge.jsx';
+import StatusBadge from '../StatusBadge.tsx';
 import { useEffect, useState } from "react";
-import DataTable from "../DataTable.jsx";
+import DataTable from "../DataTable.tsx";
 import { loadLocationSummaries } from "../../services/consignacao.js";
 import { localDetailsPage } from "../../lib/consignacao.js";
 import { formatBRLCents as money } from "../../lib/financeiro.js";

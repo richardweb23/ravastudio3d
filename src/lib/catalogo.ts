@@ -1,6 +1,6 @@
 export const catalogCode = (value: unknown) => String(value ?? "").padStart(3, "0");
 export const catalogSlug = (value: unknown) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-export const catalogMoney = (cents: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(cents) / 100);
+export const catalogMoney = (cents: number | null) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(cents) / 100);
 export function catalogCents(value: unknown) {
   const text = String(value).trim().replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(text)) throw Error("Informe um preço válido com até duas casas decimais.");

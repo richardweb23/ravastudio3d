@@ -1,6 +1,6 @@
-import SearchSelect from '../SearchSelect.jsx';
-import ProductSearchSelect from "../ProductSearchSelect.jsx";
-import CaixaSelect from "../CaixaSelect.jsx";
+import SearchSelect from '../SearchSelect.tsx';
+import ProductSearchSelect from "../ProductSearchSelect.tsx";
+import CaixaSelect from "../CaixaSelect.tsx";
 import { useEffect, useRef, useState } from "react";
 import { consignmentAction } from "../../services/consignacao.js";
 import { moneyInputCents, repasseStatus, validQuantity } from "../../lib/consignacao.js";

@@ -1,4 +1,4 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useRef, useState } from 'react';
 import { orderStages, orderSituations } from '../../lib/orderBoard.js';
 export default function OrderWorkflow({ order, onStatusChange, onSituationSave }) {

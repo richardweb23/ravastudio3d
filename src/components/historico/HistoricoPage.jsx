@@ -1,9 +1,9 @@
-import SearchSelect from '../SearchSelect.jsx';
-import ProductSearchSelect from "../ProductSearchSelect.jsx";
-import DataTable from "../DataTable.jsx";
+import SearchSelect from '../SearchSelect.tsx';
+import ProductSearchSelect from "../ProductSearchSelect.tsx";
+import DataTable from "../DataTable.tsx";
 import { saleTotal, saleQuantity } from "../../lib/vendas.js";
 import { useMemo, useState } from "react";
-import Header from "../Header.jsx";
+import Header from "../Header.tsx";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const all = "todos";

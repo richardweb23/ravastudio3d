@@ -1,9 +1,11 @@
-const tones = {
+import type { ReactNode } from "react";
+
+const tones: Record<string, string> = {
  pago: 'pago', paga: 'pago', ativo: 'pago', ativa: 'pago', pronto: 'pago', terminado: 'pago', concluido: 'pago', entregue: 'pago',
  pendente: 'pendente', recebido: 'pendente', parcial: 'parcial', em_preparacao: 'parcial', em_producao: 'parcial', embalagem: 'parcial', fazendo: 'parcial',
  vencido: 'vencido', vencida: 'vencido', estornado: 'neutro', devolvida: 'neutro', devolvido: 'neutro', inativo: 'neutro',
  healthy: 'pago', reduced: 'pendente', low: 'vencido', negative: 'vencido',
 };
-export default function StatusBadge({ value, children }) {
+export default function StatusBadge({ value, children }: { value: string; children: ReactNode }) {
  return <span className={`status finance-${tones[value] || 'neutro'}`}>{children}</span>;
 }

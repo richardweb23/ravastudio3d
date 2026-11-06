@@ -1,14 +1,14 @@
 import { orderStages, orderSituations, orderTooltip } from '../../lib/orderBoard.js';
 import { deliveryAlert } from '../../lib/deliveryAlert.js';
-import StageHelp from './StageHelp.jsx';
+import StageHelp from './StageHelp.tsx';
 import OrderSubtasks from '../pedidos/OrderSubtasks.jsx';
 import { saleTotal } from "../../lib/vendas.js";
 import { CashBalances } from "../financeiro/CashPanel.jsx";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 import TaskBoard from "../tarefas/TaskBoard.jsx";
-import Header from "../Header.jsx";
-import Metric from "../Metric.jsx";
+import Header from "../Header.tsx";
+import Metric from "../Metric.tsx";
 import PedidoDetalhes from "../pedidos/PedidoDetalhes.jsx";
 
 function monthKey(date) {

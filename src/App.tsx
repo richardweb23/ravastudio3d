@@ -33,6 +33,7 @@ export default function App() {
   useEffect(() => {
     if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const root = document.querySelector('.site-shell');
+    if (!root) return;
     const elements = root.querySelectorAll('[data-reveal]');
     const observer = new IntersectionObserver(entries => entries.forEach(entry => {
       if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer.unobserve(entry.target); }

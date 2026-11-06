@@ -1,6 +1,7 @@
+type Message = (message: string, type?: "error" | "success") => void;
 import { useState } from "react";
 import logo from "../../../logo.svg";
-import { managementUrl, supabase } from "../../supabase.js";
+import { managementUrl, requireSupabase } from "../../supabase.js";
 
 export function SetupScreen() {
   return (
@@ -18,20 +19,20 @@ export function SetupScreen() {
   );
 }
 
-export function LoginScreen({ onMessage }) {
+export function LoginScreen({ onMessage }: { onMessage: Message }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [recovery, setRecovery] = useState(false);
 
-  async function submit(event) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     const { error } = recovery
-      ? await supabase.auth.resetPasswordForEmail(email, {
+      ? await requireSupabase().auth.resetPasswordForEmail(email, {
           redirectTo: managementUrl(),
         })
-      : await supabase.auth.signInWithPassword({ email, password });
+      : await requireSupabase().auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) {
       onMessage(
@@ -100,19 +101,19 @@ export function LoginScreen({ onMessage }) {
   );
 }
 
-export function PasswordScreen({ onDone, onMessage }) {
+export function PasswordScreen({ onDone, onMessage }: { onDone: () => void; onMessage: Message }) {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function submit(event) {
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (password.length < 8)
       return onMessage("A senha deve ter pelo menos 8 caracteres.", "error");
     if (password !== confirmation)
       return onMessage("As senhas não coincidem.", "error");
     setBusy(true);
-    const { error } = await supabase.auth.updateUser({ password });
+    const { error } = await requireSupabase().auth.updateUser({ password });
     setBusy(false);
     if (error) return onMessage(error.message, "error");
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -131,7 +132,7 @@ export function PasswordScreen({ onDone, onMessage }) {
           Nova senha
           <input
             type="password"
-            minLength="8"
+            minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
@@ -142,7 +143,7 @@ export function PasswordScreen({ onDone, onMessage }) {
           Confirmar senha
           <input
             type="password"
-            minLength="8"
+            minLength={8}
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
             autoComplete="new-password"

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { formatMoney, formatNumber } from '../lib/formatters.js';
 import { saleProductCategory } from '../lib/produtos.js';
 import { bonecosTransferCost, saleCostCents, saleTotal } from '../lib/vendas.js';
-import StatusBadge from './StatusBadge.jsx';
+import StatusBadge from './StatusBadge.tsx';
 
 const dateLabel = value => value ? new Date(`${String(value).slice(0, 10)}T12:00:00`).toLocaleDateString('pt-BR') : 'Não informada';
 

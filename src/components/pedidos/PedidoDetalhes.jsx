@@ -1,8 +1,8 @@
 import OrderSubtasks from "./OrderSubtasks.jsx";
 import OrderWorkflow from "./OrderWorkflow.jsx";
 ﻿import { useEffect, useRef, useState } from "react";
-import Status from "../Status.jsx";
-import StatusBadge from "../StatusBadge.jsx";
+import Status from "../Status.tsx";
+import StatusBadge from "../StatusBadge.tsx";
 import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const dateLabel = value => value ? new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR") : "Não informada";

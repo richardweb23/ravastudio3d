@@ -1,11 +1,11 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatNumber as fmtNumber, today } from "../lib/formatters.js";
-import Header from "./Header.jsx";
-import MaterialSelect from "./MaterialSelect.jsx";
+import Header from "./Header.tsx";
+import MaterialSelect from "./MaterialSelect.tsx";
 
-import DataTable from "./DataTable.jsx";
+import DataTable from "./DataTable.tsx";
 
 export default function ComprasComLocal({
   materiais,

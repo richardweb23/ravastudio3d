@@ -1,9 +1,9 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
-import DataTable from "./DataTable.jsx";
+import DataTable from "./DataTable.tsx";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../lib/formatters.js";
-import Header from "./Header.jsx";
+import Header from "./Header.tsx";
 import ProdutoForm from "./ProdutoForm.jsx";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 

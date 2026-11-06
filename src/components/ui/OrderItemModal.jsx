@@ -1,6 +1,6 @@
-import ProductSearchSelect from "../ProductSearchSelect.jsx";
+import ProductSearchSelect from "../ProductSearchSelect.tsx";
 import { useState } from "react";
-import SearchSelect from "../SearchSelect.jsx";
+import SearchSelect from "../SearchSelect.tsx";
 
 export function OrderItemModal({ item, materiais, locais = [], onClose, onSave }) {
   const [draft, setDraft] = useState({ ...item });

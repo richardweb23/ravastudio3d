@@ -1,6 +1,6 @@
-import StatusBadge from '../StatusBadge.jsx';
+import StatusBadge from '../StatusBadge.tsx';
 import { useState } from "react";
-import DataTable from "../DataTable.jsx";
+import DataTable from "../DataTable.tsx";
 import { filterTasks, taskHistoryStatuses, taskAssigneeLabel } from "../../lib/tasks.js";
 
 export default function TaskHistory({ tarefas = [], error, onEdit }) {

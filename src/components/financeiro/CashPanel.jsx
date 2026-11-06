@@ -1,13 +1,13 @@
-import SearchSelect from '../SearchSelect.jsx';
-import StatusBadge from '../StatusBadge.jsx';
+import SearchSelect from '../SearchSelect.tsx';
+import StatusBadge from '../StatusBadge.tsx';
 import CashMovementDetails from './CashMovementDetails.jsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../supabase.js';
 import { CASH_BOXES, SALES_BOXES } from '../../lib/vendas.js';
 import { formatBRLCents as money, reaisToCents, currentMonthKey } from '../../lib/financeiro.js';
 import { today } from '../../lib/formatters.js';
-import CaixaSelect from '../CaixaSelect.jsx';
-import DataTable from '../DataTable.jsx';
+import CaixaSelect from '../CaixaSelect.tsx';
+import DataTable from '../DataTable.tsx';
 
 const labels = { abertura:'Saldo inicial', entrada:'Entrada manual',saida:'Saída manual',transferencia_saida:'Transferência enviada',transferencia_entrada:'Transferência recebida', venda:'Venda recebida', pedido:'Pedido recebido', despesa:'Despesa paga', repasse:'Repasse', reembolso:'Reembolso ao sócio', estorno:'Estorno', devolucao_cliente:'Devolução ao cliente' };
 const orderedCaixas = (caixas = []) => CASH_BOXES.map((nome) => caixas.find((caixa) => caixa.nome === nome)).filter(Boolean);

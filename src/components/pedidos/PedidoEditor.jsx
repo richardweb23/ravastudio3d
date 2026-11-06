@@ -1,9 +1,9 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
 import { OrderItemModal } from "../ui/OrderItemModal.jsx";
-import Empty from "../Empty.jsx";
+import Empty from "../Empty.tsx";
 
 export default function PedidoEditor({
   order,

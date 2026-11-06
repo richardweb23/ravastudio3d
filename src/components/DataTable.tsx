@@ -1,9 +1,18 @@
-import { Children, cloneElement, useId, useState } from "react";
-import Empty from "./Empty.jsx";
+import type { ReactElement, ReactNode } from "react";
+
+interface TableProps {
+  heads: string[];
+  rows: ReactElement<{ children?: ReactNode }>[];
+  empty?: string;
+  pagination?: { page: number; hasNext: boolean; loading?: boolean; onPageChange: (page: number) => void };
+}
+
+import { Children, cloneElement, isValidElement, useId, useState } from "react";
+import Empty from "./Empty.tsx";
 
 const PAGE_SIZE = 10;
 
-export default function DataTable({ heads, rows, empty, pagination }) {
+export default function DataTable({ heads, rows, empty, pagination }: TableProps) {
   const tableId = useId();
   const signature = JSON.stringify(rows.map((row, index) => row.key ?? index));
   const [position, setPosition] = useState({ signature, page: 0 });
@@ -13,7 +22,7 @@ export default function DataTable({ heads, rows, empty, pagination }) {
   const page = pagination?.page ?? localPage;
   const visibleRows = pagination ? rows.slice(0, PAGE_SIZE) : rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
   const hasNext = pagination ? pagination.hasNext : page + 1 < totalPages;
-  const changePage = (next) => pagination ? pagination.onPageChange(next) : setPosition({ signature, page: next });
+  const changePage = (next: number) => pagination ? pagination.onPageChange(next) : setPosition({ signature, page: next });
   const actionColumns = heads.map((head, index) => head === "Ações" || (head === "" && index === heads.length - 1));
   const first = rows.length ? page * PAGE_SIZE + 1 : 0;
   const last = rows.length ? page * PAGE_SIZE + visibleRows.length : 0;
@@ -27,7 +36,7 @@ export default function DataTable({ heads, rows, empty, pagination }) {
           ))}</tr></thead>
           <tbody>
             {visibleRows.length ? visibleRows.map(row => cloneElement(row, {}, Children.map(row.props.children, (cell, index) => (
-              actionColumns[index] && cell ? cloneElement(cell, { className: [cell.props.className, "table-actions-cell"].filter(Boolean).join(" ") }) : cell
+              actionColumns[index] && isValidElement<{ className?: string }>(cell) ? cloneElement(cell, { className: [cell.props.className, "table-actions-cell"].filter(Boolean).join(" ") }) : cell
             )))) : <tr><td colSpan={heads.length}><Empty text={empty} /></td></tr>}
           </tbody>
         </table>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import Header from "../Header.jsx";
+import Header from "../Header.tsx";
 import TaskBoard from "./TaskBoard.jsx";
 import TaskForm from "./TaskForm.jsx";
 import TaskHistory from "./TaskHistory.jsx";

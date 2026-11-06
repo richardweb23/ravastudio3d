@@ -1,18 +1,18 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { bonecosTransferCost } from '../lib/vendas.js';
-import StatusBadge from './StatusBadge.jsx';
+import StatusBadge from './StatusBadge.tsx';
 import { PRODUCT_CATEGORIES, saleProductCategory, matchesProductCategory } from "../lib/produtos.js";
-import CaixaSelect from "./CaixaSelect.jsx";
+import CaixaSelect from "./CaixaSelect.tsx";
 import VendaActionModal from "./VendaActionModal.jsx";
 import VendaDetalhesModal from "./VendaDetalhesModal.jsx";
 import { saleTotal, salesCostTotal } from "../lib/vendas.js";
 import { useRef, useState } from "react";
 import { supabase } from "../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber, today } from "../lib/formatters.js";
-import Header from "./Header.jsx";
-import MaterialSelect from "./MaterialSelect.jsx";
-import Info from "./Info.jsx";
-import DataTable from "./DataTable.jsx";
+import Header from "./Header.tsx";
+import MaterialSelect from "./MaterialSelect.tsx";
+import Info from "./Info.tsx";
+import DataTable from "./DataTable.tsx";
 
 export default function VendasComLocal({
   materiais,

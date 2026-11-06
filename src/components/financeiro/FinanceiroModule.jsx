@@ -1,16 +1,16 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { CASH_BOXES } from '../../lib/vendas.js';
-import StatusBadge from '../StatusBadge.jsx';
+import StatusBadge from '../StatusBadge.tsx';
 import { loadAllTableRows } from "../../services/tableRows.js";
 import CashPanel from "./CashPanel.jsx";
-import CaixaSelect from "../CaixaSelect.jsx";
-import FilterButtons from "../ui/FilterButtons.jsx";
+import CaixaSelect from "../CaixaSelect.tsx";
+import FilterButtons from "../ui/FilterButtons.tsx";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabase.js";
-import Header from "../Header.jsx";
-import DataTable from "../DataTable.jsx";
-import Empty from "../Empty.jsx";
+import Header from "../Header.tsx";
+import DataTable from "../DataTable.tsx";
+import Empty from "../Empty.tsx";
 import {
   centsToInput,
   currentMonthKey,

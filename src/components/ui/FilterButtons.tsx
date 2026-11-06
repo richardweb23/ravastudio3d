@@ -1,4 +1,4 @@
-export default function FilterButtons({ label, value, onChange, options }) {
+export default function FilterButtons<T extends string>({ label, value, onChange, options }: { label: string; value: T; onChange: (value: T) => void; options: { label: string; value: T }[] }) {
   return <div className="field-filter" role="group" aria-label={label}>
     <span className="field-filter-label">{label}</span>
     <div className="field-filter-options">{options.map(option => <button type="button" className="field-filter-option" key={option.value} aria-pressed={value === option.value} onClick={() => onChange(option.value)}>

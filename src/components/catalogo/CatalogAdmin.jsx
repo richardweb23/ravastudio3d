@@ -1,13 +1,13 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { catalogCode, catalogMoney, catalogSlug, catalogLink } from "../../lib/catalogo.js";
 import { adminCatalog, catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap } from "../../services/catalogo.js";
-import Header from "../Header.jsx";
-import DataTable from "../DataTable.jsx";
+import Header from "../Header.tsx";
+import DataTable from "../DataTable.tsx";
 import ProdutoForm from "../ProdutoForm.jsx";
-import CatalogDialog from "./CatalogDialog.jsx";
+import CatalogDialog from "./CatalogDialog.tsx";
 import CatalogEditor from "./CatalogEditor.jsx";
 import MarketplaceEditor from "./MarketplaceEditor.jsx";
 import "../../catalogo.css";

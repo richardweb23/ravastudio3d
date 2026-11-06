@@ -1,3 +1,5 @@
+import type { Tables } from "../database.types";
+type Order = Tables<"pedidos">;
 import { formatMoney } from "./formatters.js";
 export const orderStages = [
   ['recebido', 'Recebidos', 'Pedido cadastrado, aguardando preparação.'],
@@ -7,14 +9,14 @@ export const orderStages = [
   ['pronto', 'Prontos para entrega', 'Pedido conferido, embalado e disponível para entregar.'],
 ];
 export const orderSituations = { normal: 'Normal', aguardando: 'Aguardando', bloqueado: 'Bloqueado' };
-export function orderAdvanceWarning(order, subtasks, status) {
+export function orderAdvanceWarning(order: Order, subtasks: Tables<"pedido_subtarefas">[], status: string) {
   if (!['pronto', 'entregue'].includes(status)) return '';
   const pending = subtasks.filter(task => task.pedido_id === order.id && !task.concluido).length;
   return [pending ? `${pending} subtarefa(s) pendente(s).` : '',
     order.situacao === 'bloqueado' ? `Pedido bloqueado: ${order.situacao_descricao}` : ''].filter(Boolean).join('\n');
 }
 
-export function orderTooltip(order, data) {
+export function orderTooltip(order: Order, data: { pagamentos: Tables<"pedido_pagamentos">[]; pedidoItens: (Tables<"pedido_itens"> & { materiais: {nome: string} | null })[] }) {
   const paid = data.pagamentos.filter(p => p.pedido_id === order.id && !p.estornado_em).reduce((sum, p) => sum + Number(p.valor || 0), 0);
   const total = Number(order.valor_total || 0);
   const items = data.pedidoItens.filter(item => item.pedido_id === order.id).map(item =>

@@ -1,10 +1,10 @@
-import SearchSelect from './SearchSelect.jsx';
-import ProductSearchSelect from "./ProductSearchSelect.jsx";
+import SearchSelect from './SearchSelect.tsx';
+import ProductSearchSelect from "./ProductSearchSelect.tsx";
 import { useMemo, useState } from "react";
 import { formatMoney, formatNumber } from "../lib/formatters.js";
-import DataTable from "./DataTable.jsx";
-import Header from "./Header.jsx";
-import Metric from "./Metric.jsx";
+import DataTable from "./DataTable.tsx";
+import Header from "./Header.tsx";
+import Metric from "./Metric.tsx";
 
 const ALL_LOCATIONS = "__all__";
 

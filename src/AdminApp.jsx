@@ -1,7 +1,7 @@
 import { orderAdvanceWarning } from "./lib/orderBoard.js";
 import { loadAllTableRows } from "./services/tableRows.js";
 import useCaixaPedido from "./hooks/useCaixaPedido.js";
-import CaixaPedidoModal from "./components/CaixaPedidoModal.jsx";
+import CaixaPedidoModal from "./components/CaixaPedidoModal.tsx";
 import { loadSales } from "./services/vendas.js";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import logo from "../logo.svg";
 import { isSupabaseConfigured, supabase } from "./supabase.js";
 import { orderStatusLabel } from "./lib/formatters.js";
 import { getAdminPage, getAdminPageHref } from "./lib/adminNavigation.js";
-import { LoginScreen, PasswordScreen, SetupScreen } from "./components/auth/AuthScreens.jsx";
+import { LoginScreen, PasswordScreen, SetupScreen } from "./components/auth/AuthScreens.tsx";
 import Dashboard from "./components/dashboard/Dashboard.jsx";
 import CatalogAdmin from "./components/catalogo/CatalogAdmin.jsx";
 import EstoqueComLocais from "./components/EstoqueComLocais.jsx";

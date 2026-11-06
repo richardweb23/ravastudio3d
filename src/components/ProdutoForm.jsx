@@ -1,4 +1,4 @@
-import SearchSelect from './SearchSelect.jsx';
+import SearchSelect from './SearchSelect.tsx';
 import { formatMoney } from "../lib/formatters.js";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 import { filamentProductionCost, updateProductFilament } from "../lib/productCost.js";

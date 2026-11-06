@@ -1,11 +1,12 @@
+import type { CatalogProduct, CatalogResult } from "./catalogTypes";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
 import { publicCatalog, catalogImageUrl } from "./services/catalogo.js";
 import { catalogLink, catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
 import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
-import ProductDetail from "./components/catalogo/ProductDetail.jsx";
-import CatalogDialog from "./components/catalogo/CatalogDialog.jsx";
+import ProductDetail from "./components/catalogo/ProductDetail.tsx";
+import CatalogDialog from "./components/catalogo/CatalogDialog.tsx";
 const currentSlug = () => new URLSearchParams(window.location.search).get("produto") || window.location.pathname.match(/^\/produto\/([a-z0-9-]+)\/?$/)?.[1] || null;
 export default function CatalogPage() {
   const [search, setSearch] = useState("");
@@ -13,27 +14,27 @@ export default function CatalogPage() {
   const [category, setCategory] = useState("");
   const [order, setOrder] = useState("novos");
   const [openMenu, setOpenMenu] = useState("");
-  const menuRef = useRef(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState(() => window.matchMedia("(max-width: 640px)").matches ? "list" : "grid");
   const [offset, setOffset] = useState(0);
-  const [result, setResult] = useState({ produtos: [], categorias: [], total: 0 });
+  const [result, setResult] = useState<CatalogResult>({ produtos: [], categorias: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [slug, setSlug] = useState(currentSlug);
-  const [publishedPages, setPublishedPages] = useState([]);
+  const [publishedPages, setPublishedPages] = useState<string[]>([]);
   const directEntry = useRef(currentSlug());
   const lastSearch = useRef("");
-  const [detail, setDetail] = useState(null);
+  const [detail, setDetail] = useState<CatalogProduct | null>(null);
   const [detailStatus, setDetailStatus] = useState("");
   const [detailLoading, setDetailLoading] = useState(false);
   useEffect(() => {
     if (!openMenu) return;
-    const onPointerDown = event => { if (!menuRef.current?.contains(event.target)) setOpenMenu(""); };
-    const onKeyDown = event => {
+    const onPointerDown = (event: PointerEvent) => { if (!(event.target instanceof Node && menuRef.current?.contains(event.target))) setOpenMenu(""); };
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setOpenMenu("");
-        menuRef.current?.querySelector(`[data-catalog-trigger="${openMenu}"]`)?.focus();
+        menuRef.current?.querySelector<HTMLElement>(`[data-catalog-trigger="${openMenu}"]`)?.focus();
       }
     };
     document.addEventListener("pointerdown", onPointerDown);
@@ -47,9 +48,9 @@ export default function CatalogPage() {
   }, [search]);
   useEffect(() => {
     let current = true;
-    let analyticsTimer;
+    let analyticsTimer: number | undefined;
     setLoading(true); setError("");
-    publicCatalog({ p_busca: query, p_categoria: category || null, p_ordem: order, p_offset: offset }).then(data => {
+    publicCatalog({ p_busca: query, p_categoria: category || undefined, p_ordem: order, p_offset: offset }).then(data => {
       if (current) {
         setResult(previous => ({ ...data, produtos: offset ? [...new Map([...previous.produtos, ...data.produtos].map(p => [p.id, p])).values()] : data.produtos }));
         if (!query) lastSearch.current = '';
@@ -88,7 +89,7 @@ export default function CatalogPage() {
     }).catch(() => { if (current) setDetailStatus("Não foi possível abrir este produto. Tente novamente."); }).finally(() => { if (current) setDetailLoading(false); });
     return () => { current = false; };
   }, [slug, retry]);
-  function open(product) {
+  function open(product: CatalogProduct) {
     directEntry.current = null;
     trackCatalogClick(product, 'ver_detalhes', 'lista');
     setDetail(null); setDetailLoading(true); setDetailStatus("");
@@ -110,11 +111,11 @@ export default function CatalogPage() {
           <div className="catalog-nav" ref={menuRef} aria-label="Navegar pelo catálogo">
             <div className="catalog-menu">
               <button className={`catalog-menu-trigger${category ? ' is-selected' : ''}`} type="button" data-catalog-trigger="category" aria-expanded={openMenu === 'category'} aria-controls="catalog-category-menu" onClick={() => setOpenMenu(openMenu === 'category' ? '' : 'category')}><span><small>Explorar</small><strong>{categoryName}</strong></span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg></button>
-              {openMenu === 'category' && <div className="catalog-menu-panel" id="catalog-category-menu" role="group" aria-label="Categorias"><p>Escolha uma categoria</p>{[{ id: '', nome: 'Todas as categorias' }, ...result.categorias].map(item => <button key={item.id || 'all'} type="button" className={String(item.id) === category ? 'is-current' : ''} aria-pressed={String(item.id) === category} onClick={() => { const value = String(item.id); if (value !== category) trackCatalogEvent('catalogo_filtro_categoria', { produto_categoria: item.nome }); setCategory(value); setOffset(0); menuRef.current?.querySelector('[data-catalog-trigger=category]')?.focus(); setOpenMenu(''); }}>{item.nome}{String(item.id) === category && <span aria-hidden="true">✓</span>}</button>)}</div>}
+              {openMenu === 'category' && <div className="catalog-menu-panel" id="catalog-category-menu" role="group" aria-label="Categorias"><p>Escolha uma categoria</p>{[{ id: '', nome: 'Todas as categorias' }, ...result.categorias].map(item => <button key={item.id || 'all'} type="button" className={String(item.id) === category ? 'is-current' : ''} aria-pressed={String(item.id) === category} onClick={() => { const value = String(item.id); if (value !== category) trackCatalogEvent('catalogo_filtro_categoria', { produto_categoria: item.nome }); setCategory(value); setOffset(0); menuRef.current?.querySelector<HTMLElement>('[data-catalog-trigger=category]')?.focus(); setOpenMenu(''); }}>{item.nome}{String(item.id) === category && <span aria-hidden="true">✓</span>}</button>)}</div>}
             </div>
             <div className="catalog-menu catalog-menu-sort">
               <button className="catalog-menu-trigger" type="button" data-catalog-trigger="order" aria-expanded={openMenu === 'order'} aria-controls="catalog-order-menu" onClick={() => setOpenMenu(openMenu === 'order' ? '' : 'order')}><span><small>Ordenar</small><strong>{orderOptions.find(item => item[0] === order)?.[1]}</strong></span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m5 7.5 5 5 5-5"/></svg></button>
-              {openMenu === 'order' && <div className="catalog-menu-panel" id="catalog-order-menu" role="group" aria-label="Ordenação"><p>Ordenar produtos</p>{orderOptions.map(([value, label]) => <button key={value} type="button" className={value === order ? 'is-current' : ''} aria-pressed={value === order} onClick={() => { setOrder(value); setOffset(0); menuRef.current?.querySelector('[data-catalog-trigger=order]')?.focus(); setOpenMenu(''); }}>{label}{value === order && <span aria-hidden="true">✓</span>}</button>)}</div>}
+              {openMenu === 'order' && <div className="catalog-menu-panel" id="catalog-order-menu" role="group" aria-label="Ordenação"><p>Ordenar produtos</p>{orderOptions.map(([value, label]) => <button key={value} type="button" className={value === order ? 'is-current' : ''} aria-pressed={value === order} onClick={() => { setOrder(value); setOffset(0); menuRef.current?.querySelector<HTMLElement>('[data-catalog-trigger=order]')?.focus(); setOpenMenu(''); }}>{label}{value === order && <span aria-hidden="true">✓</span>}</button>)}</div>}
             </div>
           </div>
         </div>
@@ -129,10 +130,10 @@ export default function CatalogPage() {
           {!loading && !result.produtos.length && <div className="catalog-empty"><h2>{query || category ? "Nenhum produto encontrado" : "Novas criações estão chegando"}</h2><p>{query || category ? "Experimente outro nome ou categoria." : "Converse com a gente para conhecer as possibilidades."}</p></div>}
           <div className={`catalog-grid${view === "list" ? " catalog-list" : ""}`} aria-busy={loading}>{result.produtos.map(product => <article className="catalog-card" key={product.id}>
             <a className="catalog-card-open" href={catalogLink(product.slug, window.location.origin, publishedPages.includes(product.slug))} onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); open(product); } }} aria-label={`Ver detalhes de ${product.nome}`}>
-              <div className={`catalog-card-photo${product.marketplace ? ' catalog-card-photo-marketplace' : ''}`}>{product.imagens[0] || product.imagem_externa ? <img loading="lazy" decoding="async" src={product.imagens[0] ? catalogImageUrl(product.imagens[0].miniatura) : product.imagem_externa} alt={product.imagens[0]?.alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
+              <div className={`catalog-card-photo${product.marketplace ? ' catalog-card-photo-marketplace' : ''}`}>{product.imagens[0] || product.imagem_externa ? <img loading="lazy" decoding="async" src={product.imagens[0] ? catalogImageUrl(product.imagens[0].miniatura) : product.imagem_externa ?? undefined} alt={product.imagens[0]?.alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
               <div className="catalog-card-copy"><p className="catalog-eyebrow">{product.categoria || "Feito em 3D"}</p><h2>{product.nome}</h2>{product.resumo && <p>{product.resumo}</p>}{!product.marketplace && <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>}<span className="catalog-view">Ver detalhes +</span></div>
             </a>
-            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace)} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'comprar_marketplace', 'lista')}>Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp({ ...product, pagina_publicada: publishedPages.includes(product.slug) })} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'pedir_whatsapp', 'lista')}>Pedir pelo WhatsApp ↗</a>}
+            {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-card-contact" href={marketplaceUrl(product.link_marketplace) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'comprar_marketplace', 'lista')}>Comprar produto ↗</a> : <span className="catalog-card-contact">Link de compra indisponível</span>) : <a className="catalog-card-contact" href={catalogWhatsapp({ ...product, pagina_publicada: publishedPages.includes(product.slug) })} target="_blank" rel="noopener noreferrer" onClick={() => trackCatalogClick(product, 'pedir_whatsapp', 'lista')}>Pedir pelo WhatsApp ↗</a>}
           </article>)}</div>
           {result.produtos.length < result.total && <button className="catalog-more" disabled={loading} onClick={() => { trackCatalogEvent('catalogo_carregar_mais'); setOffset(result.produtos.length); }}>Carregar mais produtos</button>}
         </>}

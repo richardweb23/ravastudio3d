@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react';
-export default function StageHelp({ label, children }) {
+export default function StageHelp({ label, children }: { label: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const root = useRef(null);
+  const root = useRef<HTMLSpanElement>(null);
   const id = useId();
   useEffect(() => {
-    const outside = event => { if (!root.current?.contains(event.target)) setOpen(false); };
-    const escape = event => { if (event.key === 'Escape') setOpen(false); };
+    const outside = (event: PointerEvent) => { if (!(event.target instanceof Node && root.current?.contains(event.target))) setOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
     document.addEventListener('pointerdown', outside);
     document.addEventListener('keydown', escape);
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };

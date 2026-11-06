@@ -1,15 +1,15 @@
-import SearchSelect from '../SearchSelect.jsx';
+import SearchSelect from '../SearchSelect.tsx';
 import { orderAdvanceWarning } from "../../lib/orderBoard.js";
-import StatusBadge from '../StatusBadge.jsx';
+import StatusBadge from '../StatusBadge.tsx';
 import RecebimentoModal from "./RecebimentoModal.jsx";
 import useCaixaPedido from "../../hooks/useCaixaPedido.js";
-import CaixaPedidoModal from "../CaixaPedidoModal.jsx";
+import CaixaPedidoModal from "../CaixaPedidoModal.tsx";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabase.js";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
-import Header from "../Header.jsx";
-import DataTable from "../DataTable.jsx";
-import Status from "../Status.jsx";
+import Header from "../Header.tsx";
+import DataTable from "../DataTable.tsx";
+import Status from "../Status.tsx";
 import PedidoEditor from "./PedidoEditor.jsx";
 import PedidoDetalhes from "./PedidoDetalhes.jsx";
 

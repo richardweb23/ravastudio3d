@@ -1,19 +1,27 @@
+type Selection = { name?: string; value: string };
+export type SelectChange = (event: { target: Selection; currentTarget: Selection }) => void;
+interface SelectProps extends Pick<React.InputHTMLAttributes<HTMLInputElement>, "name" | "required" | "disabled" | "autoFocus" | "id" | "className" | "aria-label" | "aria-describedby"> {
+  value?: string | number | null;
+  children: React.ReactNode;
+  onChange?: SelectChange;
+}
+
 import { Children, isValidElement, useId, useState } from 'react';
 import './search-select.css';
 
-const textOf = children => Children.toArray(children).map(child => isValidElement(child) ? textOf(child.props.children) : String(child)).join('');
-const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+const textOf = (children: React.ReactNode): string => Children.toArray(children).map(child => isValidElement<{ children?: React.ReactNode }>(child) ? textOf(child.props.children) : String(child)).join('');
+const normalize = (value: unknown) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
 
-export default function SearchSelect({ children, value, onChange, name, required = false, disabled = false, autoFocus, id: suppliedId, className = '', 'aria-label': ariaLabel, 'aria-describedby': describedBy }) {
+export default function SearchSelect({ children, value, onChange, name, required = false, disabled = false, autoFocus, id: suppliedId, className = '', 'aria-label': ariaLabel, 'aria-describedby': describedBy }: SelectProps) {
   const generatedId = useId();
   const id = suppliedId || generatedId;
   const [open, setOpen] = useState(false), [query, setQuery] = useState(''), [active, setActive] = useState(0);
-  const options = Children.toArray(children).filter(child => isValidElement(child) && child.type === 'option').map(child => ({ value: String(child.props.value ?? textOf(child.props.children)), label: textOf(child.props.children), disabled: Boolean(child.props.disabled) }));
+  const options = Children.toArray(children).filter((child): child is React.ReactElement<React.OptionHTMLAttributes<HTMLOptionElement>> => isValidElement(child) && child.type === 'option').map(child => ({ value: String(child.props.value ?? textOf(child.props.children)), label: textOf(child.props.children), disabled: Boolean(child.props.disabled) }));
   const selected = options.find(option => option.value === String(value ?? ''));
   const matches = options.filter(option => normalize(option.label).includes(normalize(query)));
   const available = matches.filter(option => !option.disabled);
   const current = available[Math.min(active, Math.max(0, available.length - 1))];
-  const choose = option => {
+  const choose = (option: (typeof options)[number]) => {
     if (!option || option.disabled) return;
     const target = { name, value: option.value };
     onChange?.({ target, currentTarget: target });
