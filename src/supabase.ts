@@ -1,3 +1,4 @@
+import type { Database } from "./database.types";
 import { createClient } from "@supabase/supabase-js";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
@@ -13,7 +14,7 @@ export const isSupabaseConfigured = Boolean(
 );
 
 export const supabase = isSupabaseConfigured
-  ? createClient(url, browserKey, {
+  ? createClient<Database>(url, browserKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -24,4 +25,9 @@ export const supabase = isSupabaseConfigured
 
 export function managementUrl() {
   return `${window.location.origin}${window.location.pathname.replace(/\/?$/, "/")}`;
+}
+
+export function requireSupabase() {
+  if (!supabase) throw new Error("Supabase não configurado.");
+  return supabase;
 }

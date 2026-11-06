@@ -1,4 +1,4 @@
-export function parseMeasurement(value) {
+export function parseMeasurement(value: unknown) {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value !== "string") return null;
   const normalized = value.trim().replace(",", ".");
@@ -7,7 +7,7 @@ export function parseMeasurement(value) {
   return Number.isFinite(number) ? number : null;
 }
 
-export function calculateScale(currentSize, desiredSize) {
+export function calculateScale(currentSize: number, desiredSize: number) {
   if (
     !Number.isFinite(currentSize) ||
     !Number.isFinite(desiredSize) ||

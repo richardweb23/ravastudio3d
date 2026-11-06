@@ -1,12 +1,12 @@
 const MINUTE_IN_MS = 60_000;
 
-function asNonNegativeInteger(value) {
+function asNonNegativeInteger(value: unknown) {
   if (typeof value === "string" && !/^\d+$/.test(value.trim())) return null;
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
 }
 
-export function createLocalDateTime(dateValue, timeValue) {
+export function createLocalDateTime(dateValue: string, timeValue: string) {
   const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateValue || "");
   const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue || "");
   if (!dateMatch || !timeMatch) return null;
@@ -33,7 +33,7 @@ export function createLocalDateTime(dateValue, timeValue) {
   return result;
 }
 
-export function durationToMinutes(hours, minutes) {
+export function durationToMinutes(hours: unknown, minutes: unknown) {
   const parsedHours = asNonNegativeInteger(hours);
   const parsedMinutes = asNonNegativeInteger(minutes);
   if (parsedHours === null || parsedMinutes === null || parsedMinutes > 59)
@@ -42,7 +42,7 @@ export function durationToMinutes(hours, minutes) {
   return Number.isSafeInteger(total) ? total : null;
 }
 
-export function addMinutes(start, minutes) {
+export function addMinutes(start: Date | null, minutes: unknown) {
   const parsedMinutes = asNonNegativeInteger(minutes);
   if (!(start instanceof Date) || Number.isNaN(start.getTime()) || parsedMinutes === null)
     return null;
@@ -50,7 +50,7 @@ export function addMinutes(start, minutes) {
   return Number.isNaN(result.getTime()) ? null : result;
 }
 
-export function splitDuration(totalMinutes) {
+export function splitDuration(totalMinutes: unknown) {
   const parsed = asNonNegativeInteger(totalMinutes);
   if (parsed === null) return null;
   return {
@@ -60,7 +60,7 @@ export function splitDuration(totalMinutes) {
   };
 }
 
-export function formatDurationCompact(totalMinutes) {
+export function formatDurationCompact(totalMinutes: unknown) {
   const parts = splitDuration(totalMinutes);
   if (!parts) return "—";
   const totalHours = parts.days * 24 + parts.hours;
@@ -68,7 +68,7 @@ export function formatDurationCompact(totalMinutes) {
   return parts.minutes ? `${totalHours}h${parts.minutes}min` : `${totalHours}h`;
 }
 
-export function formatDurationFriendly(totalMinutes) {
+export function formatDurationFriendly(totalMinutes: unknown) {
   const parts = splitDuration(totalMinutes);
   if (!parts) return "—";
   const labels = [];
@@ -81,7 +81,7 @@ export function formatDurationFriendly(totalMinutes) {
   return `${labels.slice(0, -1).join(", ")} e ${labels.at(-1)}`;
 }
 
-export function calendarDayDifference(start, end) {
+export function calendarDayDifference(start: Date | null, end: Date | null) {
   if (
     !(start instanceof Date) ||
     !(end instanceof Date) ||
@@ -96,8 +96,8 @@ export function calendarDayDifference(start, end) {
 }
 
 export function createAlternativeSchedule(
-  baseDate,
-  durationMinutes,
+  baseDate: Date | null,
+  durationMinutes: unknown,
   startHours = [18, 20, 22, 0, 6, 8],
 ) {
   if (!(baseDate instanceof Date) || Number.isNaN(baseDate.getTime())) return [];
@@ -123,7 +123,7 @@ export function createAlternativeSchedule(
   });
 }
 
-export function createPrintQueue(start, durationMinutes, quantity, pauseMinutes = 0) {
+export function createPrintQueue(start: Date | null, durationMinutes: unknown, quantity: unknown, pauseMinutes = 0) {
   const parsedDuration = asNonNegativeInteger(durationMinutes);
   const parsedQuantity = asNonNegativeInteger(quantity);
   const parsedPause = asNonNegativeInteger(pauseMinutes);
@@ -146,8 +146,9 @@ export function createPrintQueue(start, durationMinutes, quantity, pauseMinutes 
     if (!end) return null;
     items.push({ number: index + 1, start: itemStart, end });
     if (index < parsedQuantity - 1) {
-      itemStart = addMinutes(end, parsedPause);
-      if (!itemStart) return null;
+      const nextStart = addMinutes(end, parsedPause);
+      if (!nextStart) return null;
+      itemStart = nextStart;
     }
   }
 
@@ -156,6 +157,6 @@ export function createPrintQueue(start, durationMinutes, quantity, pauseMinutes 
   return {
     items,
     totalMinutes,
-    completion: items.at(-1).end,
+    completion: items[items.length - 1].end,
   };
 }

@@ -1,8 +1,9 @@
-import { supabase } from "../supabase.js";
+import { requireSupabase } from "../supabase.js";
 
 export async function loadSales() {
+  const supabase = requireSupabase();
   const rows = [];
-  const statuses = new Map();
+  const statuses = new Map<string | null, string | null>();
   for (let offset=0; ; offset+=500) {
     const {data,error}=await supabase.from("pedidos_financeiro").select("id,status_financeiro").order("id").range(offset,offset+499);
     if(error)return {data:null,error};

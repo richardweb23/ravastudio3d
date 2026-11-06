@@ -1,6 +1,6 @@
 // Integer arithmetic keeps half-cent rounding consistent with PostgreSQL numeric.
-export function filamentProductionCost(grams, price) {
-  function scaled(value, places) {
+export function filamentProductionCost(grams: unknown, price: unknown) {
+  function scaled(value: unknown, places: number) {
     const text = String(value ?? "").trim() || "0";
     if (!new RegExp(`^\\d+(?:\\.\\d{1,${places}})?$`).test(text) || Number(text) > 10000000) {
       throw new Error(`Informe valores de filamento entre zero e 10.000.000, com até ${places} casas decimais.`);
@@ -15,7 +15,7 @@ export function filamentProductionCost(grams, price) {
   return `${cents / 100n}.${String(cents % 100n).padStart(2, "0")}`;
 }
 
-export function updateProductFilament(form, field, value) {
+export function updateProductFilament<T extends { filamento_gramas: string; filamento_valor_kg: string; custo_medio: string }>(form: T, field: "filamento_gramas" | "filamento_valor_kg", value: string) {
   const next = { ...form, [field]: value };
   try {
     const cost = filamentProductionCost(next.filamento_gramas, next.filamento_valor_kg);

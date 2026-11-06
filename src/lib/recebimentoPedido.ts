@@ -1,9 +1,11 @@
-export function sugestaoRecebimento(valorCentavos, totalCentavos, custoCentavos) {
+import type { Tables } from "../database.types";
+
+export function sugestaoRecebimento(valorCentavos: number, totalCentavos: number, custoCentavos: number | null) {
   if (!Number.isSafeInteger(valorCentavos) || valorCentavos <= 0 || !Number.isSafeInteger(totalCentavos) || totalCentavos <= 0 || custoCentavos == null || custoCentavos < 0) return null;
   const materiais = Math.min(valorCentavos, Math.round(valorCentavos * Math.min(custoCentavos, totalCentavos) / totalCentavos));
   return { materiais, restante: valorCentavos - materiais };
 }
-export function custoItensPedido(items, materiais) {
+export function custoItensPedido(items: readonly Pick<Tables<"pedido_itens">, "material_id" | "quantidade">[], materiais: readonly Pick<Tables<"materiais">, "id" | "custo_medio">[]) {
   if (!items.length) return null;
   let sum = 0;
   for (const item of items) {
