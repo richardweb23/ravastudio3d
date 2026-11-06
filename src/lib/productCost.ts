@@ -15,7 +15,7 @@ export function filamentProductionCost(grams: unknown, price: unknown) {
   return `${cents / 100n}.${String(cents % 100n).padStart(2, "0")}`;
 }
 
-export function updateProductFilament<T extends { filamento_gramas: string; filamento_valor_kg: string; custo_medio: string }>(form: T, field: "filamento_gramas" | "filamento_valor_kg", value: string) {
+export function updateProductFilament<T extends { filamento_gramas: string | number; filamento_valor_kg: string | number; custo_medio: string | number }>(form: T, field: "filamento_gramas" | "filamento_valor_kg", value: string) {
   const next = { ...form, [field]: value };
   try {
     const cost = filamentProductionCost(next.filamento_gramas, next.filamento_valor_kg);

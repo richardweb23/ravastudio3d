@@ -7,8 +7,11 @@ export const orderStages = [
   ['em_producao', 'Em produção', 'Impressão, acabamento e montagem em andamento.'],
   ['embalagem', 'Embalagem', 'Produtos prontos, aguardando embalagem antes da entrega.'],
   ['pronto', 'Prontos para entrega', 'Pedido conferido, embalado e disponível para entregar.'],
-];
-export const orderSituations = { normal: 'Normal', aguardando: 'Aguardando', bloqueado: 'Bloqueado' };
+] as const;
+export function isOrderStatus(value: string): value is Tables<"pedidos">["status"] {
+  return value === "entregue" || orderStages.some(([status]) => status === value);
+}
+export const orderSituations: Record<string, string> = { normal: 'Normal', aguardando: 'Aguardando', bloqueado: 'Bloqueado' };
 export function orderAdvanceWarning(order: Order, subtasks: Tables<"pedido_subtarefas">[], status: string) {
   if (!['pronto', 'entregue'].includes(status)) return '';
   const pending = subtasks.filter(task => task.pedido_id === order.id && !task.concluido).length;

@@ -8,10 +8,21 @@ const browserKey =
 
 // Postgres reports JSONB for this RPC; its public fields are defined by the catalog migrations.
 type PublicSchema = Database["public"];
+// These arguments explicitly accept SQL NULL in the project migrations.
+type NullArgs<T, K extends string> = T extends { Args: infer A }
+  ? Omit<T, "Args"> & { Args: { [P in keyof A]: P extends K ? A[P] | null : A[P] } } : T;
+type Functions = PublicSchema["Functions"];
+type NullableRpc = {
+  registrar_entrada: "p_fornecedor";
+  salvar_material: "p_material_id" | "p_local_id";
+  salvar_pedido: "p_pedido_id";
+  registrar_venda: "p_vendedor_id";
+  editar_venda: "p_vendedor_id";
+};
 type CatalogRpc = PublicSchema["Functions"]["catalogo_publico"];
 type AppDatabase = Omit<Database, "public"> & {
   public: Omit<PublicSchema, "Functions"> & {
-    Functions: Omit<PublicSchema["Functions"], "catalogo_publico"> & {
+    Functions: Omit<Functions, "catalogo_publico" | keyof NullableRpc> & { [K in keyof NullableRpc]: NullArgs<Functions[K], NullableRpc[K]> } & {
       catalogo_publico: Omit<CatalogRpc, "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
     };
   };

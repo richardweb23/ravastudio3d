@@ -2,7 +2,7 @@ import type { Tables } from "../database.types";
 
 type Task = Tables<"tarefas">;
 
-export const taskAssignees = ["Richard", "Xandy", "Ambos"];
+export const taskAssignees = ["Richard", "Xandy", "Ambos"] as const;
 export function taskAssigneeLabel(task: Pick<Task, "pessoa_encarregada" | "responsavel">) { return task.pessoa_encarregada || task.responsavel || "Não informado"; }
 export const taskStatuses = [["pendente", "Pendentes"], ["fazendo", "Fazendo"], ["terminado", "Terminado"]];
 export const taskHistoryStatuses = [...taskStatuses, ["concluido", "Concluídas"]];

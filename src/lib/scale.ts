@@ -7,8 +7,9 @@ export function parseMeasurement(value: unknown) {
   return Number.isFinite(number) ? number : null;
 }
 
-export function calculateScale(currentSize: number, desiredSize: number) {
+export function calculateScale(currentSize: number | null, desiredSize: number | null) {
   if (
+    currentSize === null || desiredSize === null ||
     !Number.isFinite(currentSize) ||
     !Number.isFinite(desiredSize) ||
     currentSize <= 0 ||
@@ -25,6 +26,6 @@ export function calculateScale(currentSize: number, desiredSize: number) {
     percentageChange,
     physicalDifference,
     state: scale > 100 ? "increase" : scale < 100 ? "reduction" : "original",
-  };
+  } as const;
 }
 
