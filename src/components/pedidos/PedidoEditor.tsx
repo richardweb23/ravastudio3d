@@ -24,11 +24,13 @@ export default function PedidoEditor({
     previsao_entrega: "",
     desconto: "",
     observacao: "",
+    links: [] as string[],
     caixa_padrao: "",
   };
   const [draft, setDraft] = useState(() => ({
     ...blank,
     ...(order || {}),
+    links: order?.links || [],
     items: initialItems.map<DraftItem>((item) => ({ ...item, key: item.id })),
   }));
   const [itemModal, setItemModal] = useState<DraftItem | null>(null);
@@ -61,6 +63,7 @@ export default function PedidoEditor({
       previsao_entrega: draft.previsao_entrega || null,
       desconto: Number(draft.desconto || 0),
       observacao: draft.observacao || null,
+      links: draft.links.map((link) => link.trim()).filter(Boolean),
     };
     const rows = draft.items.map((item) => ({
       material_id: item.material_id,
@@ -98,6 +101,8 @@ export default function PedidoEditor({
             ×
           </button>
         </div>
+        <section className="order-editor-section" aria-labelledby="order-customer-title">
+        <h3 id="order-customer-title">Dados do pedido</h3>
         <label>
           Cliente
           <input
@@ -136,6 +141,7 @@ export default function PedidoEditor({
             </SearchSelect>
           </label>
         </div>
+        <div className="form-grid">
         <label>Caixa padrão para novos itens<SearchSelect value={draft.caixa_padrao || ""} onChange={e => update({ caixa_padrao: e.target.value })}><option value="">Definir na entrega</option><option value="Rava">Rava</option><option value="Rivoxel">Rivoxel</option><option value="Bonecos">Bonecos</option></SearchSelect></label>
         <label>
           Previsão de entrega
@@ -145,6 +151,10 @@ export default function PedidoEditor({
             onChange={(e) => update({ previsao_entrega: e.target.value })}
           />
         </label>
+        </div>
+        </section>
+        <section className="order-editor-section" aria-labelledby="order-notes-title">
+        <h3 id="order-notes-title">Observações e links</h3>
         <label>
           Observação / personalização
           <textarea
@@ -152,10 +162,26 @@ export default function PedidoEditor({
             onChange={(e) => update({ observacao: e.target.value })}
           />
         </label>
-        <section className="draft-items">
-          <div className="panel-title">
-            <h3>Itens ({draft.items.length})</h3>
+        <section className="order-links-editor" aria-labelledby="order-links-title">
+          <div className="order-section-heading">
+            <h3 id="order-links-title">Links do pedido</h3>
+            <button className="order-add-button" type="button" disabled={draft.links.length >= 20} onClick={() => update({ links: [...draft.links, ""] })}><span aria-hidden="true">+</span> Adicionar link</button>
+          </div>
+          {draft.links.map((link, index) => <div className="order-link-row" key={index}>
+            <label>Link {index + 1}
+              <input type="url" placeholder="https://exemplo.com" value={link} maxLength={2048}
+                pattern="https?://[^\s@/]+([/?#][^\s]*)?" title="Informe um link começando com http:// ou https://"
+                onChange={event => update({ links: draft.links.map((value, position) => position === index ? event.target.value : value) })} />
+            </label>
+            <button type="button" className="danger-text" aria-label={`Remover link ${index + 1}`} onClick={() => update({ links: draft.links.filter((_, position) => position !== index) })}>Remover</button>
+          </div>)}
+        </section>
+        </section>
+        <section className="order-editor-section draft-items" aria-labelledby="order-items-editor-title">
+          <div className="order-section-heading">
+            <h3 id="order-items-editor-title">Itens <span className="order-item-count">{draft.items.length}</span></h3>
             <button
+              className="order-add-button"
               type="button"
               onClick={() =>
                 setItemModal({
@@ -167,7 +193,7 @@ export default function PedidoEditor({
                 })
               }
             >
-              Adicionar item
+              <span aria-hidden="true">+</span> Adicionar item
             </button>
           </div>
           {draft.items.map((item) => (
@@ -203,6 +229,8 @@ export default function PedidoEditor({
           ))}
           {!draft.items.length && <Empty text="Nenhum item adicionado." />}
         </section>
+        <section className="order-editor-section order-pricing" aria-labelledby="order-pricing-title">
+        <h3 id="order-pricing-title">Resumo do pedido</h3>
         <div className="discount-row">
           <span>
             Subtotal: <strong>{fmtMoney(subtotal)}</strong>
@@ -221,7 +249,8 @@ export default function PedidoEditor({
         <div className="order-total">
           Total do pedido: <strong>{fmtMoney(total)}</strong>
         </div>
-        <div className="actions">
+        </section>
+        <div className="actions order-editor-actions">
           <button className="primary" disabled={saving}>
             {saving ? "Salvando…" : "Salvar pedido"}
           </button>

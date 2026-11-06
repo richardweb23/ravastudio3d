@@ -79,6 +79,16 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
       <div><dt>Restante</dt><dd className={financial.balance ? "negative" : ""}>{formatMoney(financial.balance)}</dd></div>
     </dl>
     </section>
+    {!!order.links?.length && <section className="order-details-section order-links" aria-labelledby="order-links-details-title">
+      <h3 id="order-links-details-title">Links do pedido</h3>
+      <ul>{order.links.map((link, index) => {
+        try {
+          const url = new URL(link);
+          if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null;
+          return <li key={`${index}-${link}`}><a href={url.href} target="_blank" rel="noopener noreferrer">{link}</a></li>;
+        } catch { return null; }
+      })}</ul>
+    </section>}
     {onDescriptionSave ? <form className="order-details-note order-details-section" onSubmit={saveDescription}>
       <h3><label htmlFor="order-description">Descrição do pedido / observações</label></h3>
       <textarea id="order-description" rows={4} value={description} onChange={event => { setDescription(event.target.value); setDescriptionMessage(null); }} placeholder="Descreva os detalhes e a personalização do pedido" />

@@ -2694,3 +2694,68 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .product-search-options li.active, .product-search-options li:hover { background: #f4efe8; }
 .product-search-options li small { color: #716a60; white-space: nowrap; }
 .product-search-options li.product-search-empty { color: #777; cursor: default; }
+
+.order-links-editor { display: grid; gap: 10px; }
+.order-links-editor h3 { margin: 0; }
+.order-link-row { display: flex; gap: 10px; align-items: end; }
+.order-link-row label { flex: 1; min-width: 0; }
+.order-links ul { margin: 0; padding-left: 20px; }
+.order-links a { overflow-wrap: anywhere; }
+
+/* Cadastro de pedidos */
+.order-editor { padding: 24px; background: #faf8f4; }
+.order-editor .modal-heading { margin-bottom: 20px; align-items: flex-start; }
+.order-editor .modal-heading h2 { font-size: 20px; }
+.order-editor .modal-heading p { margin: 0; color: #756d62; font-size: 13px; }
+.order-editor-section {
+  padding: 18px;
+  margin: 0 0 14px;
+  border: 1px solid #e8e0d6;
+  border-radius: 12px;
+  background: #fff;
+}
+.order-editor-section > h3,
+.order-section-heading h3 { margin: 0; color: #25211d; font-size: 14px; font-weight: 700; }
+.order-editor-section > h3 { margin-bottom: 16px; }
+.order-editor-section > label:last-child,
+.order-editor-section > .form-grid:last-child > label { margin-bottom: 0; }
+.order-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.order-editor .order-links-editor { margin-top: 2px; padding-top: 14px; border-top: 1px solid #eee8e0; }
+.order-editor .order-links-editor h3 { color: #625a4f; font-size: 12px; }
+.order-editor .order-add-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 8px 12px; border: 1px solid #d8c9b9;
+  border-radius: 8px; background: #fcfaf7; color: #765638;
+  font-size: 12px; font-weight: 700; white-space: nowrap; cursor: pointer;
+}
+.order-editor .order-add-button span { font-size: 18px; line-height: 1; font-weight: 400; }
+.order-editor .order-add-button:hover:not(:disabled) { background: #f4ece3; }
+.order-editor .order-add-button:disabled { opacity: .5; cursor: not-allowed; }
+.order-editor .order-link-row { gap: 10px; align-items: end; }
+.order-editor .order-link-row label { margin: 0; }
+.order-editor .order-link-row > button { min-height: 44px; padding: 0 4px; }
+.order-editor .draft-items { padding: 18px; margin: 0 0 14px; border: 1px solid #e8e0d6; }
+.order-item-count { display: inline-flex; align-items: center; justify-content: center; min-width: 23px; height: 23px; margin-left: 4px; border-radius: 50%; background: #f3eee8; color: #756452; font-size: 12px; }
+.order-editor .draft-items .empty { margin: 14px 0 0; padding: 18px; border: 1px dashed #e7ded3; border-radius: 8px; background: #fcfaf7; text-align: center; }
+.order-editor .draft-items .item-line { margin-top: 12px; }
+.order-editor .draft-items .item-line span:last-child { flex-wrap: wrap; justify-content: flex-end; }
+.order-editor .draft-items .item-line button { min-height: 36px; padding: 6px 8px; }
+.order-editor .order-pricing .discount-row { padding: 0; border: 0; }
+.order-editor .order-pricing .discount-row label { margin: 0; }
+.order-editor .order-total { padding-top: 14px; margin: 14px 0 0; border-top: 1px solid #eee8e0; }
+.order-editor-actions { justify-content: flex-end; flex-wrap: wrap; padding-top: 4px; }
+.order-editor-actions button { min-height: 44px; }
+@media (max-width: 600px) {
+  .modal-backdrop:has(> .order-editor) { padding: 10px; }
+  .order-editor { max-height: calc(100dvh - 20px); padding: 18px; }
+  .order-editor-section, .order-editor .draft-items { padding: 15px; }
+  .order-editor .form-grid { gap: 0; }
+  .order-editor-section > .form-grid:last-child > label:first-child { margin-bottom: 14px; }
+  .order-section-heading { align-items: flex-start; }
+  .order-editor .order-link-row { align-items: stretch; }
+  .order-editor .order-link-row > button { align-self: end; }
+  .order-editor .discount-row { align-items: stretch; }
+  .order-editor-actions { flex-direction: column-reverse; }
+  .order-editor-actions button { width: 100%; }
+}
+.modal-backdrop:has(> .order-editor) { z-index: 40; }

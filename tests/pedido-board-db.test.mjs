@@ -41,6 +41,17 @@ test('board: migrações, subtarefas, isolamento, permissões e entrega', async 
  assert.equal((await one('select situacao from public.pedidos where id=$1',[a.id])).situacao,'bloqueado');
  // A edição comercial recria os itens: o vínculo da checklist deve sobreviver.
  const material=await one("insert into public.materiais(nome) values('Kit') returning id");
+ const linked=await one("select public.salvar_pedido(null,$1::jsonb,$2::jsonb) id", [
+  JSON.stringify({cliente:'Pedido com links',links:['https://example.com/modelo','http://example.com/referencia']}),
+  JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}]),
+ ]);
+ assert.deepEqual((await one('select links from public.pedidos where id=$1',[linked.id])).links,['https://example.com/modelo','http://example.com/referencia']);
+ await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado'}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
+ assert.equal((await one('select cardinality(links) n from public.pedidos where id=$1',[linked.id])).n,2);
+ await assert.rejects(db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Inválido',links:['javascript:alert(1)']}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]));
+ assert.equal((await one('select cliente from public.pedidos where id=$1',[linked.id])).cliente,'Pedido editado');
+ await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado',links:[]}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
+ assert.deepEqual((await one('select links from public.pedidos where id=$1',[linked.id])).links,[]);
  await db.query('insert into public.pedido_itens(pedido_id,material_id,quantidade,preco_unitario) values($1,$2,1,100)',[a.id,material.id]);
  await db.query('delete from public.pedido_itens where pedido_id=$1',[a.id]);
  await db.query('insert into public.pedido_itens(pedido_id,material_id,quantidade,preco_unitario) values($1,$2,2,100)',[a.id,material.id]);
