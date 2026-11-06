@@ -10,12 +10,47 @@ import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const dateLabel = (value?: string | null) => value ? new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR") : "Não informada";
 
-export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange, onDescriptionSave, subtasks = [], onSubtaskChange, onSituationSave, onStatusChange }: OrderActions & { order: Order; items: OrderItem[]; financial: { paid: number; balance: number; status: string }; onClose: () => void; subtasks?: Subtask[] }) {
+export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange, onDescriptionSave, onLinksSave, subtasks = [], onSubtaskChange, onSituationSave, onStatusChange }: OrderActions & { order: Order; items: OrderItem[]; financial: { paid: number; balance: number; status: string }; onClose: () => void; subtasks?: Subtask[] }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
   const [description, setDescription] = useState(order.observacao || "");
   const [descriptionMessage, setDescriptionMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const [newLink, setNewLink] = useState("");
+  const [newColor, setNewColor] = useState("");
+  const [editingColor, setEditingColor] = useState<number | null>(null);
+  const [colorValue, setColorValue] = useState("");
+  const [linkMessage, setLinkMessage] = useState<{ text: string; error: boolean } | null>(null);
+  async function saveLinks(links: string[], colors: string[]) {
+    if (!onLinksSave || saving.current) return false;
+    saving.current = true;
+    setBusy(true);
+    setLinkMessage(null);
+    try {
+      await onLinksSave(order, links, colors);
+      setLinkMessage({ text: "Links atualizados.", error: false });
+      return true;
+    } catch (error) {
+      setLinkMessage({ text: errorMessage(error, "Não foi possível atualizar os links. Tente novamente."), error: true });
+      return false;
+    } finally {
+      saving.current = false;
+      setBusy(false);
+    }
+  }
+  async function addLink(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const link = newLink.trim();
+    try {
+      const url = new URL(link);
+      if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) throw new Error();
+    } catch {
+      setLinkMessage({ text: "Informe um link válido que comece com http:// ou https://.", error: true });
+      return;
+    }
+    const colors = (order.links || []).map((_, index) => order.links_cores?.[index] || "");
+    if (await saveLinks([...(order.links || []), link], [...colors, newColor.trim()])) { setNewLink(""); setNewColor(""); }
+  }
   async function saveDescription(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving.current) return;
@@ -79,15 +114,28 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
       <div><dt>Restante</dt><dd className={financial.balance ? "negative" : ""}>{formatMoney(financial.balance)}</dd></div>
     </dl>
     </section>
-    {!!order.links?.length && <section className="order-details-section order-links" aria-labelledby="order-links-details-title">
+    {(onLinksSave || !!order.links?.length) && <section className="order-details-section order-links" aria-labelledby="order-links-details-title">
       <h3 id="order-links-details-title">Links do pedido</h3>
-      <ul>{order.links.map((link, index) => {
+      {!!order.links?.length && <ul>{order.links.map((link, index) => {
         try {
           const url = new URL(link);
           if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null;
-          return <li key={`${index}-${link}`}><a href={url.href} target="_blank" rel="noopener noreferrer">{link}</a></li>;
+          return <li key={`${index}-${link}`}><div className="order-link-content">{order.links_cores?.[index] && <span>Cor: <strong>{order.links_cores[index]}</strong></span>}<a href={url.href} target="_blank" rel="noopener noreferrer">{link}</a>
+            {onLinksSave && editingColor === index && <form className="order-edit-color" onSubmit={async event => { event.preventDefault(); const colors = order.links.map((_, position) => position === index ? colorValue.trim() : order.links_cores?.[position] || ""); if (await saveLinks(order.links, colors)) setEditingColor(null); }}>
+              <label>Cor do link {index + 1}<input value={colorValue} onChange={event => setColorValue(event.target.value)} maxLength={100} placeholder="Ex.: Branco" /></label>
+              <div><button type="submit" disabled={busy}>Salvar cor</button><button type="button" onClick={() => setEditingColor(null)} disabled={busy}>Cancelar</button></div>
+            </form>}
+          </div>{onLinksSave && <div className="order-link-actions"><button type="button" className="link" aria-label={`Editar cor do link ${index + 1}`} disabled={busy} onClick={() => { setEditingColor(index); setColorValue(order.links_cores?.[index] || ""); }}>Editar cor</button><button type="button" className="danger-text" aria-label={`Remover link ${index + 1}`} disabled={busy} onClick={async () => { if (await saveLinks(order.links.filter((_, position) => position !== index), order.links.map((_, position) => order.links_cores?.[position] || "").filter((_, position) => position !== index))) setEditingColor(null); }}>Remover</button></div>}</li>;
         } catch { return null; }
-      })}</ul>
+      })}</ul>}
+      {onLinksSave && <form className="order-details-link-form" onSubmit={addLink}>
+        <label htmlFor="order-new-link-color">Cor</label>
+        <input id="order-new-link-color" type="text" value={newColor} onChange={event => setNewColor(event.target.value)} placeholder="Ex.: Branco" maxLength={100} disabled={busy || (order.links || []).length >= 20} />
+        <label htmlFor="order-new-link">Adicionar link</label>
+        <div><input id="order-new-link" type="url" value={newLink} onChange={event => { setNewLink(event.target.value); setLinkMessage(null); }} placeholder="https://exemplo.com" maxLength={2048} required disabled={busy || (order.links || []).length >= 20} />
+          <button type="submit" disabled={busy || (order.links || []).length >= 20}>Adicionar link</button></div>
+      </form>}
+      {linkMessage && <p role={linkMessage.error ? "alert" : "status"}>{linkMessage.text}</p>}
     </section>}
     {onDescriptionSave ? <form className="order-details-note order-details-section" onSubmit={saveDescription}>
       <h3><label htmlFor="order-description">Descrição do pedido / observações</label></h3>

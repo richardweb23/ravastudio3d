@@ -25,12 +25,14 @@ export default function PedidoEditor({
     desconto: "",
     observacao: "",
     links: [] as string[],
+    links_cores: [] as string[],
     caixa_padrao: "",
   };
   const [draft, setDraft] = useState(() => ({
     ...blank,
     ...(order || {}),
     links: order?.links || [],
+    links_cores: (order?.links || []).map((_, index) => order?.links_cores?.[index] || ""),
     items: initialItems.map<DraftItem>((item) => ({ ...item, key: item.id })),
   }));
   const [itemModal, setItemModal] = useState<DraftItem | null>(null);
@@ -64,6 +66,7 @@ export default function PedidoEditor({
       desconto: Number(draft.desconto || 0),
       observacao: draft.observacao || null,
       links: draft.links.map((link) => link.trim()).filter(Boolean),
+      links_cores: draft.links.map((link, index) => ({ link: link.trim(), cor: (draft.links_cores[index] || "").trim() })).filter(item => item.link).map(item => item.cor),
     };
     const rows = draft.items.map((item) => ({
       material_id: item.material_id,
@@ -165,15 +168,18 @@ export default function PedidoEditor({
         <section className="order-links-editor" aria-labelledby="order-links-title">
           <div className="order-section-heading">
             <h3 id="order-links-title">Links do pedido</h3>
-            <button className="order-add-button" type="button" disabled={draft.links.length >= 20} onClick={() => update({ links: [...draft.links, ""] })}><span aria-hidden="true">+</span> Adicionar link</button>
+            <button className="order-add-button" type="button" disabled={draft.links.length >= 20} onClick={() => update({ links: [...draft.links, ""], links_cores: [...draft.links_cores, ""] })}><span aria-hidden="true">+</span> Adicionar link</button>
           </div>
-          {draft.links.map((link, index) => <div className="order-link-row" key={index}>
+          {draft.links.map((link, index) => <div className="order-link-entry" key={index}>
+            <label>Cor {index + 1}<input type="text" placeholder="Ex.: Branco" value={draft.links_cores[index] || ""} maxLength={100} onChange={event => update({ links_cores: draft.links.map((_, position) => position === index ? event.target.value : draft.links_cores[position] || "") })} /></label>
+            <div className="order-link-row">
             <label>Link {index + 1}
               <input type="url" placeholder="https://exemplo.com" value={link} maxLength={2048}
                 pattern="https?://[^\s@/]+([/?#][^\s]*)?" title="Informe um link começando com http:// ou https://"
                 onChange={event => update({ links: draft.links.map((value, position) => position === index ? event.target.value : value) })} />
             </label>
-            <button type="button" className="danger-text" aria-label={`Remover link ${index + 1}`} onClick={() => update({ links: draft.links.filter((_, position) => position !== index) })}>Remover</button>
+            <button type="button" className="danger-text" aria-label={`Remover link ${index + 1}`} onClick={() => update({ links: draft.links.filter((_, position) => position !== index), links_cores: draft.links_cores.filter((_, position) => position !== index) })}>Remover</button>
+            </div>
           </div>)}
         </section>
         </section>

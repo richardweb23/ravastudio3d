@@ -313,6 +313,19 @@ export default function AdminApp() {
       item.id === saved.id ? { ...item, observacao: saved.observacao } : item) }));
   }
 
+  async function saveOrderLinks(order: Order, links: string[], colors: string[]) {
+    // Compare the saved list so another user's changes are not silently overwritten.
+    const previous = `{${(order.links || []).map(link => JSON.stringify(link)).join(",")}}`;
+    const previousColors = `{${(order.links_cores || []).map(color => JSON.stringify(color)).join(",")}}`;
+    const { data: saved, error } = await requireSupabase().from("pedidos")
+      .update({ links, links_cores: colors }).eq("id", order.id).filter("links", "eq", previous).filter("links_cores", "eq", previousColors)
+      .select("id, links, links_cores").maybeSingle();
+    if (error) throw error;
+    if (!saved) throw new Error("Os links deste pedido foram alterados em outra sessão. Atualize a página e tente novamente.");
+    setData(current => ({ ...current, pedidos: current.pedidos.map(item =>
+      item.id === saved.id ? { ...item, links: saved.links, links_cores: saved.links_cores } : item) }));
+  }
+
   async function changeTaskStatus(task: Task, status: string) {
     return updateBoard(async () => {
       const { error } = await requireSupabase().from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
@@ -330,7 +343,7 @@ export default function AdminApp() {
       const { error } = await requireSupabase().from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) throw error;
       await refresh(true);
-    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
+    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onLinksSave={saveOrderLinks} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,

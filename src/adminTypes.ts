@@ -40,6 +40,7 @@ export type ChangeSubtask = (...args:
 export interface OrderActions {
   onStatusChange?: (order: Order, status: Order["status"]) => Promise<unknown>;
   onDescriptionSave?: (order: Order, description: string) => Promise<void>;
+  onLinksSave?: (order: Order, links: string[], colors: string[]) => Promise<void>;
   onItemStatusChange?: (item: OrderItem, checked: boolean) => Promise<unknown>;
   onSituationSave?: (order: Order, situation: string, description: string) => Promise<void>;
   onSubtaskChange?: ChangeSubtask;

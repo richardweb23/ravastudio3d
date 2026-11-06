@@ -48,6 +48,13 @@ test('board: migrações, subtarefas, isolamento, permissões e entrega', async 
  assert.deepEqual((await one('select links from public.pedidos where id=$1',[linked.id])).links,['https://example.com/modelo','http://example.com/referencia']);
  await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado'}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
  assert.equal((await one('select cardinality(links) n from public.pedidos where id=$1',[linked.id])).n,2);
+ await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado',links:['https://example.com/modelo','http://example.com/referencia'],links_cores:['Branco','Azul']}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
+ assert.deepEqual((await one('select links_cores from public.pedidos where id=$1',[linked.id])).links_cores,['Branco','Azul']);
+ // Clientes antigos que removem um link preservam a cor do endereço restante.
+ await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado',links:['http://example.com/referencia']}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
+ assert.deepEqual((await one('select links_cores from public.pedidos where id=$1',[linked.id])).links_cores,['Azul']);
+ await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado',links:['https://example.com/novo'],links_cores:['Azul']}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);
+ assert.deepEqual((await one('select links_cores from public.pedidos where id=$1',[linked.id])).links_cores,['Azul']);
  await assert.rejects(db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Inválido',links:['javascript:alert(1)']}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]));
  assert.equal((await one('select cliente from public.pedidos where id=$1',[linked.id])).cliente,'Pedido editado');
  await db.query("select public.salvar_pedido($1,$2::jsonb,$3::jsonb)",[linked.id,JSON.stringify({cliente:'Pedido editado',links:[]}),JSON.stringify([{material_id:material.id,quantidade:1,preco_unitario:10}])]);

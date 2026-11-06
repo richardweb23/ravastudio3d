@@ -33,6 +33,7 @@ export default function DashboardBoard({
   onPriorityChange,
   onItemStatusChange,
   onDescriptionSave,
+  onLinksSave,
   onSituationSave,
   onSubtaskChange,
   tarefas, taskError, onTaskStatusChange,
@@ -257,7 +258,7 @@ export default function DashboardBoard({
       <TaskBoard tarefas={tarefas} error={taskError} onStatusChange={onTaskStatusChange} onCreate={() => onNavigate("tarefas", { createTask: true })} />
       {detailOrder && (
         <PedidoDetalhes key={detailOrder.id} subtasks={data.subtarefas.filter(task => task.pedido_id === detailOrder.id)} onSubtaskChange={onSubtaskChange} onSituationSave={onSituationSave} onStatusChange={onStatusChange} order={detailOrder} items={detailItems} financial={detailFinancial}
-          onItemStatusChange={onItemStatusChange} onDescriptionSave={onDescriptionSave} onClose={() => setDetailOrder(null)} />
+          onItemStatusChange={onItemStatusChange} onDescriptionSave={onDescriptionSave} onLinksSave={onLinksSave} onClose={() => setDetailOrder(null)} />
       )}
       <section className="panel shortcut">
         <h2>Atalhos</h2>

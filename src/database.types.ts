@@ -1515,6 +1515,7 @@ export type Database = {
           desconto: number
           id: string
           links: string[]
+          links_cores: string[]
           local_estoque_id: string | null
           observacao: string | null
           previsao_entrega: string | null
@@ -1533,6 +1534,7 @@ export type Database = {
           desconto?: number
           id?: string
           links?: string[]
+          links_cores?: string[]
           local_estoque_id?: string | null
           observacao?: string | null
           previsao_entrega?: string | null
@@ -1551,6 +1553,7 @@ export type Database = {
           desconto?: number
           id?: string
           links?: string[]
+          links_cores?: string[]
           local_estoque_id?: string | null
           observacao?: string | null
           previsao_entrega?: string | null
