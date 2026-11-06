@@ -1,4 +1,4 @@
-import type { Database } from "../database.types";
+import type { AppDatabase } from "../supabase";
 import { summarizeLocations } from "../lib/consignacao";
 import { requireSupabase } from "../supabase";
 import { loadAllTableRows } from "./tableRows";
@@ -29,7 +29,7 @@ export async function loadConsignment(type: string, id: string) {
 }
 export type Consignment = Awaited<ReturnType<typeof loadConsignment>>;
 type Action = "salvar_acordo_consignacao" | "pagar_repasses_consignacao" | "movimentar_consignacao" | "vincular_local_vendedor" | "vender_consignacao";
-export async function consignmentAction<K extends Action>(name: K, params: Database["public"]["Functions"][K]["Args"]) {
+export async function consignmentAction<K extends Action>(name: K, params: AppDatabase["public"]["Functions"][K]["Args"]) {
   const {data, error} = await requireSupabase().rpc(name, params);
   if (error) throw error;
   return data;

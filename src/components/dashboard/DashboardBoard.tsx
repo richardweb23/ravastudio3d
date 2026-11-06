@@ -3,15 +3,15 @@ import type { OrderActions } from "../../adminTypes";
 import { orderStages, orderSituations, orderTooltip } from '../../lib/orderBoard.js';
 import { deliveryAlert } from '../../lib/deliveryAlert.js';
 import StageHelp from './StageHelp.tsx';
-import OrderSubtasks from '../pedidos/OrderSubtasks.jsx';
+import OrderSubtasks from '../pedidos/OrderSubtasks.tsx';
 import { saleTotal } from "../../lib/vendas.js";
-import { CashBalances } from "../financeiro/CashPanel.jsx";
+import { CashBalances } from "../financeiro/CashPanel.tsx";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { formatMoney as fmtMoney } from "../../lib/formatters.js";
-import TaskBoard from "../tarefas/TaskBoard.jsx";
+import TaskBoard from "../tarefas/TaskBoard.tsx";
 import Header from "../Header.tsx";
 import Metric from "../Metric.tsx";
-import PedidoDetalhes from "../pedidos/PedidoDetalhes.jsx";
+import PedidoDetalhes from "../pedidos/PedidoDetalhes.tsx";
 
 function monthKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;

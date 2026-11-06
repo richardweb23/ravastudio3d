@@ -1,3 +1,4 @@
+import type { CashSummary, Movement } from "./cashTypes";
 import type { Database } from "./database.types";
 import { createClient } from "@supabase/supabase-js";
 
@@ -13,6 +14,9 @@ type NullArgs<T, K extends string> = T extends { Args: infer A }
   ? Omit<T, "Args"> & { Args: { [P in keyof A]: P extends K ? A[P] | null : A[P] } } : T;
 type Functions = PublicSchema["Functions"];
 type NullableRpc = {
+  vincular_local_vendedor: "p_local_id";
+  movimentar_consignacao: "p_outro_local_id" | "p_preco_centavos" | "p_repasse_centavos";
+  salvar_despesa_financeira: "p_despesa_id";
   registrar_entrada: "p_fornecedor";
   salvar_material: "p_material_id" | "p_local_id";
   salvar_pedido: "p_pedido_id";
@@ -20,9 +24,11 @@ type NullableRpc = {
   editar_venda: "p_vendedor_id";
 };
 type CatalogRpc = PublicSchema["Functions"]["catalogo_publico"];
-type AppDatabase = Omit<Database, "public"> & {
+export type AppDatabase = Omit<Database, "public"> & {
   public: Omit<PublicSchema, "Functions"> & {
-    Functions: Omit<Functions, "catalogo_publico" | keyof NullableRpc> & { [K in keyof NullableRpc]: NullArgs<Functions[K], NullableRpc[K]> } & {
+    Functions: Omit<Functions, "catalogo_publico" | "financeiro_resumo" | "financeiro_extrato" | keyof NullableRpc> & { [K in keyof NullableRpc]: NullArgs<Functions[K], NullableRpc[K]> } & {
+      financeiro_resumo: Omit<Functions["financeiro_resumo"], "Returns"> & { Returns: CashSummary };
+      financeiro_extrato: Omit<Functions["financeiro_extrato"], "Returns"> & { Returns: Movement[] };
       catalogo_publico: Omit<CatalogRpc, "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
     };
   };

@@ -5,7 +5,7 @@ import { requireSupabase } from "../supabase.js";
 import DataTable from "./DataTable.tsx";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../lib/formatters.js";
 import Header from "./Header.tsx";
-import ProdutoForm from "./ProdutoForm.jsx";
+import ProdutoForm from "./ProdutoForm.tsx";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 
 export default function EstoqueComLocais({ materiais, locais, estoqueLocal, onSaved, show }: Pick<AdminData, "materiais" | "locais" | "estoqueLocal"> & { onSaved: () => void; show: Show }) {

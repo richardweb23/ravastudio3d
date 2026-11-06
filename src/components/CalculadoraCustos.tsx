@@ -1,3 +1,6 @@
+import type { AdminData, Show } from "../adminTypes";
+import type { Tables } from "../database.types";
+type Saved = Pick<Tables<"calculos_precificacao">, "id" | "material_id" | "configuracao" | "nome_projeto" | "cliente" | "descricao" | "updated_at"> & { materiais: { nome: string } | null };
 import SearchSelect from './SearchSelect.tsx';
 import ProductSearchSelect from "./ProductSearchSelect.tsx";
 import StatusBadge from './StatusBadge.tsx';
@@ -5,7 +8,7 @@ import DataTable from "./DataTable.tsx";
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useState } from "react";
 import { calculatePricing, calculateTier, money } from "../lib/pricing.js";
-import { supabase } from "../supabase.js";
+import { requireSupabase } from "../supabase.js";
 
 const material = () => ({
   id: crypto.randomUUID(),
@@ -23,7 +26,7 @@ const extra = () => ({
   unitPrice: "",
   scope: "unit",
 });
-const tiersDefault = [
+const tiersDefault: { quantity: number | string; discount: number | string }[] = [
   { quantity: 1, discount: 0 },
   { quantity: 5, discount: 5 },
   { quantity: 10, discount: 10 },
@@ -31,6 +34,7 @@ const tiersDefault = [
   { quantity: 50, discount: 20 },
 ];
 const initial = {
+  materialId: "",
   projectName: "",
   client: "",
   description: "",
@@ -49,7 +53,7 @@ const initial = {
   manualHours: "0",
   manualMinutes: "0",
   manualRate: "20",
-  extras: [],
+  extras: [] as ReturnType<typeof extra>[],
   energyEnabled: false,
   energyWatts: "150",
   energyKwh: "1",
@@ -76,7 +80,7 @@ function NumberInput({
   suffix,
   min = "0",
   step = "0.01",
-}) {
+}: { value: string | number; onChange: (value: string) => void; label: string; suffix?: string; min?: string; step?: string }) {
   return (
     <label className="calculator-field">
       {label}
@@ -93,7 +97,7 @@ function NumberInput({
     </label>
   );
 }
-function SummaryLine({ label, value }) {
+function SummaryLine({ label, value }: { label: string; value: number }) {
   return (
     <div className="calculator-summary-line">
       <span>{label}</span>
@@ -102,30 +106,29 @@ function SummaryLine({ label, value }) {
   );
 }
 
-export default function CalculadoraCustos({ materiais, show }) {
+export default function CalculadoraCustos({ materiais, show }: { materiais: AdminData["materiais"]; show: Show }) {
   const [form, setForm] = useState(initial);
   const [tiers, setTiers] = useState(tiersDefault);
-  const [savedCalculations, setSavedCalculations] = useState([]);
-  const [selectedCalculation, setSelectedCalculation] = useState(null);
+  const [savedCalculations, setSavedCalculations] = useState<Saved[]>([]);
+  const [selectedCalculation, setSelectedCalculation] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const result = useMemo(() => calculatePricing(form), [form]);
-  const update = (field, value) =>
+  const update = <K extends keyof typeof initial,>(field: K, value: (typeof initial)[K]) =>
     setForm((current) => ({ ...current, [field]: value }));
-  const updateList = (list, id, field, value) =>
+  const updateList = (list: "filaments" | "extras", id: string, field: string, value: string) =>
     setForm((current) => ({
       ...current,
       [list]: current[list].map((item) =>
         item.id === id ? { ...item, [field]: value } : item,
       ),
     }));
-  const removeList = (list, id) =>
+  const removeList = (list: "filaments" | "extras", id: string) =>
     setForm((current) => ({
       ...current,
       [list]: current[list].filter((item) => item.id !== id),
     }));
   const loadCalculations = async () => {
-    const { data, error } = await supabase
-      .from("calculos_precificacao")
+    const { data, error } = await requireSupabase().from("calculos_precificacao")
       .select(
         "id, material_id, nome_projeto, cliente, descricao, configuracao, updated_at, materiais(nome)",
       )
@@ -145,8 +148,8 @@ export default function CalculadoraCustos({ materiais, show }) {
     setTiers(tiersDefault);
     setSelectedCalculation(null);
   };
-  const loadCalculation = (calculation) => {
-    const configuration = calculation.configuracao || {};
+  const loadCalculation = (calculation: Saved) => {
+    const configuration = (calculation.configuracao || {}) as Partial<typeof initial> & { tiers?: typeof tiersDefault };
     setForm({
       ...initial,
       ...configuration,
@@ -172,12 +175,10 @@ export default function CalculadoraCustos({ materiais, show }) {
       updated_at: new Date().toISOString(),
     };
     const query = selectedCalculation
-      ? supabase
-          .from("calculos_precificacao")
+      ? requireSupabase().from("calculos_precificacao")
           .update(values)
           .eq("id", selectedCalculation)
-      : supabase
-          .from("calculos_precificacao")
+      : requireSupabase().from("calculos_precificacao")
           .insert(values)
           .select("id")
           .single();
@@ -185,7 +186,7 @@ export default function CalculadoraCustos({ materiais, show }) {
     setSaving(false);
     if (error)
       return show(`Não foi possível salvar: ${error.message}`, "error");
-    if (!selectedCalculation) setSelectedCalculation(data.id);
+    if (!selectedCalculation && data) setSelectedCalculation(data.id);
     show(selectedCalculation ? "Simulação atualizada." : "Simulação salva.");
     loadCalculations();
   };
@@ -197,7 +198,7 @@ export default function CalculadoraCustos({ materiais, show }) {
       "A margem está abaixo da meta desejada, mas ainda acima da margem mínima de segurança.",
     result.marginStatus.tone === "low" &&
       "Atenção: a margem está abaixo do mínimo de segurança configurado.",
-  ].filter(Boolean);
+  ].filter((alert): alert is string => !!alert);
 
   return (
     <div className="calculator-page">
@@ -290,7 +291,7 @@ export default function CalculadoraCustos({ materiais, show }) {
                   onChange={(event) =>
                     update("description", event.target.value)
                   }
-                  rows="2"
+                  rows={2}
                 />
               </label>
             </div>

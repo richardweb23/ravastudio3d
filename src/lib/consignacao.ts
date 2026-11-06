@@ -11,7 +11,7 @@ interface ConsignmentData {
   movimentos?: ConsignmentMovement[];
 }
 
-export const movementLabels = { devolucao: "Devolução de venda", entrada: "Entrada", venda: "Venda", retirada: "Retirada / devolução", ajuste: "Ajuste", saldo_inicial: "Saldo inicial" };
+export const movementLabels: Record<string, string> = { devolucao: "Devolução de venda", entrada: "Entrada", venda: "Venda", retirada: "Retirada / devolução", ajuste: "Ajuste", saldo_inicial: "Saldo inicial" };
 
 export function moneyInputCents(value: unknown) {
   const text = String(value ?? "").trim().replace(/^R\$\s*/, "");
@@ -45,7 +45,7 @@ export function summarizeConsignment({ materiais = [], estoque = [], acordos = [
   vendas = vendas.filter(sale => !sale.devolvida_em);
   const ids = new Set([...estoque, ...acordos, ...vendas, ...movimentos].map(row => row.material_id));
   const products = [...ids].map(id => {
-    const product = materiais.find(row => row.id === id) || { id, nome: "Produto indisponível" };
+    const product: Pick<Tables<"materiais">, "id" | "nome"> & { imagem_url?: string | null } = materiais.find(row => row.id === id) || { id, nome: "Produto indisponível" };
     const agreement = acordos.find(row => row.material_id === id);
     const sales = vendas.filter(row => row.material_id === id);
     const movements = movimentos.filter(row => row.material_id === id);

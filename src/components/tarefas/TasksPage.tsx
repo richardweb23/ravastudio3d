@@ -1,9 +1,9 @@
 import type { Task, TaskChange, Show } from "../../adminTypes";
 import { useEffect, useRef, useState } from "react";
 import Header from "../Header.tsx";
-import TaskBoard from "./TaskBoard.jsx";
-import TaskForm from "./TaskForm.jsx";
-import TaskHistory from "./TaskHistory.jsx";
+import TaskBoard from "./TaskBoard.tsx";
+import TaskForm from "./TaskForm.tsx";
+import TaskHistory from "./TaskHistory.tsx";
 
 export default function TasksPage({ initialOpen = false, tarefas, error, onSaved, onStatusChange, show }: { initialOpen?: boolean; tarefas: Task[]; error?: unknown; onSaved: () => Promise<void>; onStatusChange: TaskChange; show: Show }) {
   const [open, setOpen] = useState(initialOpen);

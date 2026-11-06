@@ -1,8 +1,8 @@
 import type { Order, OrderItem, Subtask } from "../../adminTypes";
 import { errorMessage } from "../../adminTypes";
 import type { OrderActions } from "../../adminTypes";
-import OrderSubtasks from "./OrderSubtasks.jsx";
-import OrderWorkflow from "./OrderWorkflow.jsx";
+import OrderSubtasks from "./OrderSubtasks.tsx";
+import OrderWorkflow from "./OrderWorkflow.tsx";
 ﻿import { useEffect, useRef, useState } from "react";
 import Status from "../Status.tsx";
 import StatusBadge from "../StatusBadge.tsx";

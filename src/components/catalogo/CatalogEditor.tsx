@@ -1,13 +1,17 @@
+import type { AdminData } from "../../adminTypes";
+import { errorMessage } from "../../adminTypes";
+import type { Tables } from "../../database.types";
+import type { CatalogProduct } from "../../catalogTypes";
 import SearchSelect from '../SearchSelect.tsx';
 import { useState } from "react";
-import { supabase } from "../../supabase.js";
+import { requireSupabase } from "../../supabase.js";
 import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../lib/catalogo.js";
 import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, uploadCatalogImage } from "../../services/catalogo.js";
 import CatalogDialog from "./CatalogDialog.tsx";
 import ProductDetail from "./ProductDetail.tsx";
-export default function CatalogEditor({ product, record, images, categories, onClose, onSaved }) {
-  const suggestLink = title => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
-  const [saved, setSaved] = useState(record);
+export default function CatalogEditor({ product, record, images, categories, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; onClose: () => void; onSaved: () => Promise<void> }) {
+  const suggestLink = (title?: string | null) => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
+  const [saved, setSaved] = useState<Tables<"catalogo_produtos"> | null | undefined>(record);
   const [automaticLink, setAutomaticLink] = useState(() => !record?.slug || record.slug === suggestLink(record?.titulo));
   const [form, setForm] = useState(() => ({
     titulo: record?.titulo || "", descricao: record?.descricao || "", resumo: record?.resumo || "",
@@ -22,16 +26,16 @@ export default function CatalogEditor({ product, record, images, categories, onC
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState<CatalogProduct | null>(null);
   const [dirty, setDirty] = useState(false);
   const ready = images.filter(i => i.estado === "pronta").sort((a, b) => a.ordem - b.ordem || a.id.localeCompare(b.id));
   const suggestedLink = suggestLink(form.titulo);
-  function change(key, value) {
+  function change(key: keyof typeof form, value: string | boolean | number) {
     setDirty(true);
     if (key === "slug") setAutomaticLink(value === suggestedLink);
     setForm(current => ({
       ...current, [key]: value,
-      ...(key === "titulo" && automaticLink ? { slug: suggestLink(value) } : {}),
+      ...(key === "titulo" && automaticLink ? { slug: suggestLink(String(value)) } : {}),
     }));
   }
   function applySuggestedLink() {
@@ -50,11 +54,11 @@ export default function CatalogEditor({ product, record, images, categories, onC
     if (form.status === "publicado" && categories.find(c => c.id === form.categoria_id)?.marketplace && !marketplaceUrl(form.link_marketplace)) throw Error("Informe o link de compra para publicar este produto Marketplace.");
     return { ...form, preco_centavos: price, promocional_centavos: promo, peso_gramas: form.peso_gramas === "" ? null : Number(form.peso_gramas), ordem: Number(form.ordem) };
   }
-  async function run(action, success = "") {
+  async function run(action: () => Promise<unknown>, success = "") {
     if (busy) return;
     setBusy(true); setError(""); setMessage("");
     try { await action(); if (success) setMessage(success); }
-    catch (err) { setMessage(""); setError(err.message || "Não foi possível concluir. Tente novamente."); }
+    catch (err) { setMessage(""); setError(errorMessage(err, "Não foi possível concluir. Tente novamente.")); }
     finally { setBusy(false); }
   }
   async function save() {
@@ -62,7 +66,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
     setSaved(value); setDirty(false); await onSaved();
   }
   function close() { if (!dirty || window.confirm("Sair sem salvar as alterações do produto?")) onClose(); }
-  async function upload(files, replace = null) {
+  async function upload(files: File[], replace: Tables<"catalogo_imagens"> | null = null) {
     if (!files.length) return;
     await run(async () => {
       if (!replace && ready.length + files.length > 8) throw Error("Cada produto pode ter até 8 imagens.");
@@ -72,16 +76,16 @@ export default function CatalogEditor({ product, record, images, categories, onC
       } finally { await onSaved(); }
     }, "Imagens atualizadas.");
   }
-  function field(label, key, options = {}) {
+  function field(label: string, key: Exclude<keyof typeof form, "personalizavel" | "destaque">, options: React.InputHTMLAttributes<HTMLInputElement> = {}) {
     return <label>{label}<input value={form[key]} onChange={e => change(key, e.target.value)} {...options} /></label>;
   }
-  async function reorder(index, target) {
+  async function reorder(index: number, target: number) {
     const ordered = [...ready]; const [item] = ordered.splice(index, 1); ordered.splice(target, 0, item);
     await run(async () => { await imageAction("ordenar", product.id, null, { ids: ordered.map(i => i.id) }); await onSaved(); });
   }
   function showPreview() {
-    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categories.find(c => c.id === form.categoria_id)?.nome, marketplace: Boolean(categories.find(c => c.id === form.categoria_id)?.marketplace), imagens: ready }); }
-    catch (err) { setError(err.message); }
+    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categories.find(c => c.id === form.categoria_id)?.nome ?? null, marketplace: Boolean(categories.find(c => c.id === form.categoria_id)?.marketplace), imagens: ready }); }
+    catch (err) { setError(errorMessage(err, "Não foi possível abrir a prévia.")); }
   }
   return <CatalogDialog title={`Catálogo · ${catalogCode(product.codigo)} — ${product.nome}`} onClose={close} busy={busy}>
     <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(save, "Produto salvo."); }}>
@@ -120,13 +124,13 @@ export default function CatalogEditor({ product, record, images, categories, onC
       <h3>Imagens · {ready.length}/8</h3>
       <p>A primeira foto é a principal. JPEG, PNG ou WebP, até 10 MB por arquivo. As imagens serão públicas, inclusive enquanto o produto estiver oculto.</p>
       <div className="catalog-drop" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); if (!busy) upload(Array.from(e.dataTransfer.files)); }}>
-        <label>Adicionar imagens ou arrastar arquivos aqui<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy || ready.length >= 8} onChange={e => { upload(Array.from(e.target.files)); e.target.value = ""; }} /></label>
+        <label>Adicionar imagens ou arrastar arquivos aqui<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy || ready.length >= 8} onChange={e => { upload(Array.from(e.target.files ?? [])); e.target.value = ""; }} /></label>
       </div>
       <div className="catalog-admin-image-grid">{ready.map((image, index) => <article key={image.id}>
         <img src={catalogImageUrl(image.miniatura)} alt={image.alt || product.nome} />
         <strong>{index === 0 ? "Principal" : `Foto ${index + 1}`}</strong>
         <div className="actions"><button disabled={busy || index === 0} onClick={() => reorder(index, index - 1)} aria-label={`Mover foto ${index + 1} para antes`}>←</button><button disabled={busy || index === ready.length - 1} onClick={() => reorder(index, index + 1)} aria-label={`Mover foto ${index + 1} para depois`}>→</button><button disabled={busy || index === 0} onClick={() => reorder(index, 0)}>Principal</button></div>
-        <label className="catalog-replace">Substituir foto<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { upload(Array.from(e.target.files), image); e.target.value = ""; }} /></label>
+        <label className="catalog-replace">Substituir foto<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { upload(Array.from(e.target.files ?? []), image); e.target.value = ""; }} /></label>
         <div className="actions"><button disabled={busy} onClick={() => {
           const alt = window.prompt("Descrição da foto para acessibilidade", image.alt);
           if (alt !== null) run(async () => { await imageAction("alt", product.id, image.id, { alt }); await onSaved(); });
@@ -145,7 +149,7 @@ export default function CatalogEditor({ product, record, images, categories, onC
         }
         try {
           for (const image of images) await removeCatalogImage(image);
-          await unwrap(supabase.rpc("excluir_catalogo", { p_produto: product.id }));
+          await unwrap(requireSupabase().rpc("excluir_catalogo", { p_produto: product.id }));
           await onSaved(); onClose();
         } finally { await onSaved(); }
       });

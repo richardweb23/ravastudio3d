@@ -1,19 +1,22 @@
+import type { AdminData, Show } from "../../adminTypes";
+import { errorMessage } from "../../adminTypes";
+import type { Tables } from "../../database.types";
 import SearchSelect from '../SearchSelect.tsx';
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../../supabase.js";
+import { requireSupabase } from "../../supabase.js";
 import { catalogCode, catalogMoney, catalogSlug, catalogLink } from "../../lib/catalogo.js";
-import { adminCatalog, catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap } from "../../services/catalogo.js";
+import { hasImageFiles, adminCatalog, catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap } from "../../services/catalogo.js";
 import Header from "../Header.tsx";
 import DataTable from "../DataTable.tsx";
-import ProdutoForm from "../ProdutoForm.jsx";
+import ProdutoForm from "../ProdutoForm.tsx";
 import CatalogDialog from "./CatalogDialog.tsx";
-import CatalogEditor from "./CatalogEditor.jsx";
-import MarketplaceEditor from "./MarketplaceEditor.jsx";
+import CatalogEditor from "./CatalogEditor.tsx";
+import MarketplaceEditor from "./MarketplaceEditor.tsx";
 import "../../catalogo.css";
 import "./catalog-admin.css";
-export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
-  const [data, setData] = useState({ products: [], categories: [], images: [], indicacoes: [] });
+export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<AdminData, "materiais" | "locais"> & { onSaved: () => Promise<void>; show: Show }) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof adminCatalog>>>({ products: [], categories: [], images: [], indicacoes: [] });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -22,57 +25,60 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
   const [status, setStatus] = useState("");
   const [editing, setEditing] = useState(() => new URLSearchParams(window.location.search).get("produto"));
   const [creating, setCreating] = useState(false);
-  const [marketEditing, setMarketEditing] = useState(null);
+  const [marketEditing, setMarketEditing] = useState<Tables<"catalogo_indicacoes"> | "new" | null>(null);
   const [categoryModal, setCategoryModal] = useState(false);
-  const [categoryEdit, setCategoryEdit] = useState({ nome: "", slug: "", ativa: true });
-  const [publishedPages, setPublishedPages] = useState([]);
+  const [categoryEdit, setCategoryEdit] = useState<Pick<Tables<"catalogo_categorias">, "nome" | "slug" | "ativa"> & Partial<Pick<Tables<"catalogo_categorias">, "id" | "marketplace">>>({ nome: "", slug: "", ativa: true });
+  const [publishedPages, setPublishedPages] = useState<string[]>([]);
   useEffect(() => { fetch('/catalogo-paginas.json', { cache: 'no-cache' }).then(response => response.ok ? response.json() : []).then(pages => { if (Array.isArray(pages)) setPublishedPages(pages); }).catch(() => {}); }, []);
   const refresh = useCallback(async () => {
     setError("");
     try { setData(await adminCatalog()); }
-    catch (err) { setError(err.message); throw err; }
+    catch (err) { setError(errorMessage(err, "Não foi possível atualizar o catálogo.")); throw err; }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { refresh().catch(() => {}); }, [refresh]);
-  async function run(action) {
+  async function run(action: () => Promise<unknown>) {
     if (busy) return;
     setBusy(true); setError("");
     try { await action(); await refresh(); }
-    catch (err) { setError(err.message); }
+    catch (err) { setError(errorMessage(err, "Não foi possível atualizar o catálogo.")); }
     finally { setBusy(false); }
   }
   const records = new Map(data.products.map(p => [p.material_id, p]));
-  const normalized = value => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const normalized = (value: unknown) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const products = materiais.filter(p => {
     const record = records.get(p.id);
     return normalized(`${p.nome} ${record?.titulo || ""} ${catalogCode(p.codigo)}`).includes(normalized(search)) &&
       (!category || record?.categoria_id === category) && (!status || (record?.status || "rascunho") === status);
   }).sort((a, b) => (records.get(a.id)?.ordem || 0) - (records.get(b.id)?.ordem || 0) || Number(a.codigo) - Number(b.codigo));
   const product = materiais.find(p => p.id === editing);
-  async function duplicate(source) {
+  async function duplicate(source: AdminData["materiais"][number]) {
     if (!window.confirm(`Duplicar “${source.nome}” como um novo produto não publicado e sem estoque?`)) return;
     await run(async () => {
-      const id = await unwrap(supabase.rpc("duplicar_catalogo", { p_produto: source.id }));
+      const id = await unwrap(requireSupabase().rpc("duplicar_catalogo", { p_produto: source.id }));
+      if (!id) throw Error("Não foi possível duplicar o produto.");
       try {
         for (const image of data.images.filter(i => i.material_id === source.id && i.estado === "pronta").sort((a, b) => a.ordem - b.ordem)) {
           const copy = await imageAction("reservar", id, null, { arquivo: image.arquivo, alt: image.alt });
+          if (!hasImageFiles(copy)) throw Error("Não foi possível reservar a imagem.");
           try {
-            await unwrap(supabase.storage.from("catalogo-produtos").copy(image.caminho, copy.caminho));
-            await unwrap(supabase.storage.from("catalogo-produtos").copy(image.miniatura, copy.miniatura));
+            await unwrap(requireSupabase().storage.from("catalogo-produtos").copy(image.caminho, copy.caminho));
+            await unwrap(requireSupabase().storage.from("catalogo-produtos").copy(image.miniatura, copy.miniatura));
             await imageAction("confirmar", id, copy.id);
           } catch (err) {
-            try { await removeCatalogImage(copy); } catch { /* Manifest remains available for cleanup in the editor. */ }
+            if (!hasImageFiles(copy)) throw Error("Não foi possível reservar a imagem.");
+          try { await removeCatalogImage(copy); } catch { /* Manifest remains available for cleanup in the editor. */ }
             throw err;
           }
         }
         show("Cópia criada sem estoque e sem publicação.");
-      } catch (err) { throw Error(`A cópia foi criada, mas nem todas as imagens foram copiadas: ${err.message}`); }
+      } catch (err) { throw Error(`A cópia foi criada, mas nem todas as imagens foram copiadas: ${errorMessage(err, "Falha na duplicação.")}`); }
       finally { await onSaved(); setEditing(id); }
     });
   }
   return <div className="catalog-admin">
     <Header title="Catálogo" subtitle="Publique seus produtos no site, independentemente do estoque." />
-    <div className="actions"><button className="primary" onClick={() => setCreating(true)}>Novo produto</button><button onClick={() => setMarketEditing({})}>Nova indicação Marketplace</button><button onClick={() => setCategoryModal(true)}>Categorias do site</button><a href="/catalogo/" target="_blank" rel="noopener noreferrer">Abrir catálogo público ↗</a></div>
+    <div className="actions"><button className="primary" onClick={() => setCreating(true)}>Novo produto</button><button onClick={() => setMarketEditing("new")}>Nova indicação Marketplace</button><button onClick={() => setCategoryModal(true)}>Categorias do site</button><a href="/catalogo/" target="_blank" rel="noopener noreferrer">Abrir catálogo público ↗</a></div>
     {error && <p role="alert" className="catalog-admin-error">{error} <button disabled={busy} onClick={() => refresh().catch(() => {})}>Tentar novamente</button></p>}
     <section className="panel table-panel">
       <div className="sales-filters">
@@ -93,17 +99,17 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
       })} />}
     </section>
     <section className="panel table-panel"><h2>Indicações Marketplace</h2><p>Produtos de terceiros, exibidos apenas na vitrine.</p>
-      <DataTable heads={["Produto", "Categoria", "Preço", "Status", "Ações"]} empty="Nenhuma indicação cadastrada." rows={data.indicacoes.filter(item => normalized(item.titulo).includes(normalized(search)) && (!category || item.categoria_id === category) && (!status || item.status === status)).map(item => <tr key={item.material_id}><td><strong>{item.titulo}</strong></td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td><td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(supabase.from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{item.status==='publicado' && <a href={catalogLink(item.slug, window.location.origin, publishedPages.includes(item.slug))} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>)} />
+      <DataTable heads={["Produto", "Categoria", "Preço", "Status", "Ações"]} empty="Nenhuma indicação cadastrada." rows={data.indicacoes.filter(item => normalized(item.titulo).includes(normalized(search)) && (!category || item.categoria_id === category) && (!status || item.status === status)).map(item => <tr key={item.material_id}><td><strong>{item.titulo}</strong></td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td><td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(requireSupabase().from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{item.status==='publicado' && <a href={catalogLink(item.slug, window.location.origin, publishedPages.includes(item.slug))} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>)} />
     </section>
-    {marketEditing && <MarketplaceEditor record={marketEditing.material_id ? marketEditing : null} categories={data.categories} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
+    {marketEditing && <MarketplaceEditor record={marketEditing !== "new" ? marketEditing : null} categories={data.categories} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
     {product && <CatalogEditor key={product.id} product={product} record={records.get(product.id)} categories={data.categories} images={data.images.filter(i => i.material_id === product.id)} onSaved={refresh} onClose={() => setEditing(null)} />}
     {creating && <CatalogDialog title="Cadastrar produto na Gestão" onClose={() => setCreating(false)}><ProdutoForm locais={locais} show={show} onSaved={async id => { await onSaved(); setCreating(false); setEditing(id); }} /></CatalogDialog>}
     {categoryModal && <CatalogDialog title="Categorias do site" onClose={() => setCategoryModal(false)} busy={busy}>
       <p>Estas categorias são exclusivas do catálogo. Ao desativar uma categoria, seus produtos deixam de aparecer no site.</p>
       <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(async () => {
         const payload = { nome: categoryEdit.nome.trim(), slug: categoryEdit.slug || catalogSlug(categoryEdit.nome), ativa: categoryEdit.ativa, marketplace: Boolean(categoryEdit.marketplace) };
-        if (categoryEdit.id) await unwrap(supabase.from("catalogo_categorias").update(payload).eq("id", categoryEdit.id));
-        else await unwrap(supabase.from("catalogo_categorias").insert(payload));
+        if (categoryEdit.id) await unwrap(requireSupabase().from("catalogo_categorias").update(payload).eq("id", categoryEdit.id));
+        else await unwrap(requireSupabase().from("catalogo_categorias").insert(payload));
         setCategoryEdit({ nome: "", slug: "", ativa: true });
       }); }}>
         <div className="form-grid"><label>Nome<input required maxLength={100} value={categoryEdit.nome} onChange={e => setCategoryEdit({ ...categoryEdit, nome: e.target.value })} /></label><label>Slug<input pattern="[a-z0-9]+(-[a-z0-9]+)*" value={categoryEdit.slug} placeholder={catalogSlug(categoryEdit.nome)} onChange={e => setCategoryEdit({ ...categoryEdit, slug: e.target.value })} /></label></div>
@@ -112,7 +118,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }) {
         <div className="actions"><button className="primary" disabled={busy}>{categoryEdit.id ? "Salvar categoria" : "Criar categoria"}</button>{categoryEdit.id && <button type="button" onClick={() => setCategoryEdit({ nome: "", slug: "", ativa: true })}>Cancelar edição</button>}</div>
       </form>
       {error && <p role="alert" className="catalog-admin-error">{error}</p>}
-      <ul className="catalog-category-list">{data.categories.map(c => <li key={c.id}><span>{c.nome} · {c.ativa ? "Ativa" : "Inativa"}{c.marketplace ? " · Marketplace" : ""}</span><button disabled={busy} onClick={() => setCategoryEdit(c)}>Editar</button><button disabled={busy} onClick={() => { if (window.confirm(`Excluir a categoria “${c.nome}”? Categorias com produtos vinculados não podem ser excluídas.`)) run(() => unwrap(supabase.from("catalogo_categorias").delete().eq("id", c.id))); }}>Excluir</button></li>)}</ul>
+      <ul className="catalog-category-list">{data.categories.map(c => <li key={c.id}><span>{c.nome} · {c.ativa ? "Ativa" : "Inativa"}{c.marketplace ? " · Marketplace" : ""}</span><button disabled={busy} onClick={() => setCategoryEdit(c)}>Editar</button><button disabled={busy} onClick={() => { if (window.confirm(`Excluir a categoria “${c.nome}”? Categorias com produtos vinculados não podem ser excluídas.`)) run(() => unwrap(requireSupabase().from("catalogo_categorias").delete().eq("id", c.id))); }}>Excluir</button></li>)}</ul>
     </CatalogDialog>}
   </div>;
 }

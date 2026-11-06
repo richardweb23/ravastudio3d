@@ -1,13 +1,15 @@
+import { errorMessage } from "../../adminTypes";
+import type { Tables } from "../../database.types";
 import SearchSelect from '../SearchSelect.tsx';
 import { useState } from 'react';
-import { supabase } from '../../supabase.js';
+import { requireSupabase } from '../../supabase.js';
 import { catalogCents, catalogSlug, marketplaceUrl } from '../../lib/catalogo.js';
 import CatalogDialog from './CatalogDialog.tsx';
-export default function MarketplaceEditor({ record, categories, onClose, onSaved }) {
+export default function MarketplaceEditor({ record, categories, onClose, onSaved }: { record: Tables<"catalogo_indicacoes"> | null; categories: Tables<"catalogo_categorias">[]; onClose: () => void; onSaved: () => Promise<void> }) {
   const [form,setForm]=useState(() => ({ titulo:record?.titulo || '', descricao:record?.descricao || '', resumo:record?.resumo || '', price:((record?.preco_centavos || 0)/100).toFixed(2), categoria_id:record?.categoria_id || '', link_marketplace:record?.link_marketplace || '', imagem_externa:record?.imagem_externa || '', status:record?.status || 'rascunho' }));
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
-  const change=(name,value)=>setForm(current=>({...current,[name]:value}));
-  async function save(event){
+  const change=(name: keyof typeof form,value: string)=>setForm(current=>({...current,[name]:value}));
+  async function save(event: React.FormEvent<HTMLFormElement>){
     event.preventDefault(); if(busy)return; setError('');
     try {
       if(!marketplaceUrl(form.link_marketplace)) throw Error('Informe um link de compra HTTP ou HTTPS válido.');
@@ -15,10 +17,10 @@ export default function MarketplaceEditor({ record, categories, onClose, onSaved
       if(form.status==='publicado' && !form.descricao.trim()) throw Error('Preencha a descrição para publicar.');
       const payload={titulo:form.titulo.trim(), descricao:form.descricao.trim(), resumo:form.resumo.trim(), preco_centavos:catalogCents(form.price), categoria_id:form.categoria_id, link_marketplace:form.link_marketplace.trim(), imagem_externa:form.imagem_externa.trim() || null, status:form.status};
       setBusy(true);
-      const query=record ? supabase.from('catalogo_indicacoes').update(payload).eq('material_id',record.material_id).eq('versao',record.versao) : supabase.from('catalogo_indicacoes').insert({...payload,slug:`${catalogSlug(form.titulo).slice(0,100) || 'indicacao'}-${crypto.randomUUID()}`});
+      const query=record ? requireSupabase().from('catalogo_indicacoes').update(payload).eq('material_id',record.material_id).eq('versao',record.versao) : requireSupabase().from('catalogo_indicacoes').insert({...payload,slug:`${catalogSlug(form.titulo).slice(0,100) || 'indicacao'}-${crypto.randomUUID()}`});
       const {error:err}=await query.select('material_id').single(); if(err) throw err;
       await onSaved(); onClose();
-    } catch(err){setError(err.message || 'Não foi possível salvar a indicação.');} finally {setBusy(false);}
+    } catch(err){setError(errorMessage(err, 'Não foi possível salvar a indicação.'));} finally {setBusy(false);}
   }
   return <CatalogDialog title={record ? 'Editar indicação Marketplace' : 'Nova indicação Marketplace'} onClose={onClose} busy={busy}>
     <p>Este produto aparece somente no catálogo e não cria produto nem estoque na Gestão.</p>

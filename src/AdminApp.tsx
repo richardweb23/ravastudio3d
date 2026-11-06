@@ -1,3 +1,6 @@
+import type { Session } from "@supabase/supabase-js";
+import type { Tables } from "./database.types";
+import { errorMessage, type AdminData, type Task, type Order, type ChangeSubtask } from "./adminTypes";
 import { orderAdvanceWarning } from "./lib/orderBoard.js";
 import { loadAllTableRows } from "./services/tableRows.js";
 import useCaixaPedido from "./hooks/useCaixaPedido.js";
@@ -6,32 +9,32 @@ import { loadSales } from "./services/vendas.js";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
-import { isSupabaseConfigured, supabase } from "./supabase.js";
+import { isSupabaseConfigured, supabase, requireSupabase } from "./supabase.js";
 import { orderStatusLabel } from "./lib/formatters.js";
 import { getAdminPage, getAdminPageHref } from "./lib/adminNavigation.js";
 import { LoginScreen, PasswordScreen, SetupScreen } from "./components/auth/AuthScreens.tsx";
-import Dashboard from "./components/dashboard/Dashboard.jsx";
-import CatalogAdmin from "./components/catalogo/CatalogAdmin.jsx";
-import EstoqueComLocais from "./components/EstoqueComLocais.jsx";
-import EstoquePorLocal from "./components/EstoquePorLocal.jsx";
-import ComprasComLocal from "./components/ComprasComLocal.jsx";
-import VendasComLocal from "./components/VendasComLocal.jsx";
-import PedidosComLocal from "./components/pedidos/PedidosComLocal.jsx";
-import Filamentos from "./components/Filamentos.jsx";
-import Cadastros from "./components/Cadastros.jsx";
-import HistoricoPage from "./components/historico/HistoricoPage.jsx";
-import CalculadoraCustos from "./components/CalculadoraCustos.jsx";
-import CalculadoraEscala from "./components/CalculadoraEscala.jsx";
-import EstimativaImpressao from "./components/EstimativaImpressao.jsx";
-import FinanceiroModule from "./components/financeiro/FinanceiroModule.jsx";
-import PreviousMonthPayablesAlert from "./components/financeiro/PreviousMonthPayablesAlert.jsx";
+import Dashboard from "./components/dashboard/Dashboard.tsx";
+import CatalogAdmin from "./components/catalogo/CatalogAdmin.tsx";
+import EstoqueComLocais from "./components/EstoqueComLocais.tsx";
+import EstoquePorLocal from "./components/EstoquePorLocal.tsx";
+import ComprasComLocal from "./components/ComprasComLocal.tsx";
+import VendasComLocal from "./components/VendasComLocal.tsx";
+import PedidosComLocal from "./components/pedidos/PedidosComLocal.tsx";
+import Filamentos from "./components/Filamentos.tsx";
+import Cadastros from "./components/Cadastros.tsx";
+import HistoricoPage from "./components/historico/HistoricoPage.tsx";
+import CalculadoraCustos from "./components/CalculadoraCustos.tsx";
+import CalculadoraEscala from "./components/CalculadoraEscala.tsx";
+import EstimativaImpressao from "./components/EstimativaImpressao.tsx";
+import FinanceiroModule from "./components/financeiro/FinanceiroModule.tsx";
+import PreviousMonthPayablesAlert from "./components/financeiro/PreviousMonthPayablesAlert.tsx";
 
-import LocalDetails from "./components/consignacao/LocalDetails.jsx";
+import LocalDetails from "./components/consignacao/LocalDetails.tsx";
 import { parseLocalDetailsPage } from "./lib/consignacao.js";
-import TasksPage from "./components/tarefas/TasksPage.jsx";
+import TasksPage from "./components/tarefas/TasksPage.tsx";
 
-function Icon({ name }) {
-  const paths = {
+function Icon({ name }: { name: string }) {
+  const paths: Record<string, React.ReactNode> = {
     dashboard: <><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></>,
     products: <><path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z" /><path d="m4 7.5 8 4.5 8-4.5M4 7.5V16l8 5 8-5V7.5" /></>,
     warehouse: <><path d="m3 10 9-7 9 7v10H3V10Z" /><path d="M8 20v-6h8v6" /></>,
@@ -87,13 +90,13 @@ const financeNavigation = [
 function initialPasswordMode() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
   const query = new URLSearchParams(window.location.search);
-  return ["invite", "recovery"].includes(hash.get("type") || query.get("type"));
+  return ["invite", "recovery"].includes(hash.get("type") || query.get("type") || "");
 }
 
 export default function AdminApp() {
   const { open: caixaOpen, requestCaixa, finishCaixa } = useCaixaPedido();
-  const [session, setSession] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Tables<"profiles"> | null>(null);
   const [page, setPage] = useState(() => getAdminPage(window.location));
   const [loading, setLoading] = useState(true);
   const [boardUpdating, setBoardUpdating] = useState(false);
@@ -101,17 +104,17 @@ export default function AdminApp() {
   const [taskCreateRequested, setTaskCreateRequested] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [needsPassword, setNeedsPassword] = useState(initialPasswordMode);
-  const [tarefas, setTarefas] = useState([]);
-  const [taskError, setTaskError] = useState(null);
-  const [notice, setNotice] = useState(null);
+  const [tarefas, setTarefas] = useState<Task[]>([]);
+  const [taskError, setTaskError] = useState<unknown>(null);
+  const [notice, setNotice] = useState<{ message: string; type: string } | null>(null);
   const [financeRevision, setFinanceRevision] = useState(0);
   const refreshPayablesAlert = useCallback(() => setFinanceRevision(value => value + 1), []);
-  const [data, setData] = useState({
+  const [data, setData] = useState<AdminData>({
     subtarefas: [], materiais: [], compras: [], vendas: [], pedidos: [], pedidoItens: [],
     pagamentos: [], locais: [], vendedores: [], locaisTodos: [], vendedoresTodos: [], estoqueLocal: [],
   });
 
-  const show = useCallback((message, type = "success") => {
+  const show = useCallback((message: string, type = "success") => {
     setNotice({ message, type });
     window.setTimeout(() => setNotice(null), 4500);
   }, []);
@@ -202,16 +205,16 @@ export default function AdminApp() {
       setProfile(null);
       return;
     }
-    supabase.from("profiles").select("*").eq("id", session.user.id).single()
+    requireSupabase().from("profiles").select("*").eq("id", session.user.id).single()
       .then(async ({ data: userProfile, error }) => {
         if (error || !userProfile) {
           show("Seu perfil de acesso ainda não foi configurado.", "error");
-          await supabase.auth.signOut();
+          await requireSupabase().auth.signOut();
           return;
         }
         if (!userProfile.ativo) {
           show("Este acesso está bloqueado.", "error");
-          await supabase.auth.signOut();
+          await requireSupabase().auth.signOut();
           return;
         }
         setProfile(userProfile);
@@ -222,7 +225,7 @@ export default function AdminApp() {
     if (profile?.id) refresh();
   }, [profile?.id, refresh]);
 
-  const authView = (screen) => (
+  const authView = (screen: React.ReactNode) => (
     <>
       {notice && <div className={`notice auth-notice ${notice.type}`} role="status">{notice.message}</div>}
       {screen}
@@ -236,7 +239,7 @@ export default function AdminApp() {
     return authView(<PasswordScreen onMessage={show} onDone={() => setNeedsPassword(false)} />);
   if (!profile) return <div className="app-loading">Validando acesso…</div>;
 
-  async function updateBoard(action) {
+  async function updateBoard(action: () => Promise<void>) {
     if (boardUpdateLock.current) return;
     boardUpdateLock.current = true;
     setBoardUpdating(true);
@@ -244,7 +247,7 @@ export default function AdminApp() {
       await action();
       return true;
     } catch (error) {
-      show(error.message || "Não foi possível atualizar o quadro. Tente novamente.", "error");
+      show(errorMessage(error, "Não foi possível atualizar o quadro. Tente novamente."), "error");
       return false;
     } finally {
       boardUpdateLock.current = false;
@@ -252,7 +255,7 @@ export default function AdminApp() {
     }
   }
 
-  async function changeOrderStatus(order, status) {
+  async function changeOrderStatus(order: Order, status: Order["status"]) {
     const warning = orderAdvanceWarning(order, data.subtarefas, status);
     if (status === "entregue") {
       if (!window.confirm([warning, 'Confirmar a entrega e baixa de estoque? O pedido sairá deste quadro.'].filter(Boolean).join('\n\n'))) return;
@@ -261,7 +264,7 @@ export default function AdminApp() {
     const caixa = status === "entregue" ? (orderItems.length && orderItems.every(item => item.caixa) ? orderItems[0].caixa : await requestCaixa()) : null;
     if (status === "entregue" && !caixa) return;
     return updateBoard(async () => {
-    const { error } = await supabase.rpc("alterar_status_pedido", {
+    const { error } = await requireSupabase().rpc("alterar_status_pedido", {
       p_pedido_id: order.id,
       p_status: status,
       ...(caixa ? { p_caixa: caixa } : {}),
@@ -274,25 +277,25 @@ export default function AdminApp() {
     });
   }
 
-  async function changeOrderPriority(status, ids) {
+  async function changeOrderPriority(status: Order["status"], ids: string[]) {
     return updateBoard(async () => {
-      const { error } = await supabase.rpc("ordenar_pedidos", { p_status: status, p_ids: ids });
+      const { error } = await requireSupabase().rpc("ordenar_pedidos", { p_status: status, p_ids: ids });
       if (error) throw error;
       await refresh(true);
     });
   }
 
-  async function saveOrderSituation(order, situacao, situacao_descricao) {
-    const { data: saved, error } = await supabase.from("pedidos").update({ situacao, situacao_descricao })
+  async function saveOrderSituation(order: Order, situacao: string, situacao_descricao: string) {
+    const { data: saved, error } = await requireSupabase().from("pedidos").update({ situacao, situacao_descricao })
       .eq("id", order.id).select("id, situacao, situacao_descricao").single();
     if (error) throw error;
     setData(current => ({ ...current, pedidos: current.pedidos.map(item => item.id === saved.id ? { ...item, ...saved } : item) }));
   }
-  async function changeOrderSubtask(action, task, patch = {}) {
+  async function changeOrderSubtask(...[action, task, patch]: Parameters<ChangeSubtask>) {
     let query;
-    if (action === 'create') query = supabase.from('pedido_subtarefas').insert({ pedido_id: task.pedido_id, titulo: patch.titulo });
-    else if (action === 'delete') query = supabase.from('pedido_subtarefas').delete().eq('id', task.id).eq('pedido_id', task.pedido_id);
-    else query = supabase.from('pedido_subtarefas').update(patch).eq('id', task.id).eq('pedido_id', task.pedido_id);
+    if (action === 'create') query = requireSupabase().from('pedido_subtarefas').insert({ pedido_id: task.pedido_id, titulo: patch.titulo });
+    else if (action === 'delete') query = requireSupabase().from('pedido_subtarefas').delete().eq('id', task.id).eq('pedido_id', task.pedido_id);
+    else query = requireSupabase().from('pedido_subtarefas').update(patch).eq('id', task.id).eq('pedido_id', task.pedido_id);
     const { data: saved, error } = await query.select('*').single();
     if (error) throw error;
     setData(current => ({ ...current, subtarefas: (action === 'delete'
@@ -301,8 +304,8 @@ export default function AdminApp() {
       .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)) }));
   }
 
-  async function saveOrderDescription(order, description) {
-    const { data: saved, error } = await supabase.from("pedidos")
+  async function saveOrderDescription(order: Order, description: string) {
+    const { data: saved, error } = await requireSupabase().from("pedidos")
       .update({ observacao: description || null }).eq("id", order.id)
       .select("id, observacao").single();
     if (error) throw error;
@@ -310,9 +313,9 @@ export default function AdminApp() {
       item.id === saved.id ? { ...item, observacao: saved.observacao } : item) }));
   }
 
-  async function changeTaskStatus(task, status) {
+  async function changeTaskStatus(task: Task, status: string) {
     return updateBoard(async () => {
-      const { error } = await supabase.from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
+      const { error } = await requireSupabase().from("tarefas").update({ status }).eq("id", task.id).eq("status", task.status).select("id").single();
       if (error) throw error;
       await refreshTasks();
       show(status === "concluido" ? "Tarefa concluída. Disponível no histórico de tarefas." : "Etapa da tarefa atualizada.");
@@ -321,10 +324,10 @@ export default function AdminApp() {
 
   const taskProps = { tarefas, error: taskError, onNavigate: navigate, onSaved: refreshTasks, onStatusChange: changeTaskStatus, show };
   const detailRoute = parseLocalDetailsPage(page);
-  const pages = {
+  const pages: Record<string, React.ReactNode> = {
     tarefas: <TasksPage key="tarefas" initialOpen={taskCreateRequested} {...taskProps} />,
     dashboard: <Dashboard tarefas={tarefas} taskError={taskError} onTaskStatusChange={changeTaskStatus} data={data} onNavigate={navigate} onItemStatusChange={(item, concluido) => updateBoard(async () => {
-      const { error } = await supabase.from("pedido_itens").update({ concluido }).eq("id", item.id);
+      const { error } = await requireSupabase().from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) throw error;
       await refresh(true);
     })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
@@ -351,7 +354,7 @@ export default function AdminApp() {
     financeiroCategorias: <FinanceiroModule onDataChanged={refreshPayablesAlert} page="financeiroCategorias" onNavigate={navigate} show={show} />,
   };
 
-  function navigate(target, options = {}) {
+  function navigate(target: string, options: { createTask?: boolean } = {}) {
     setTaskCreateRequested(Boolean(options.createTask));
     const href = getAdminPageHref(target);
     window.history.pushState({ page: target }, "", href);
@@ -482,7 +485,7 @@ export default function AdminApp() {
         <div className="sidebar-bottom">
           <strong>{profile.nome}</strong>
           <span>{session.user.email}</span>
-          <button className="logout" onClick={() => supabase.auth.signOut()}>Sair</button>
+          <button className="logout" onClick={() => requireSupabase().auth.signOut()}>Sair</button>
         </div>
       </aside>
       <main className="content">

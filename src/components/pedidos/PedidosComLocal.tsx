@@ -2,7 +2,7 @@ import type { AdminData, Show, Order, OrderItem, Subtask } from "../../adminType
 import SearchSelect from '../SearchSelect.tsx';
 import { orderAdvanceWarning } from "../../lib/orderBoard.js";
 import StatusBadge from '../StatusBadge.tsx';
-import RecebimentoModal from "./RecebimentoModal.jsx";
+import RecebimentoModal from "./RecebimentoModal.tsx";
 import useCaixaPedido from "../../hooks/useCaixaPedido.js";
 import CaixaPedidoModal from "../CaixaPedidoModal.tsx";
 import { useEffect, useState } from "react";
@@ -11,8 +11,8 @@ import { formatMoney as fmtMoney } from "../../lib/formatters.js";
 import Header from "../Header.tsx";
 import DataTable from "../DataTable.tsx";
 import Status from "../Status.tsx";
-import PedidoEditor from "./PedidoEditor.jsx";
-import PedidoDetalhes from "./PedidoDetalhes.jsx";
+import PedidoEditor from "./PedidoEditor.tsx";
+import PedidoDetalhes from "./PedidoDetalhes.tsx";
 
 const statusPriority: Record<string, number> = { recebido: 0, em_preparacao: 1, em_producao: 2, embalagem: 3, pronto: 4, entregue: 5 };
 

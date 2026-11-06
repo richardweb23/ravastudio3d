@@ -1,22 +1,39 @@
-const numberValue = (value) => {
+type InputNumber = number | string;
+type Filament = { grams: InputNumber; rollPrice: InputNumber; rollKg: InputNumber };
+type PricingInput<F extends Filament> = Record<
+  "quantity" | "printHours" | "printMinutes" | "manualHours" | "manualMinutes" | "printRate" | "manualRate" |
+  "wastePercent" | "energyWatts" | "energyKwh" | "modelingHours" | "modelingRate" | "modelingFixed" |
+  "fixedValue" | "markup" | "roundTo" | "finalUnitPrice" | "desiredMargin" | "minimumMargin" | "partnerPercent", InputNumber
+> & {
+  filaments: F[];
+  extras: { quantity: InputNumber; unitPrice: InputNumber; scope: string }[];
+  hourRanges: { from: InputNumber; to: InputNumber; rate: InputNumber }[];
+  energyEnabled: boolean;
+  useRanges: boolean;
+  finalPriceEnabled: boolean;
+  modelingMode: string;
+  fixedMode: string;
+};
+
+const numberValue = (value: unknown) => {
   const parsed = Number(String(value ?? "").replace(",", "."));
   return Number.isFinite(parsed) ? parsed : 0;
 };
-const roundCurrency = (value) =>
+const roundCurrency = (value: number) =>
   Math.round((value + Number.EPSILON) * 100) / 100;
 
-export const money = (value) =>
+export const money = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(Number.isFinite(value) ? value : 0);
 
-export const priceForMargin = (cost, margin) => {
+export const priceForMargin = (cost: InputNumber, margin: InputNumber) => {
   const marginFactor = 1 - numberValue(margin) / 100;
   return marginFactor > 0 ? roundCurrency(numberValue(cost) / marginFactor) : 0;
 };
 
-export const classifyMargin = (margin, desiredMargin, minimumMargin) => {
+export const classifyMargin = (margin: number, desiredMargin: InputNumber, minimumMargin: InputNumber) => {
   if (margin >= numberValue(desiredMargin)) {
     return { label: "Margem saudável", tone: "healthy" };
   }
@@ -26,7 +43,7 @@ export const classifyMargin = (margin, desiredMargin, minimumMargin) => {
   return { label: "Margem abaixo do mínimo", tone: "low" };
 };
 
-export const calculatePricing = (input) => {
+export const calculatePricing = <F extends Filament>(input: PricingInput<F>) => {
   const quantity = Math.max(1, numberValue(input.quantity));
   const printHours =
     numberValue(input.printHours) + numberValue(input.printMinutes) / 60;
@@ -158,7 +175,7 @@ export const calculatePricing = (input) => {
   };
 };
 
-export const calculateTier = (result, tier, desiredMargin, minimumMargin) => {
+export const calculateTier = (result: { baseUnitPrice: number; unitCost: number }, tier: { quantity: InputNumber; discount: InputNumber }, desiredMargin: InputNumber, minimumMargin: InputNumber) => {
   const unitPrice = roundCurrency(
     result.baseUnitPrice * (1 - numberValue(tier.discount) / 100),
   );

@@ -1,13 +1,33 @@
+import type { Show } from "../../adminTypes";
+import type { Tables } from "../../database.types";
+type Navigate = (page: string) => void;
+type Pay = (ids: string[], paid?: boolean) => void;
+type Socio = Tables<"financeiro_socios">;
+type Expense = Tables<"financeiro_despesas"> & { financeiro_categorias: {nome: string} | null; financeiro_cartoes: {nome: string} | null };
+type Parcela = Tables<"financeiro_parcelas"> & {
+  financeiro_despesas: Pick<Expense, "nome" | "responsavel_socio_id" | "responsavel_empresa" | "fornecedor" | "categoria_id" | "cartao_id" | "financeiro_categorias" | "financeiro_cartoes"> | null;
+  financeiro_socios: { nome: string } | null;
+  financeiro_pagamentos_parcela: (Tables<"financeiro_pagamentos_parcela"> & { financeiro_socios: { nome: string } | null })[];
+};
+interface FinanceData {
+  socios: Socio[];
+  categorias: Tables<"financeiro_categorias">[];
+  cartoes: Tables<"financeiro_cartoes">[];
+  despesas: Expense[];
+  parcelas: Parcela[];
+}
+type WithData = {data: FinanceData; socios: Socio[]};
+type Mutations = {show: Show; onReload: () => void};
 import SearchSelect from '../SearchSelect.tsx';
 import { CASH_BOXES } from '../../lib/vendas.js';
 import StatusBadge from '../StatusBadge.tsx';
 import { loadAllTableRows } from "../../services/tableRows.js";
-import CashPanel from "./CashPanel.jsx";
+import CashPanel from "./CashPanel.tsx";
 import CaixaSelect from "../CaixaSelect.tsx";
 import FilterButtons from "../ui/FilterButtons.tsx";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { supabase } from "../../supabase.js";
+import { requireSupabase } from "../../supabase.js";
 import Header from "../Header.tsx";
 import DataTable from "../DataTable.tsx";
 import Empty from "../Empty.tsx";
@@ -26,7 +46,7 @@ import {
   summarizePartnerInstallments,
 } from "../../lib/financeiro.js";
 
-const pageTitles = {
+const pageTitles: Record<string, string[]> = {
   financeiro: ["Financeiro", "Visão geral da saúde financeira da RAVA."],
   financeiroCaixa: ["Caixa e extrato", "Entradas, saídas e saldo disponível da empresa."],
   financeiroReembolsos: ["Reembolsos aos sócios", "Adiantamentos, devoluções e saldo a receber."],
@@ -38,16 +58,16 @@ const pageTitles = {
   financeiroCategorias: ["Categorias", "Organize as despesas em categorias ativas e reutilizáveis."],
 };
 
-const paymentLabels = {
+const paymentLabels: Record<string,string> = {
   pix: "Pix", dinheiro: "Dinheiro", debito: "Débito", credito: "Crédito",
   boleto: "Boleto", transferencia: "Transferência", outro: "Outro",
 };
 
 const statusLabels = { pago: "Pago", pendente: "Pendente", vencido: "Vencido" };
-const dateBR = (date) => date ? new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR") : "—";
+const dateBR = (date?: string | null) => date ? new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR") : "—";
 const today = () => new Date().toISOString().slice(0, 10);
 
-function payerLabel(item) {
+function payerLabel(item: Parcela) {
   if (!item.pago) return "—";
   if (item.financeiro_pagamentos_parcela?.length) {
     return item.financeiro_pagamentos_parcela.map((payment) => {
@@ -64,14 +84,14 @@ function payerLabel(item) {
   return item.financeiro_socios?.nome || "Sócio";
 }
 
-function paymentDatesLabel(item) {
+function paymentDatesLabel(item: Parcela) {
   const dates = [...new Set(
     (item.financeiro_pagamentos_parcela || []).map((payment) => payment.data_pagamento),
   )];
   return dates.length ? dates.map(dateBR).join(" · ") : dateBR(item.data_pagamento);
 }
 
-function matchesPayer(item, payer) {
+function matchesPayer(item: Parcela, payer: string) {
   if (!payer) return true;
   const payments = item.financeiro_pagamentos_parcela;
   if (payments?.length) {
@@ -90,7 +110,7 @@ function matchesPayer(item, payer) {
       : item.pago_por_socio_id === payer;
 }
 
-function SplitValues({ total, socios, responsibilities, responsiblePartnerId, compact = false }) {
+function SplitValues({ total, socios, responsibilities, responsiblePartnerId, compact = false }: { total: number; socios: Socio[]; responsibilities?: { id: string; nome: string; valor_centavos: number }[]; responsiblePartnerId?: string | null; compact?: boolean }) {
   const split = responsibilities || expenseResponsibilities(total, socios, responsiblePartnerId);
   return (
     <div className={compact ? "finance-split compact" : "finance-split"}>
@@ -105,7 +125,7 @@ function SplitValues({ total, socios, responsibilities, responsiblePartnerId, co
   );
 }
 
-function MetricCard({ label, value, tone, note }) {
+function MetricCard({ label, value, tone, note }: { label: string; value: React.ReactNode; tone?: string; note?: React.ReactNode }) {
   return (
     <section className={`metric finance-metric ${tone || ""}`}>
       <span>{label}</span><strong>{formatBRLCents(value)}</strong>{note && <small>{note}</small>}
@@ -113,7 +133,7 @@ function MetricCard({ label, value, tone, note }) {
   );
 }
 
-function MonthPicker({ value, onChange }) {
+function MonthPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [year, month] = value.split("-");
   return (
     <div className="month-picker" aria-label="Selecionar mês">
@@ -132,15 +152,15 @@ function MonthPicker({ value, onChange }) {
   );
 }
 
-function PartnerSummary({ onNavigate }) { return <CashPanel view="partners" onNavigate={onNavigate} />; }
+function PartnerSummary({ onNavigate }: { onNavigate?: Navigate; summary?: unknown }) { return <CashPanel view="partners" onNavigate={onNavigate} />; }
 
-function AccountsTable({ items, socios, onPay }) {
+function AccountsTable({ items, socios, onPay }: { items: Parcela[]; socios: Socio[]; onPay: Pay }) {
   return (
     <DataTable
       heads={["Vencimento", "Despesa", "Loja", "Parcela", "Cartão", "Valor", "Responsável", "Pago por", "Status", "Ações"]}
       rows={items.map((item) => {
         const status = installmentStatus(item);
-        const expense = item.financeiro_despesas || {};
+        const expense: Partial<NonNullable<Parcela["financeiro_despesas"]>> = item.financeiro_despesas || {};
         return (
           <tr key={item.id}>
             <td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td>
@@ -156,7 +176,7 @@ function AccountsTable({ items, socios, onPay }) {
   );
 }
 
-function Overview({ data, socios, onNavigate }) {
+function Overview({ data, socios, onNavigate }: WithData & { onNavigate: Navigate }) {
   const current = currentMonthKey();
   const summary = summarizeInstallments(data.parcelas, socios, current);
   const next = summarizeInstallments(data.parcelas, socios, shiftMonth(current, 1));
@@ -189,7 +209,7 @@ function Overview({ data, socios, onNavigate }) {
   );
 }
 
-function Accounts({ data, socios, onPay, onNavigate }) {
+function Accounts({ data, socios, onPay, onNavigate }: WithData & { onNavigate: Navigate; onPay: Pay }) {
   const [selectedMonth, setSelectedMonth] = useState(currentMonthKey);
   const [selectedPartner, setSelectedPartner] = useState("");
   const visiblePartners = socios.filter((partner) => !selectedPartner || partner.id === selectedPartner);
@@ -234,19 +254,19 @@ const emptyExpense = {
   quantidade_parcelas: "1", primeiro_vencimento: today(), observacoes: "", responsavel_socio_id: "",
 };
 
-function Expenses({ data, socios, onReload, show }) {
+function Expenses({ data, socios, onReload, show }: WithData & Mutations) {
   const [form, setForm] = useState(emptyExpense);
-  const [editingId, setEditingId] = useState(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const totalCents = reaisToCents(form.valor);
-  const installmentsByExpense = new Map();
+  const installmentsByExpense = new Map<string, Parcela[]>();
   for (const installment of data.parcelas) {
     const items = installmentsByExpense.get(installment.despesa_id) || [];
     items.push(installment);
     installmentsByExpense.set(installment.despesa_id, items);
   }
-  const isPaid = (expense) => {
+  const isPaid = (expense: Expense) => {
     const items = installmentsByExpense.get(expense.id) || [];
     return items.length > 0 && items.every((item) => item.pago);
   };
@@ -254,7 +274,7 @@ function Expenses({ data, socios, onReload, show }) {
     const query = search.trim().toLocaleLowerCase("pt-BR");
     return (!query || `${item.numero_compra || ""} ${item.nome} ${item.fornecedor || ""}`.toLocaleLowerCase("pt-BR").includes(query)) && (!category || item.categoria_id === category);
   }).sort((a, b) => Number(isPaid(a)) - Number(isPaid(b)));
-  function edit(item) {
+  function edit(item: Expense) {
     setEditingId(item.id);
     setForm({
       nome: item.nome || "", categoria_id: item.categoria_id || "", descricao: item.descricao || "",
@@ -267,22 +287,20 @@ function Expenses({ data, socios, onReload, show }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function reset() { setEditingId(null); setForm(emptyExpense); }
-  async function save(event) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (totalCents <= 0) return show("Informe um valor total válido.", "error");
     const quantity = form.forma_pagamento === "credito" ? Number(form.quantidade_parcelas) : 1;
-    const payload = { ...form, valor_total_centavos: totalCents, quantidade_parcelas: quantity, cartao_id: form.forma_pagamento === "credito" ? form.cartao_id : null };
-    payload.responsavel_empresa = form.responsavel_socio_id === "rava";
-    payload.responsavel_socio_id = payload.responsavel_empresa ? null : form.responsavel_socio_id || null;
-    delete payload.valor;
-    const { error } = await supabase.rpc("salvar_despesa_financeira", { p_despesa_id: editingId, p_despesa: payload });
+    const { valor: _valor, ...fields } = form;
+    const payload = { ...fields, valor_total_centavos: totalCents, quantidade_parcelas: quantity, cartao_id: form.forma_pagamento === "credito" ? form.cartao_id : null, responsavel_empresa: form.responsavel_socio_id === "rava", responsavel_socio_id: form.responsavel_socio_id === "rava" ? null : form.responsavel_socio_id || null };
+    const { error } = await requireSupabase().rpc("salvar_despesa_financeira", { p_despesa_id: editingId, p_despesa: payload });
     if (error) return show(error.message, "error");
     show(editingId ? "Compra atualizada e parcelas recalculadas." : "Compra cadastrada e parcelas geradas.");
     reset(); onReload();
   }
-  async function remove(item) {
+  async function remove(item: Expense) {
     if (!window.confirm(`Excluir “${item.nome}” e todas as suas parcelas?`)) return;
-    const { error } = await supabase.from("financeiro_despesas").delete().eq("id", item.id);
+    const { error } = await requireSupabase().from("financeiro_despesas").delete().eq("id", item.id);
     if (error) return show(error.message, "error");
     show("Compra excluída."); if (editingId === item.id) reset(); onReload();
   }
@@ -319,7 +337,7 @@ function Expenses({ data, socios, onReload, show }) {
   );
 }
 
-function PaymentModal({ installments, socios, onClose, onSaved, show }) {
+function PaymentModal({ installments, socios, onClose, onSaved, show }: { installments: Parcela[]; socios: Socio[]; onClose: () => void; onSaved: () => void; show: Show }) {
   const singleInstallment = installments.length === 1;
   const total = installments.reduce((sum, item) => sum + Number(item.valor_centavos), 0);
   const [payer, setPayer] = useState("");
@@ -341,7 +359,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
   );
   const allocated = partnerTotal + reaisToCents(cashAmount) + reaisToCents(otherAmount);
 
-  async function save(event) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
     let entries;
@@ -397,7 +415,7 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
       }));
     }
     setSaving(true);
-    const {error} = await supabase.rpc("salvar_pagamentos_parcelas", {p_itens: entries});
+    const {error} = await requireSupabase().rpc("salvar_pagamentos_parcelas", {p_itens: entries});
     setSaving(false);
     if (error) return show(error.message, "error");
     show(installments.length + " parcela(s) marcada(s) como paga(s)."); onSaved();
@@ -443,17 +461,17 @@ function PaymentModal({ installments, socios, onClose, onSaved, show }) {
   );
 }
 
-function Installments({ data, onPay }) {
+function Installments({ data, onPay }: { data: FinanceData; onPay: Pay }) {
   const [month, setMonth] = useState("");
   const [status, setStatus] = useState("");
   const [card, setCard] = useState("");
   const [category, setCategory] = useState("");
   const [supplier, setSupplier] = useState("");
   const [payer, setPayer] = useState("");
-  const [selected, setSelected] = useState([]);
-  const suppliers = [...new Set(data.despesas.map((item) => item.fornecedor).filter(Boolean))].sort();
+  const [selected, setSelected] = useState<string[]>([]);
+  const suppliers = [...new Set(data.despesas.map((item) => item.fornecedor).filter((value): value is string => !!value))].sort();
   const filtered = data.parcelas.filter((item) => {
-    const expense = item.financeiro_despesas || {};
+    const expense: Partial<NonNullable<Parcela["financeiro_despesas"]>> = item.financeiro_despesas || {};
     const itemStatus = installmentStatus(item);
     return (!month || monthKey(item.vencimento) === month) && (!status || itemStatus === status)
       && (!card || expense.cartao_id === card) && (!category || expense.categoria_id === category)
@@ -465,50 +483,50 @@ function Installments({ data, onPay }) {
     <section className="panel table-panel">
       <div className="finance-filter-grid"><label>Mês e ano<input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></label><FilterButtons label="Status" value={status} onChange={setStatus} options={[{ value: "", label: "Todos" }, { value: "pago", label: "Pago" }, { value: "pendente", label: "Pendente" }, { value: "vencido", label: "Vencido" }]} /><label>Cartão<SearchSelect value={card} onChange={(e) => setCard(e.target.value)}><option value="">Todos</option>{data.cartoes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label><label>Categoria<SearchSelect value={category} onChange={(e) => setCategory(e.target.value)}><option value="">Todas</option>{data.categorias.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</SearchSelect></label><label>Loja / fornecedor<SearchSelect value={supplier} onChange={(e) => setSupplier(e.target.value)}><option value="">Todos</option>{suppliers.map((item) => <option key={item} value={item}>{item}</option>)}</SearchSelect></label><label>Pago por<SearchSelect value={payer} onChange={(e) => setPayer(e.target.value)}><option value="">Todos</option>{data.socios.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}<option value="caixa">Caixa da RAVA</option><option value="outro">Outro</option></SearchSelect></label></div>
       <div className="selection-bar"><span>{selected.length} selecionada(s)</span><button className="primary" disabled={!unpaidSelected.length} onClick={() => onPay(unpaidSelected)}>Marcar selecionadas como pagas</button><button onClick={() => setSelected([])}>Limpar</button></div>
-      <DataTable heads={["", "Vencimento", "Compra", "Loja", "Parcela", "Cartão", "Valor", "Responsável", "Pago por", "Pagamento", "Status", "Ações"]} rows={filtered.map((item) => { const expense = item.financeiro_despesas || {}; const itemStatus = installmentStatus(item); return <tr key={item.id}><td><input type="checkbox" checked={selected.includes(item.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, item.id] : selected.filter((id) => id !== item.id))} aria-label={`Selecionar ${expense.nome}`} /></td><td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td><td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td><td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td><td>{expense.responsavel_empresa ? "RAVA" : expense.responsavel_socio_id ? data.socios.find(partner => partner.id === expense.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{payerLabel(item)}</td><td>{paymentDatesLabel(item)}</td><td><StatusBadge value={itemStatus}>{statusLabels[itemStatus]}</StatusBadge></td><td><button className="link" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer" : "Pagar"}</button></td></tr>; })} empty="Nenhuma parcela encontrada." />
+      <DataTable heads={["", "Vencimento", "Compra", "Loja", "Parcela", "Cartão", "Valor", "Responsável", "Pago por", "Pagamento", "Status", "Ações"]} rows={filtered.map((item) => { const expense: Partial<NonNullable<Parcela["financeiro_despesas"]>> = item.financeiro_despesas || {}; const itemStatus = installmentStatus(item); return <tr key={item.id}><td><input type="checkbox" checked={selected.includes(item.id)} onChange={(e) => setSelected(e.target.checked ? [...selected, item.id] : selected.filter((id) => id !== item.id))} aria-label={`Selecionar ${expense.nome}`} /></td><td>{dateBR(item.vencimento)}</td><td><strong>{expense.nome}</strong></td><td>{expense.fornecedor || "—"}</td><td>{item.numero}/{item.total_parcelas}</td><td>{expense.financeiro_cartoes?.nome || "—"}</td><td>{formatBRLCents(item.valor_centavos)}</td><td>{expense.responsavel_empresa ? "RAVA" : expense.responsavel_socio_id ? data.socios.find(partner => partner.id === expense.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td>{payerLabel(item)}</td><td>{paymentDatesLabel(item)}</td><td><StatusBadge value={itemStatus}>{statusLabels[itemStatus]}</StatusBadge></td><td><button className="link" onClick={() => onPay([item.id], item.pago)}>{item.pago ? "Desfazer" : "Pagar"}</button></td></tr>; })} empty="Nenhuma parcela encontrada." />
     </section>
   );
 }
 
-function Invoices({ data, socios }) {
+function Invoices({ data, socios }: WithData) {
   const [month, setMonth] = useState(currentMonthKey);
-  const groups = data.parcelas.filter((item) => item.financeiro_despesas?.cartao_id && monthKey(item.vencimento) === month).reduce((result, item) => {
-    const card = item.financeiro_despesas.financeiro_cartoes;
+  const groups = data.parcelas.filter((item) => item.financeiro_despesas?.cartao_id && monthKey(item.vencimento) === month).reduce<Record<string, Parcela[]>>((result, item) => {
+    const card = item.financeiro_despesas?.financeiro_cartoes;
     const key = card?.nome || "Cartão removido";
     (result[key] ||= []).push(item); return result;
   }, {});
   return (
-    <><MonthPicker value={month} onChange={setMonth} /><div className="invoice-grid">{Object.entries(groups).map(([card, items]) => { const total = items.reduce((sum, item) => sum + Number(item.valor_centavos), 0); const paid = items.filter((item) => item.pago).reduce((sum, item) => sum + Number(item.valor_centavos), 0); return <section className="panel invoice-card" key={card}><div className="panel-title"><div><span className="eyebrow">Fatura</span><h2>{card} — {monthLabel(month)}</h2></div><span className={`status ${paid === total ? "finance-pago" : "finance-pendente"}`}>{paid === total ? "Paga" : paid ? "Parcial" : "Pendente"}</span></div><div className="invoice-lines">{items.map((item) => <div key={item.id}><span>{item.financeiro_despesas.nome} — {item.numero}/{item.total_parcelas}</span><strong>{formatBRLCents(item.valor_centavos)}</strong></div>)}</div><SplitValues total={total} socios={socios} responsibilities={installmentResponsibilities(items, socios)} compact /><p>Responsabilidade RAVA: {formatBRLCents(items.filter(item => item.financeiro_despesas?.responsavel_empresa).reduce((sum, item) => sum + Number(item.valor_centavos), 0))}</p><div className="finance-paid-line"><span>Total pago</span><strong>{formatBRLCents(paid)}</strong><span>Total pendente</span><strong>{formatBRLCents(total - paid)}</strong></div></section>; })}{!Object.keys(groups).length && <section className="panel"><Empty text="Nenhuma fatura encontrada neste mês." /></section>}</div></>
+    <><MonthPicker value={month} onChange={setMonth} /><div className="invoice-grid">{Object.entries(groups).map(([card, items]) => { const total = items.reduce((sum, item) => sum + Number(item.valor_centavos), 0); const paid = items.filter((item) => item.pago).reduce((sum, item) => sum + Number(item.valor_centavos), 0); return <section className="panel invoice-card" key={card}><div className="panel-title"><div><span className="eyebrow">Fatura</span><h2>{card} — {monthLabel(month)}</h2></div><span className={`status ${paid === total ? "finance-pago" : "finance-pendente"}`}>{paid === total ? "Paga" : paid ? "Parcial" : "Pendente"}</span></div><div className="invoice-lines">{items.map((item) => <div key={item.id}><span>{item.financeiro_despesas?.nome} — {item.numero}/{item.total_parcelas}</span><strong>{formatBRLCents(item.valor_centavos)}</strong></div>)}</div><SplitValues total={total} socios={socios} responsibilities={installmentResponsibilities(items, socios)} compact /><p>Responsabilidade RAVA: {formatBRLCents(items.filter(item => item.financeiro_despesas?.responsavel_empresa).reduce((sum, item) => sum + Number(item.valor_centavos), 0))}</p><div className="finance-paid-line"><span>Total pago</span><strong>{formatBRLCents(paid)}</strong><span>Total pendente</span><strong>{formatBRLCents(total - paid)}</strong></div></section>; })}{!Object.keys(groups).length && <section className="panel"><Empty text="Nenhuma fatura encontrada neste mês." /></section>}</div></>
   );
 }
 
-function Cards({ data, onReload, show }) {
+function Cards({ data, onReload, show }: {data: FinanceData} & Mutations) {
   const blank = { nome: "", banco: "", ultimos_quatro: "", dia_fechamento: "", dia_vencimento: "", ativo: true };
-  const [form, setForm] = useState(blank); const [editing, setEditing] = useState(null);
-  function edit(item) { setEditing(item.id); setForm({ nome: item.nome, banco: item.banco || "", ultimos_quatro: item.ultimos_quatro || "", dia_fechamento: item.dia_fechamento || "", dia_vencimento: item.dia_vencimento, ativo: item.ativo }); }
-  async function save(e) { e.preventDefault(); const payload = { ...form, ultimos_quatro: form.ultimos_quatro || null, dia_fechamento: Number(form.dia_fechamento) || null, dia_vencimento: Number(form.dia_vencimento) }; const request = editing ? supabase.from("financeiro_cartoes").update(payload).eq("id", editing) : supabase.from("financeiro_cartoes").insert(payload); const { error } = await request; if (error) return show(error.message, "error"); show(editing ? "Cartão atualizado." : "Cartão cadastrado."); setEditing(null); setForm(blank); onReload(); }
-  return <div className="split"><form className="panel form" onSubmit={save}><div className="panel-title"><h2>{editing ? "Editar cartão" : "Novo cartão"}</h2>{editing && <button className="link" type="button" onClick={() => { setEditing(null); setForm(blank); }}>Cancelar</button>}</div><label>Nome<input placeholder="Ex.: Nubank Richard" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></label><label>Banco<input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} /></label><label>Últimos 4 dígitos<input inputMode="numeric" pattern="\d{4}" maxLength="4" value={form.ultimos_quatro} onChange={(e) => setForm({ ...form, ultimos_quatro: e.target.value.replace(/\D/g, "") })} /></label><div className="form-grid"><label>Dia de fechamento<input type="number" min="1" max="31" value={form.dia_fechamento} onChange={(e) => setForm({ ...form, dia_fechamento: e.target.value })} /></label><label>Dia de vencimento<input type="number" min="1" max="31" value={form.dia_vencimento} onChange={(e) => setForm({ ...form, dia_vencimento: e.target.value })} required /></label></div><label className="checkbox-line"><input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} /> Cartão ativo</label><button className="primary">{editing ? "Salvar alterações" : "Cadastrar cartão"}</button><p className="security-note">Nunca armazene número completo, CVV ou senha.</p></form><section className="panel"><h2>Cartões cadastrados</h2><div className="finance-card-list">{data.cartoes.map((item) => <article key={item.id}><div><strong>{item.nome}</strong><span>{item.banco || "Banco não informado"}{item.ultimos_quatro ? ` · final ${item.ultimos_quatro}` : ""}</span><small>Fecha dia {item.dia_fechamento || "—"} · vence dia {item.dia_vencimento}</small></div><span className={`status ${item.ativo ? "finance-pago" : ""}`}>{item.ativo ? "Ativo" : "Inativo"}</span><button className="link" onClick={() => edit(item)}>Editar</button></article>)}{!data.cartoes.length && <Empty text="Nenhum cartão cadastrado." />}</div></section></div>;
+  const [form, setForm] = useState(blank); const [editing, setEditing] = useState<string | null>(null);
+  function edit(item: FinanceData["cartoes"][number]) { setEditing(item.id); setForm({ nome: item.nome, banco: item.banco || "", ultimos_quatro: item.ultimos_quatro || "", dia_fechamento: String(item.dia_fechamento || ""), dia_vencimento: String(item.dia_vencimento), ativo: item.ativo }); }
+  async function save(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); const payload = { ...form, ultimos_quatro: form.ultimos_quatro || null, dia_fechamento: Number(form.dia_fechamento) || null, dia_vencimento: Number(form.dia_vencimento) }; const request = editing ? requireSupabase().from("financeiro_cartoes").update(payload).eq("id", editing) : requireSupabase().from("financeiro_cartoes").insert(payload); const { error } = await request; if (error) return show(error.message, "error"); show(editing ? "Cartão atualizado." : "Cartão cadastrado."); setEditing(null); setForm(blank); onReload(); }
+  return <div className="split"><form className="panel form" onSubmit={save}><div className="panel-title"><h2>{editing ? "Editar cartão" : "Novo cartão"}</h2>{editing && <button className="link" type="button" onClick={() => { setEditing(null); setForm(blank); }}>Cancelar</button>}</div><label>Nome<input placeholder="Ex.: Nubank Richard" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required /></label><label>Banco<input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} /></label><label>Últimos 4 dígitos<input inputMode="numeric" pattern="\d{4}" maxLength={4} value={form.ultimos_quatro} onChange={(e) => setForm({ ...form, ultimos_quatro: e.target.value.replace(/\D/g, "") })} /></label><div className="form-grid"><label>Dia de fechamento<input type="number" min="1" max="31" value={form.dia_fechamento} onChange={(e) => setForm({ ...form, dia_fechamento: e.target.value })} /></label><label>Dia de vencimento<input type="number" min="1" max="31" value={form.dia_vencimento} onChange={(e) => setForm({ ...form, dia_vencimento: e.target.value })} required /></label></div><label className="checkbox-line"><input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} /> Cartão ativo</label><button className="primary">{editing ? "Salvar alterações" : "Cadastrar cartão"}</button><p className="security-note">Nunca armazene número completo, CVV ou senha.</p></form><section className="panel"><h2>Cartões cadastrados</h2><div className="finance-card-list">{data.cartoes.map((item) => <article key={item.id}><div><strong>{item.nome}</strong><span>{item.banco || "Banco não informado"}{item.ultimos_quatro ? ` · final ${item.ultimos_quatro}` : ""}</span><small>Fecha dia {item.dia_fechamento || "—"} · vence dia {item.dia_vencimento}</small></div><span className={`status ${item.ativo ? "finance-pago" : ""}`}>{item.ativo ? "Ativo" : "Inativo"}</span><button className="link" onClick={() => edit(item)}>Editar</button></article>)}{!data.cartoes.length && <Empty text="Nenhum cartão cadastrado." />}</div></section></div>;
 }
 
-function Categories({ data, onReload, show }) {
-  const [name, setName] = useState(""); const [editing, setEditing] = useState(null);
-  async function save(e) { e.preventDefault(); const request = editing ? supabase.from("financeiro_categorias").update({ nome: name }).eq("id", editing) : supabase.from("financeiro_categorias").insert({ nome: name }); const { error } = await request; if (error) return show(error.message, "error"); show(editing ? "Categoria atualizada." : "Categoria cadastrada."); setName(""); setEditing(null); onReload(); }
-  async function toggle(item) { const { error } = await supabase.from("financeiro_categorias").update({ ativo: !item.ativo }).eq("id", item.id); if (error) return show(error.message, "error"); show(`Categoria ${item.ativo ? "desativada" : "ativada"}.`); onReload(); }
+function Categories({ data, onReload, show }: {data: FinanceData} & Mutations) {
+  const [name, setName] = useState(""); const [editing, setEditing] = useState<string | null>(null);
+  async function save(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); const request = editing ? requireSupabase().from("financeiro_categorias").update({ nome: name }).eq("id", editing) : requireSupabase().from("financeiro_categorias").insert({ nome: name }); const { error } = await request; if (error) return show(error.message, "error"); show(editing ? "Categoria atualizada." : "Categoria cadastrada."); setName(""); setEditing(null); onReload(); }
+  async function toggle(item: FinanceData["categorias"][number]) { const { error } = await requireSupabase().from("financeiro_categorias").update({ ativo: !item.ativo }).eq("id", item.id); if (error) return show(error.message, "error"); show(`Categoria ${item.ativo ? "desativada" : "ativada"}.`); onReload(); }
   return <div className="split"><form className="panel form" onSubmit={save}><h2>{editing ? "Editar categoria" : "Nova categoria"}</h2><label>Nome<input value={name} onChange={(e) => setName(e.target.value)} required /></label><div className="actions"><button className="primary">{editing ? "Salvar" : "Cadastrar"}</button>{editing && <button type="button" onClick={() => { setEditing(null); setName(""); }}>Cancelar</button>}</div></form><section className="panel"><h2>Categorias</h2><div className="finance-category-list">{data.categorias.map((item) => <div key={item.id}><span><strong>{item.nome}</strong><small>{item.ativo ? "Disponível nos formulários" : "Desativada"}</small></span><button className="link" onClick={() => { setEditing(item.id); setName(item.nome); }}>Editar</button><button className={item.ativo ? "danger-text" : "link"} onClick={() => toggle(item)}>{item.ativo ? "Desativar" : "Ativar"}</button></div>)}</div></section></div>;
 }
 
-export default function FinanceiroModule({ page, onNavigate, show, onDataChanged }) {
-  const [data, setData] = useState({ socios: [], categorias: [], cartoes: [], despesas: [], parcelas: [] });
+export default function FinanceiroModule({ page, onNavigate, show, onDataChanged }: { page: string; onNavigate: Navigate; show: Show; onDataChanged?: () => void }) {
+  const [data, setData] = useState<FinanceData>({ socios: [], categorias: [], cartoes: [], despesas: [], parcelas: [] });
   const [loading, setLoading] = useState(true);
-  const [payment, setPayment] = useState(null);
+  const [payment, setPayment] = useState<Parcela[] | null>(null);
   const load = useCallback(async () => {
     setLoading(true);
     const [socios, categorias, cartoes, despesas, parcelas] = await Promise.all([
-      loadAllTableRows(supabase.from("financeiro_socios").select("*").eq("ativo", true).order("created_at")),
-      loadAllTableRows(supabase.from("financeiro_categorias").select("*").order("nome")),
-      loadAllTableRows(supabase.from("financeiro_cartoes").select("*").order("nome")),
-      loadAllTableRows(supabase.from("financeiro_despesas").select("*, financeiro_categorias(nome), financeiro_cartoes(nome)").order("data_compra", { ascending: false })),
-      loadAllTableRows(supabase.from("financeiro_parcelas").select("*, financeiro_despesas(nome, responsavel_socio_id, responsavel_empresa, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento")),
+      loadAllTableRows(requireSupabase().from("financeiro_socios").select("*").eq("ativo", true).order("created_at")),
+      loadAllTableRows(requireSupabase().from("financeiro_categorias").select("*").order("nome")),
+      loadAllTableRows(requireSupabase().from("financeiro_cartoes").select("*").order("nome")),
+      loadAllTableRows(requireSupabase().from("financeiro_despesas").select("*, financeiro_categorias(nome), financeiro_cartoes(nome)").order("data_compra", { ascending: false })),
+      loadAllTableRows(requireSupabase().from("financeiro_parcelas").select("*, financeiro_despesas(nome, responsavel_socio_id, responsavel_empresa, fornecedor, categoria_id, cartao_id, financeiro_categorias(nome), financeiro_cartoes(nome)), financeiro_socios(nome), financeiro_pagamentos_parcela(*, financeiro_socios(nome))").order("vencimento")),
     ]);
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");
@@ -518,10 +536,10 @@ export default function FinanceiroModule({ page, onNavigate, show, onDataChanged
   }, [show, onDataChanged]);
   useEffect(() => { load(); }, [load]);
   const title = pageTitles[page] || pageTitles.financeiro;
-  async function handlePay(ids, isPaid = false) {
-    if (!isPaid) return setPayment(ids.map((id) => data.parcelas.find((item) => item.id === id)).filter(Boolean));
+  async function handlePay(ids: string[], isPaid = false) {
+    if (!isPaid) return setPayment(ids.map((id) => data.parcelas.find((item) => item.id === id)).filter(item => item != null));
     if (!window.confirm("Desfazer a baixa desta parcela?")) return;
-    const { error } = await supabase.rpc("excluir_pagamentos_parcela", { p_parcela_id: ids[0] });
+    const { error } = await requireSupabase().rpc("excluir_pagamentos_parcela", { p_parcela_id: ids[0] });
     if (error) return show(error.message, "error"); show("Baixa desfeita."); load();
   }
   let content;
@@ -537,3 +555,6 @@ export default function FinanceiroModule({ page, onNavigate, show, onDataChanged
   else content = <Overview data={data} socios={data.socios} onNavigate={onNavigate} />;
   return <div className="finance-page"><Header title={title[0]} subtitle={title[1]} />{content}{payment && <PaymentModal installments={payment} socios={data.socios} onClose={() => setPayment(null)} onSaved={() => { setPayment(null); load(); }} show={show} />}</div>;
 }
+
+
+

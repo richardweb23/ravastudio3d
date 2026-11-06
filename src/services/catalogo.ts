@@ -29,10 +29,10 @@ export async function adminCatalog() {
   ]);
   const failed = results.find(r => r.status === "rejected");
   if (failed) throw failed.reason;
-  return { products: settled(results[0]), categories: settled(results[1]), images: settled(results[2]), indicacoes: settled(results[3]) };
+  return { products: settled(results[0]) ?? [], categories: settled(results[1]) ?? [], images: settled(results[2]) ?? [], indicacoes: settled(results[3]) ?? [] };
 }
 type ImageFiles = Pick<Tables<"catalogo_imagens">, "id" | "material_id" | "caminho" | "miniatura">;
-function hasImageFiles(value: unknown): value is ImageFiles {
+export function hasImageFiles(value: unknown): value is ImageFiles {
   return !!value && typeof value === "object" && ["id", "material_id", "caminho", "miniatura"].every(key => typeof Reflect.get(value, key) === "string");
 }
 export async function removeCatalogImage(image: ImageFiles) {

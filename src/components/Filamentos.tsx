@@ -1,6 +1,11 @@
+import type { Tables, Json } from "../database.types";
+import { loadAllTableRows } from "../services/tableRows";
+import { errorMessage, type ChangeEvent } from "../adminTypes";
+type Stock = Tables<"filamento_estoque"> & { filamento_marcas: { nome: string } | null };
+type Modal = { type: "marca" } | { type: "baixa" | "reposicao" | "historico"; row: Stock };
 import SearchSelect from './SearchSelect.tsx';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { supabase } from '../supabase.js';
+import { requireSupabase } from '../supabase.js';
 import Header from './Header.tsx';
 import DataTable from './DataTable.tsx';
 import { today } from '../lib/formatters.js';
@@ -8,124 +13,123 @@ import { SALES_BOXES } from '../lib/vendas.js';
 import './filamentos.css';
 
 const categories = ['Standard', 'Matte', 'Silk', 'Duo Color'];
-const kg = grams => `${(Number(grams) / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} kg`;
-const money = cents => (Number(cents) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const kg = (grams: number) => `${(Number(grams) / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} kg`;
+const money = (cents: number) => (Number(cents) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const blankEntry = () => ({ marca_id: '', cor_nome: '', cor_hex: '#ffffff', tipo: 'PLA', categoria: 'Matte', caixa: '', quantidade: '', valor: '', data: today(), observacao: '' });
 const emptyFilters = { busca: '', marca: '', tipo: '', categoria: '', caixa: '', saldo: 'disponivel' };
-async function allRows(table, columns, order) {
-  const rows = [];
-  for (let from = 0; ; from += 1000) {
-    const result = await supabase.from(table).select(columns).order(order).order('id').range(from, from + 999);
-    if (result.error) throw result.error;
-    rows.push(...result.data);
-    if (result.data.length < 1000) return rows;
-  }
+async function allRows<T>(query: Parameters<typeof loadAllTableRows<T>>[0], order: string) {
+  const result = await loadAllTableRows(query, [order, "id"]);
+  if (result.error) throw result.error;
+  return result.data;
 }
-function Dialog({ title, variant, onClose, children }) {
-  const ref = useRef(null);
-  useEffect(() => { const node = ref.current; node.showModal(); return () => node.close(); }, []);
+function Dialog({ title, variant, onClose, children }: { title: string; variant?: string; onClose: () => void; children: React.ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => { const node = ref.current; if (!node) return; node.showModal(); return () => node.close(); }, []);
   return <dialog ref={ref} className={`modal-card registration-dialog filament-dialog filament-dialog--${variant || "marca"}`} aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }}><header className="filament-dialog-heading"><h2>{title}</h2><button type="button" className="filament-dialog-close" onClick={onClose} aria-label="Fechar modal">×</button></header>{children}</dialog>;
 }
-function ActionIcon({ kind }) {
+function ActionIcon({ kind }: { kind: "adicionar" | "baixa" | "historico" }) {
  const paths = { adicionar: <path d="M12 5v14M5 12h14" />, baixa: <><path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4" /></>, historico: <><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2" /></> };
  return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[kind]}</svg>;
 }
 export default function Filamentos() {
-  const [brands, setBrands] = useState([]), [stock, setStock] = useState([]);
+  const [brands, setBrands] = useState<Tables<"filamento_marcas">[]>([]), [stock, setStock] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const [entry, setEntry] = useState(blankEntry), [filters, setFilters] = useState(emptyFilters);
-  const [modal, setModal] = useState(null), [dialogError, setDialogError] = useState(''), [busy, setBusy] = useState(false);
+  const [modal, setModal] = useState<Modal | null>(null), [dialogError, setDialogError] = useState(''), [busy, setBusy] = useState(false);
   const [brand, setBrand] = useState({ id: '', nome: '', valor: '' });
   const [replenishment, setReplenishment] = useState({ quantidade: '', valor: '', data: today(), observacao: '' });
   const [withdrawal, setWithdrawal] = useState({ quantidade: '', data: today(), observacao: '' });
-  const [history, setHistory] = useState([]), [historyLoading, setHistoryLoading] = useState(false);
-  const submitting = useRef(false), request = useRef(null), historyRequest = useRef(0);
+  const [history, setHistory] = useState<Tables<"filamento_movimentos">[]>([]), [historyLoading, setHistoryLoading] = useState(false);
+  const submitting = useRef(false), request = useRef<{ signature: string; id: string } | null>(null), historyRequest = useRef(0);
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [b, s] = await Promise.all([allRows('filamento_marcas', '*', 'nome'), allRows('filamento_estoque', '*,filamento_marcas(nome)', 'cor_nome')]);
+      const [b, s] = await Promise.all([allRows(requireSupabase().from('filamento_marcas').select('*'), 'nome'), allRows(requireSupabase().from('filamento_estoque').select('*,filamento_marcas(nome)'), 'cor_nome')]);
       setBrands(b); setStock(s); setError(''); return s;
-    } catch (err) { setError(`Não foi possível carregar os filamentos: ${err.message}`); }
+    } catch (err) { setError(`Não foi possível carregar os filamentos: ${errorMessage(err, "Falha ao acessar os filamentos.")}`); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { let active = true; Promise.resolve().then(() => { if (active) void load(); }); return () => { active = false; }; }, [load]);
-  const update = e => setEntry(v => ({ ...v, [e.target.name]: e.target.value }));
+  const update = (e: ChangeEvent) => setEntry(v => ({ ...v, [e.target.name ?? ""]: e.target.value }));
   const close = () => { if (!submitting.current) { historyRequest.current++; setModal(null); setDialogError(''); } };
-  const open = (type, row) => { setDialogError(''); setModal({ type, row }); request.current = null; };
-  async function perform(action, data) {
+  const open = (...args: ["marca"] | ["baixa" | "reposicao" | "historico", Stock]) => { setDialogError(''); setModal(args[0] === "marca" ? { type: "marca" } : { type: args[0], row: args[1] }); request.current = null; };
+  async function perform(action: string, data: Json) {
     const signature = JSON.stringify({ action, data });
     if (request.current?.signature !== signature) request.current = { signature, id: crypto.randomUUID() };
-    const result = await supabase.rpc('movimentar_filamento', { p_acao: action, p_dados: data, p_requisicao: request.current.id });
+    const result = await requireSupabase().rpc('movimentar_filamento', { p_acao: action, p_dados: data, p_requisicao: request.current.id });
     if (result.error) throw result.error;
     request.current = null;
   }
-  async function saveEntry(e) {
+  async function saveEntry(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); if (submitting.current) return;
     submitting.current = true; setBusy(true); setError(''); setNotice('');
     try {
       await perform('entrada', { marca_id: entry.marca_id, cor_nome: entry.cor_nome.trim(), cor_hex: entry.cor_hex, tipo: entry.tipo, categoria: entry.categoria, caixa: entry.caixa, quantidade_gramas: Math.round(Number(entry.quantidade) * 1000), valor_kg_centavos: Math.round(Number(entry.valor) * 100), data: entry.data, observacao: entry.observacao.trim() });
       setEntry(blankEntry()); setNotice('Entrada registrada. Estoque atualizado.'); await load();
-    } catch (err) { setError(err.message); }
+    } catch (err) { setError(errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { submitting.current = false; setBusy(false); }
   }
-  async function saveBrand(e) {
+  async function saveBrand(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); if (submitting.current) return;
     submitting.current = true; setBusy(true); setDialogError('');
     try {
       const data = { nome: brand.nome.trim(), valor_medio_centavos: Math.round(Number(brand.valor) * 100) };
-      const result = await (brand.id ? supabase.from('filamento_marcas').update(data).eq('id', brand.id) : supabase.from('filamento_marcas').insert(data)).select().single();
+      const result = await (brand.id ? requireSupabase().from('filamento_marcas').update(data).eq('id', brand.id) : requireSupabase().from('filamento_marcas').insert(data)).select().single();
       if (result.error) throw result.error;
       setEntry(v => ({ ...v, marca_id: result.data.id, valor: (Number(result.data.valor_medio_centavos) / 100).toFixed(2) }));
       setModal(null); setNotice('Marca salva. Valor por kg sugerido na entrada.'); await load();
-    } catch (err) { setDialogError(err.code === '23505' ? 'Já existe uma marca com esse nome.' : err.message); }
+    } catch (err) { setDialogError(err && typeof err === 'object' && 'code' in err && err.code === '23505' ? 'Já existe uma marca com esse nome.' : errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { submitting.current = false; setBusy(false); }
   }
-  async function saveWithdrawal(e) {
+  async function saveWithdrawal(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); if (submitting.current) return;
     submitting.current = true; setBusy(true); setDialogError('');
     try {
+      if (modal?.type !== 'baixa') return;
       await perform('baixa', { estoque_id: modal.row.id, quantidade_gramas: Math.round(Number(withdrawal.quantidade) * 1000), data: withdrawal.data, observacao: withdrawal.observacao.trim() });
       setModal(null); setNotice('Baixa registrada. Histórico preservado.'); await load();
-    } catch (err) { setDialogError(err.message); }
+    } catch (err) { setDialogError(errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { submitting.current = false; setBusy(false); }
   }
-  async function saveReplenishment(e) {
+  async function saveReplenishment(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); if (submitting.current) return;
     submitting.current = true; setBusy(true); setDialogError('');
     try {
+      if (modal?.type !== "reposicao") return;
       const row = modal.row;
       await perform('entrada', { marca_id: row.marca_id, cor_nome: row.cor_nome, cor_hex: row.cor_hex, tipo: row.tipo, categoria: row.categoria, caixa: row.caixa, quantidade_gramas: Math.round(Number(replenishment.quantidade) * 1000), valor_kg_centavos: Math.round(Number(replenishment.valor) * 100), data: replenishment.data, observacao: replenishment.observacao.trim() || 'Reposição de filamento' });
       setModal(null); setNotice('Filamento adicionado. Saldo e custo médio atualizados.'); await load();
-    } catch (err) { setDialogError(err.message); }
+    } catch (err) { setDialogError(errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { submitting.current = false; setBusy(false); }
   }
-  async function showHistory(row) {
+  async function showHistory(row: Stock) {
     open('historico', row); setHistory([]); setHistoryLoading(true);
     const seq = ++historyRequest.current;
     try {
       const rows = [];
       for (let from = 0; ; from += 1000) {
-        const { data, error } = await supabase.from('filamento_movimentos').select('*').eq('estoque_id', row.id).order('created_at', { ascending: false }).order('id').range(from, from + 999);
+        const { data, error } = await requireSupabase().from('filamento_movimentos').select('*').eq('estoque_id', row.id).order('created_at', { ascending: false }).order('id').range(from, from + 999);
         if (error) throw error;
         rows.push(...data); if (data.length < 1000) break;
       }
       if (seq === historyRequest.current) setHistory(rows);
-    } catch (err) { if (seq === historyRequest.current) setDialogError(err.message); }
+    } catch (err) { if (seq === historyRequest.current) setDialogError(errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { if (seq === historyRequest.current) setHistoryLoading(false); }
   }
-  async function removeWithdrawal(movement) {
+  async function removeWithdrawal(movement: Tables<"filamento_movimentos">) {
+    if (modal?.type !== "historico") return;
     if (submitting.current) return;
     if (!window.confirm(`Remover esta baixa de ${kg(movement.quantidade_gramas)}? A quantidade voltará ao estoque de ${modal.row.cor_nome} no caixa ${modal.row.caixa}.`)) return;
     submitting.current = true; setBusy(true); setDialogError('');
     try {
-      const { error } = await supabase.rpc('remover_baixa_filamento', { p_movimento_id: movement.id });
+      const { error } = await requireSupabase().rpc('remover_baixa_filamento', { p_movimento_id: movement.id });
       if (error) throw error;
       const updated = await load();
       if (!updated) throw new Error('Baixa removida, mas não foi possível atualizar a tela. Feche o histórico e clique em Atualizar.');
       const fresh = updated.find(item => item.id === movement.estoque_id);
       await showHistory(fresh || modal.row);
       setNotice('Baixa removida. Quantidade devolvida ao estoque.');
-    } catch (err) { setDialogError(err.message); }
+    } catch (err) { setDialogError(errorMessage(err, "Falha ao acessar os filamentos.")); }
     finally { submitting.current = false; setBusy(false); }
   }
   const reversedWithdrawals = new Set(history.filter(row => row.estorno_de).map(row => row.estorno_de));
@@ -133,7 +137,7 @@ export default function Filamentos() {
     const query = `${row.cor_nome} ${row.filamento_marcas?.nome || ''}`.toLocaleLowerCase('pt-BR');
     return query.includes(filters.busca.trim().toLocaleLowerCase('pt-BR')) && (!filters.marca || row.marca_id === filters.marca) && (!filters.tipo || row.tipo === filters.tipo) && (!filters.categoria || row.categoria === filters.categoria) && (!filters.caixa || row.caixa === filters.caixa) && (!filters.saldo || (filters.saldo === 'disponivel' ? Number(row.quantidade_gramas) > 0 : Number(row.quantidade_gramas) === 0));
   });
-  const filter = e => setFilters(v => ({ ...v, [e.target.name]: e.target.value }));
+  const filter = (e: ChangeEvent) => setFilters(v => ({ ...v, [e.target.name ?? ""]: e.target.value }));
   return <div className="filaments-page">
     <Header title="Filamentos" subtitle="Entradas, consumo e saldo por caixa, em quilogramas." action={<button onClick={() => { setBrand({ id: '', nome: '', valor: '' }); open('marca'); }}>Cadastrar marca</button>} />
     {error && <p className="negative" role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
@@ -142,7 +146,7 @@ export default function Filamentos() {
       <div className="panel-title"><h2>Entrada de filamento</h2><span>1 kg = 1.000 g</span></div>
       <fieldset disabled={busy || loading} className="filament-fields">
         <label>Marca<SearchSelect aria-label="Marca" name="marca_id" value={entry.marca_id} required onChange={e => { const b = brands.find(b => b.id === e.target.value); setEntry(v => ({ ...v, marca_id: e.target.value, valor: b ? (Number(b.valor_medio_centavos) / 100).toFixed(2) : '' })); }}><option value="">Selecione a marca</option>{brands.map(b => <option key={b.id} value={b.id}>{b.nome}</option>)}</SearchSelect></label>
-        <div className="filament-brand-action"><button type="button" disabled={!entry.marca_id} onClick={() => { const b = brands.find(b => b.id === entry.marca_id); setBrand({ id: b.id, nome: b.nome, valor: (Number(b.valor_medio_centavos) / 100).toFixed(2) }); open('marca'); }}>Editar marca / valor médio</button></div>
+        <div className="filament-brand-action"><button type="button" disabled={!entry.marca_id} onClick={() => { const b = brands.find(b => b.id === entry.marca_id); if (!b) return; setBrand({ id: b.id, nome: b.nome, valor: (Number(b.valor_medio_centavos) / 100).toFixed(2) }); open('marca'); }}>Editar marca / valor médio</button></div>
         <label>Nome da cor<input name="cor_nome" value={entry.cor_nome} onChange={update} required maxLength={100} placeholder="Ex.: Azul oceano" /></label>
         <label>Cor<div className="filament-color"><input type="color" aria-label="Cor" name="cor_hex" value={entry.cor_hex} onChange={update} /><span>{entry.cor_hex.toUpperCase()}</span></div></label>
         <label>Tipo<SearchSelect aria-label="Tipo" name="tipo" value={entry.tipo} onChange={update}>{['PLA', 'PETG'].map(v => <option key={v}>{v}</option>)}</SearchSelect></label>
@@ -195,3 +199,4 @@ export default function Filamentos() {
     </Dialog>}
   </div>;
 }
+

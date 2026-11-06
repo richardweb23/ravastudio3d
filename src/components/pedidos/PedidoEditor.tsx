@@ -4,7 +4,7 @@ import SearchSelect from '../SearchSelect.tsx';
 import { useState } from "react";
 import { requireSupabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
-import { OrderItemModal } from "../ui/OrderItemModal.jsx";
+import { OrderItemModal } from "../ui/OrderItemModal.tsx";
 import Empty from "../Empty.tsx";
 
 export default function PedidoEditor({

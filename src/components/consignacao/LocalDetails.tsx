@@ -1,3 +1,5 @@
+import type { Show } from "../../adminTypes";
+import { errorMessage } from "../../adminTypes";
 import ProductSearchSelect from "../ProductSearchSelect.tsx";
 import StatusBadge from '../StatusBadge.tsx';
 import { useRef, useState } from "react";
@@ -5,24 +7,24 @@ import Header from "../Header.tsx";
 import Metric from "../Metric.tsx";
 import DataTable from "../DataTable.tsx";
 import FilterButtons from "../ui/FilterButtons.tsx";
-import ConsignmentModal from "./ConsignmentModal.jsx";
+import ConsignmentModal from "./ConsignmentModal.tsx";
 import useConsignment from "../../hooks/useConsignment.js";
 import { summarizeConsignment, filterConsignmentSales, movementLabels, repasseStatus, repasseLabels } from "../../lib/consignacao.js";
 import { formatBRLCents as money } from "../../lib/financeiro.js";
 import { formatNumber as qty } from "../../lib/formatters.js";
 
-const date = value => value ? new Date(value.length === 10 ? value + "T12:00:00" : value).toLocaleDateString("pt-BR") : "—";
-export default function LocalDetails({ type, id, onNavigate, onSaved, show }) {
+const date = (value?: string | null) => value ? new Date(value.length === 10 ? value + "T12:00:00" : value).toLocaleDateString("pt-BR") : "—";
+export default function LocalDetails({ type, id, onNavigate, onSaved, show }: { type: string; id: string; onNavigate: (page: string) => void; onSaved: () => Promise<void>; show: Show }) {
   const { data, loading, error, reload } = useConsignment(type, id);
-  const [modal, setModal] = useState(null);
+  const [modal, setModal] = useState<Pick<React.ComponentProps<typeof ConsignmentModal>, "mode" | "product"> | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [period, setPeriod] = useState({ start: "", end: "" });
   const [movementProduct, setMovementProduct] = useState("");
-  const movementsRef = useRef(null);
+  const movementsRef = useRef<HTMLElement>(null);
   const back = <button className="link" onClick={() => onNavigate("cadastros")}>← Locais e vendedores</button>;
   if (loading && !data) return <>{back}<p className="loading" role="status">Carregando detalhes…</p></>;
-  if (error) return <>{back}<section className="panel"><h2>Não foi possível carregar os detalhes</h2><p role="alert">{error.message}</p><button className="primary" onClick={reload}>Tentar novamente</button></section></>;
+  if (error) return <>{back}<section className="panel"><h2>Não foi possível carregar os detalhes</h2><p role="alert">{errorMessage(error, "Não foi possível carregar os detalhes.")}</p><button className="primary" onClick={reload}>Tentar novamente</button></section></>;
   if (!data) return null;
   const report = summarizeConsignment(data);
   const local = data.locais.find(row => row.id === data.localId);
@@ -31,9 +33,9 @@ export default function LocalDetails({ type, id, onNavigate, onSaved, show }) {
   const invalidPeriod = period.start && period.end && period.start > period.end;
   const sales = invalidPeriod ? [] : filterConsignmentSales(data.vendas, status, period.start, period.end);
   const movements = data.movimentos.filter(row => !movementProduct || row.material_id === movementProduct);
-  const name = materialId => data.materiais.find(row => row.id === materialId)?.nome || "Produto indisponível";
+  const name = (materialId: string) => data.materiais.find(row => row.id === materialId)?.nome || "Produto indisponível";
   const pending = data.vendas.filter(row => repasseStatus(row) === "pendente");
-  function viewMovements(productId) { setMovementProduct(productId); movementsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  function viewMovements(productId: string) { setMovementProduct(productId); movementsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); }
   return <div className="consignment-page" aria-busy={loading}>
     {back}
     <Header title={data.entity.nome} subtitle={type === "vendedor" ? "Vendedor · Estoque e repasses de consignação" : "Local · Estoque e repasses de consignação"} action={<button className="primary" disabled={!active || loading} onClick={() => setModal({ mode: "entrada" })}>Adicionar produtos</button>} />

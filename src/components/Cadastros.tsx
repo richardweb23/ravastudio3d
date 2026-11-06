@@ -5,7 +5,7 @@ import { requireSupabase } from "../supabase.js";
 
 
 import Header from "./Header.tsx";
-import RegistrationTables from "./consignacao/RegistrationTables.jsx";
+import RegistrationTables from "./consignacao/RegistrationTables.tsx";
 
 
 export default function Cadastros({ locais, vendedores, onSaved, show, onNavigate }: Pick<AdminData, "locais" | "vendedores"> & { onSaved: () => void; show: Show; onNavigate: (page: string) => void }) {
