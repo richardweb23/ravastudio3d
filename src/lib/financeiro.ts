@@ -1,14 +1,30 @@
+interface Partner {
+  id: string;
+  nome: string;
+  percentual_bp: number;
+  ativo?: boolean;
+}
+
+interface Installment {
+  vencimento: string;
+  valor_centavos: number;
+  pago: boolean;
+  pago_por_socio_id?: string | null;
+  financeiro_despesas?: { responsavel_empresa?: boolean; responsavel_socio_id?: string | null } | null;
+  financeiro_pagamentos_parcela?: { pago_por_tipo: string; socio_id: string | null; valor_centavos: number }[];
+}
+
 export const DEFAULT_PARTNERS = Object.freeze([
   { id: "richard", nome: "Richard", percentual_bp: 5000 },
   { id: "xandy", nome: "Xandy", percentual_bp: 5000 },
 ]);
 
-export function normalizeCents(value) {
+export function normalizeCents(value: unknown) {
   const cents = Number(value);
   return Number.isFinite(cents) ? Math.round(cents) : 0;
 }
 
-export function reaisToCents(value) {
+export function reaisToCents(value: unknown) {
   if (typeof value === "number") return Math.round(value * 100);
   const normalized = String(value ?? "")
     .trim()
@@ -19,18 +35,18 @@ export function reaisToCents(value) {
   return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
 }
 
-export function centsToInput(cents) {
+export function centsToInput(cents: unknown) {
   return (normalizeCents(cents) / 100).toFixed(2);
 }
 
-export function formatBRLCents(cents) {
+export function formatBRLCents(cents: unknown) {
   return (normalizeCents(cents) / 100).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
 }
 
-export function splitAmount(totalCents, partners = DEFAULT_PARTNERS) {
+export function splitAmount(totalCents: number, partners: readonly Partner[] = DEFAULT_PARTNERS) {
   const total = normalizeCents(totalCents);
   const active = partners.filter((partner) => partner.ativo !== false);
   if (!active.length) return [];
@@ -51,7 +67,7 @@ export function splitAmount(totalCents, partners = DEFAULT_PARTNERS) {
   });
 }
 
-export function expenseResponsibilities(totalCents, partners, responsiblePartnerId) {
+export function expenseResponsibilities(totalCents: number, partners: readonly Partner[], responsiblePartnerId?: string | null) {
   if (responsiblePartnerId === 'rava') return partners.map(partner => ({ ...partner, valor_centavos: 0 }));
   if (!responsiblePartnerId) return splitAmount(totalCents, partners);
   return partners.map((partner) => ({
@@ -60,7 +76,7 @@ export function expenseResponsibilities(totalCents, partners, responsiblePartner
   }));
 }
 
-export function installmentResponsibilities(installments, partners) {
+export function installmentResponsibilities(installments: readonly Installment[], partners: readonly Partner[]) {
   const shared = installments.filter((item) => !item.financeiro_despesas?.responsavel_empresa && !item.financeiro_despesas?.responsavel_socio_id);
   const responsibilities = splitAmount(shared.reduce((sum, item) => sum + normalizeCents(item.valor_centavos), 0), partners);
   return responsibilities.map((partner) => ({
@@ -72,7 +88,7 @@ export function installmentResponsibilities(installments, partners) {
   }));
 }
 
-export function splitInstallments(totalCents, quantity) {
+export function splitInstallments(totalCents: number, quantity: string | number) {
   const total = normalizeCents(totalCents);
   const count = Math.max(1, Math.trunc(Number(quantity) || 1));
   const base = Math.floor(total / count);
@@ -80,7 +96,7 @@ export function splitInstallments(totalCents, quantity) {
   return Array.from({ length: count }, (_, index) => base + (index < remainder ? 1 : 0));
 }
 
-export function installmentStatus(installment, today = new Date()) {
+export function installmentStatus(installment: Pick<Installment, "pago" | "vencimento">, today = new Date()) {
   if (installment.pago) return "pago";
   const due = new Date(`${installment.vencimento}T12:00:00`);
   const comparison = new Date(today);
@@ -88,11 +104,11 @@ export function installmentStatus(installment, today = new Date()) {
   return due < comparison ? "vencido" : "pendente";
 }
 
-export function monthKey(date) {
+export function monthKey(date: unknown) {
   return String(date || "").slice(0, 7);
 }
 
-export function monthLabel(key) {
+export function monthLabel(key: string) {
   if (!/^\d{4}-\d{2}$/.test(key || "")) return "";
   const [year, month] = key.split("-").map(Number);
   const label = new Date(year, month - 1, 1).toLocaleDateString("pt-BR", {
@@ -102,7 +118,7 @@ export function monthLabel(key) {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-export function shiftMonth(key, offset) {
+export function shiftMonth(key: string, offset: number) {
   const [year, month] = key.split("-").map(Number);
   const shifted = new Date(year, month - 1 + offset, 1);
   return `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(2, "0")}`;
@@ -113,7 +129,7 @@ export function currentMonthKey() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export function summarizeInstallments(installments, partners, selectedMonth) {
+export function summarizeInstallments<T extends Installment>(installments: readonly T[], partners: readonly Partner[], selectedMonth: string) {
   const inMonth = installments.filter((item) => monthKey(item.vencimento) === selectedMonth);
   const total = inMonth.reduce((sum, item) => sum + normalizeCents(item.valor_centavos), 0);
   const paid = inMonth
@@ -145,7 +161,7 @@ export function summarizeInstallments(installments, partners, selectedMonth) {
   };
 }
 
-export function summarizePartnerInstallments(installments, partners, selectedMonth, partnerId = "") {
+export function summarizePartnerInstallments<T extends Installment>(installments: readonly T[], partners: readonly Partner[], selectedMonth: string, partnerId = "") {
   const summary = summarizeInstallments(installments, partners, selectedMonth);
   if (!partnerId) return summary;
   if (partnerId === 'rava') {
@@ -156,7 +172,7 @@ export function summarizePartnerInstallments(installments, partners, selectedMon
     const responsible = item.financeiro_despesas?.responsavel_socio_id;
     return !item.financeiro_despesas?.responsavel_empresa && (!responsible || responsible === partnerId);
   });
-  const share = (rows) => installmentResponsibilities(rows, partners)
+  const share = (rows: readonly Installment[]) => installmentResponsibilities(rows, partners)
     .find((partner) => partner.id === partnerId)?.valor_centavos || 0;
   const total = share(items);
   const paid = share(items.filter((item) => item.pago));
@@ -171,7 +187,7 @@ export function summarizePartnerInstallments(installments, partners, selectedMon
   };
 }
 
-export function settlementSuggestion(summary) {
+export function settlementSuggestion(summary: Pick<ReturnType<typeof summarizeInstallments>, "responsibilities" | "paidByPartner">) {
   const partnerBalances = summary.responsibilities.map((responsibility) => ({
     ...responsibility,
     pago_centavos: summary.paidByPartner[responsibility.id] || 0,

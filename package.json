@@ -8,14 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",
-    "test": "node --test src/lib/*.test.js tests/catalogo-seo.test.mjs",
-    "check": "npm run test && npm run test:db && npm run lint && npm run build",
+    "test": "tsx --test src/lib/*.test.js tests/catalogo-seo.test.mjs",
+    "check": "npm run typecheck && npm run test && npm run test:db && npm run lint && npm run build",
     "test:db": "node --test tests/*-db.test.mjs",
     "dev:local": "vite --mode localtest --host 127.0.0.1 --port 5173 --strictPort",
     "db:local:start": "supabase start",
     "db:local:stop": "supabase stop",
     "db:local:status": "supabase status",
-    "db:local:reset": "supabase db reset --local"
+    "db:local:reset": "supabase db reset --local",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",
@@ -25,11 +26,16 @@
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "^9.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.4.1",
     "eslint": "^9.0.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.4",
     "supabase": "2.117.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.72.1",
     "vite": "^6.2.1"
   }
 }
