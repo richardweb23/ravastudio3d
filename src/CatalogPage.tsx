@@ -102,7 +102,20 @@ export default function CatalogPage() {
   const categoryName = result.categorias.find(item => String(item.id) === category)?.nome || "Todas as categorias";
   return <div className="catalog-site">
     <a className="catalog-skip" href="#produtos">Ir para os produtos</a>
-    <header className="catalog-site-header"><a href="/" aria-label="RAVA Studio 3D — início"><img src={logo} alt="RAVA Studio 3D" /></a><a href="https://wa.me/5521984470594" target="_blank" rel="noopener noreferrer">Vamos conversar ↗</a></header>
+    <header className="catalog-site-header">
+      <a href="/" aria-label="RAVA Studio 3D — início"><img src={logo} alt="RAVA Studio 3D" /></a>
+      <nav className="catalog-social-links" aria-label="Redes sociais da RAVA">
+        <a href="https://www.instagram.com/ravastudio3d/" target="_blank" rel="noopener noreferrer" aria-label="Instagram da RAVA (abre em nova aba)" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a href="https://wa.me/5521984470594" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp da RAVA (abre em nova aba)" title="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.52 3.48A11.87 11.87 0 0 0 12.04 0C5.47 0 .12 5.35.12 11.93c0 2.1.55 4.16 1.6 5.97L0 24l6.25-1.64a11.9 11.9 0 0 0 5.79 1.48h.01c6.57 0 11.92-5.35 11.93-11.93 0-3.18-1.24-6.17-3.46-8.43ZM12.05 21.83a9.9 9.9 0 0 1-5.05-1.38l-.36-.21-3.71.97.99-3.62-.24-.37a9.9 9.9 0 0 1-1.52-5.29c0-5.47 4.45-9.92 9.92-9.92a9.85 9.85 0 0 1 7.01 2.91 9.86 9.86 0 0 1 2.9 7.02c0 5.47-4.45 9.92-9.94 9.92Zm5.44-7.43c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.08 4.49.71.3 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.42.25-.69.25-1.29.17-1.42-.07-.12-.27-.2-.57-.34Z"/></svg>
+        </a>
+        <a href="https://share.google/39NCHDpEI3AWQIk6G" target="_blank" rel="noopener noreferrer" aria-label="Avaliações da RAVA no Google (abre em nova aba)" title="Avaliações no Google" onClick={() => trackCatalogEvent('catalogo_avaliacao_google')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.19 3.32v2.77h3.56c2.08-1.91 3.27-4.73 3.27-8.1Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.65l-3.56-2.77c-.98.66-2.23 1.05-3.72 1.05-2.86 0-5.29-1.93-6.16-4.52H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.11A6.62 6.62 0 0 1 5.5 12c0-.73.13-1.44.34-2.11V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.37c1.62 0 3.06.56 4.21 1.65l3.15-3.15A10.59 10.59 0 0 0 12 1a11 11 0 0 0-9.82 6.05l3.66 2.84C6.71 7.3 9.14 5.37 12 5.37Z"/></svg>
+        </a>
+      </nav>
+    </header>
     <main>
       <section className="catalog-hero"><h1>Nosso catálogo</h1><p>Criações em 3D para você. Escolha sua próxima peça.</p></section>
       <section id="produtos" className="catalog-products">

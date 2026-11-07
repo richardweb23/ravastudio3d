@@ -11,7 +11,10 @@ body:has(.catalog-site) { margin:0; }
 .catalog-site :focus-visible,.catalog-dialog :focus-visible { outline:3px solid #956b41;outline-offset:4px; }
 .catalog-site-header { max-width:1280px;margin:auto;padding:12px 6%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #d8d0c6;gap:24px; }
 .catalog-site-header img { display:block;width:96px;height:46px;object-fit:contain; }
-.catalog-site-header>a:last-child { font-size:14px;text-underline-offset:6px; }
+.catalog-social-links { display:flex;align-items:center;gap:6px; }
+.catalog-social-links a { display:grid;place-items:center;width:44px;height:44px;border-radius:50%;transition:background-color .2s ease; }
+.catalog-social-links a:hover { background:#e9e1d7; }
+.catalog-social-links svg { display:block;width:22px;height:22px; }
 .catalog-hero { max-width:1280px;margin:auto;padding:24px 6% 20px;display:flex;align-items:baseline;justify-content:space-between;gap:12px 24px;flex-wrap:wrap; }
 .catalog-eyebrow { font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#75604c;font-weight:600; }
 .catalog-hero h1 { font-family:"Instrument Serif",serif;font-size:36px;font-weight:400;line-height:1.15;margin:0;letter-spacing:-.025em; }
