@@ -1,0 +1,29 @@
+name: Instagram - processar comentários
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: instagram-worker
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      INSTAGRAM_WORKER_SECRET: ${{ secrets.INSTAGRAM_WORKER_SECRET }}
+    steps:
+      - name: Processar eventos
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$INSTAGRAM_WORKER_SECRET" || { echo 'Secret do worker ausente.'; exit 1; }
+          endpoint='https://jmgasikbbuwnlckzxbdl.supabase.co/functions/v1/instagram-worker'
+          printf 'header = "Authorization: Bearer %s"\n' "$INSTAGRAM_WORKER_SECRET" | \
+            curl --config - --fail-with-body --silent --show-error --max-time 120 \
+            -X POST -H 'Content-Type: application/json' -d '{}' "$endpoint"
