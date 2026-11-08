@@ -5,6 +5,7 @@ export const adminPageRoutes = Object.freeze({
   dashboard: "",
   estoque: "produtos",
   catalogo: "catalogo",
+  instagram: "instagram",
   estoquePorLocal: "estoque",
   compras: "compras",
   vendas: "vendas",

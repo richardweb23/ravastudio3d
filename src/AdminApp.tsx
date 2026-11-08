@@ -15,6 +15,7 @@ import { getAdminPage, getAdminPageHref } from "./lib/adminNavigation.js";
 import { LoginScreen, PasswordScreen, SetupScreen } from "./components/auth/AuthScreens.tsx";
 import Dashboard from "./components/dashboard/Dashboard.tsx";
 import CatalogAdmin from "./components/catalogo/CatalogAdmin.tsx";
+import InstagramAdmin from "./components/instagram/InstagramAdmin.tsx";
 import EstoqueComLocais from "./components/EstoqueComLocais.tsx";
 import EstoquePorLocal from "./components/EstoquePorLocal.tsx";
 import ComprasComLocal from "./components/ComprasComLocal.tsx";
@@ -51,6 +52,7 @@ function Icon({ name }: { name: string }) {
 
 const baseNavigation = [
   ["dashboard", "dashboard", "Visão geral"],
+  ["instagram", "history", "Instagram"],
 ];
 
 const productNavigation = [
@@ -345,6 +347,7 @@ export default function AdminApp() {
       await refresh(true);
     })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onLinksSave={saveOrderLinks} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
+    instagram: <InstagramAdmin />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
     estoquePorLocal: <EstoquePorLocal materiais={data.materiais} locais={data.locaisTodos} estoqueLocal={data.estoqueLocal} />,
     compras: <ComprasComLocal materiais={data.materiais} locais={data.locais} compras={data.compras} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,
