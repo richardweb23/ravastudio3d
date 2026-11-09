@@ -1,11 +1,21 @@
 import type { AdminData, Show, Order, OrderItem } from "../../adminTypes";
 import type { DraftItem } from "../../adminTypes";
 import SearchSelect from '../SearchSelect.tsx';
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { requireSupabase } from "../../supabase.js";
 import { formatMoney as fmtMoney, formatNumber as fmtNumber } from "../../lib/formatters.js";
 import { OrderItemModal } from "../ui/OrderItemModal.tsx";
 import Empty from "../Empty.tsx";
+
+function ConfirmOrderEdit({ saving, onConfirm, onBack }: { saving: boolean; onConfirm: () => void; onBack: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => { dialog.current?.showModal(); }, []);
+  return <dialog ref={dialog} className="panel modal-card order-confirm-dialog" aria-labelledby="order-confirm-title" aria-describedby="order-confirm-description" onCancel={event => { event.preventDefault(); if (!saving) onBack(); }}>
+    <h2 id="order-confirm-title">Confirmar alterações?</h2>
+    <p id="order-confirm-description">As informações deste pedido serão atualizadas. Deseja salvar as alterações?</p>
+    <div className="actions"><button type="button" onClick={onBack} disabled={saving} autoFocus>Voltar</button><button type="button" className="primary" disabled={saving} onClick={onConfirm}>{saving ? "Salvando…" : "Confirmar alterações"}</button></div>
+  </dialog>;
+}
 
 export default function PedidoEditor({
   order,
@@ -37,6 +47,7 @@ export default function PedidoEditor({
   }));
   const [itemModal, setItemModal] = useState<DraftItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const subtotal = draft.items.reduce(
     (sum, item) => sum + Number(item.quantidade) * Number(item.preco_unitario),
     0,
@@ -57,6 +68,12 @@ export default function PedidoEditor({
       return show("Adicione pelo menos um produto.", "error");
     if (Number(draft.desconto || 0) > subtotal)
       return show("O desconto não pode ser maior que o subtotal.", "error");
+    if (order) return setConfirming(true);
+    await saveOrder();
+  }
+
+  async function saveOrder() {
+    if (saving) return;
     setSaving(true);
     const payload = {
       cliente: draft.cliente,
@@ -82,7 +99,7 @@ export default function PedidoEditor({
       p_itens: rows,
     });
     setSaving(false);
-    if (error) return show(error.message, "error");
+    if (error) { setConfirming(false); return show(error.message, "error"); }
     show(order ? "Pedido atualizado." : "Pedido criado.");
     onSaved();
   }
@@ -265,6 +282,7 @@ export default function PedidoEditor({
           </button>
         </div>
       </form>
+      {confirming && <ConfirmOrderEdit saving={saving} onBack={() => setConfirming(false)} onConfirm={saveOrder} />}
       {itemModal && (
         <OrderItemModal
           item={itemModal}

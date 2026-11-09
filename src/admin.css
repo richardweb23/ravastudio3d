@@ -2784,3 +2784,9 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .order-details-dialog .order-edit-color > div { display: flex; flex-wrap: wrap; gap: 8px; }
 .order-details-dialog .order-edit-color button { min-height: 36px; padding: 6px 10px; border: 1px solid #d8c9b9; border-radius: 7px; background: #fcfaf7; color: #765638; font-weight: 700; }
 @media (max-width: 480px) { .order-details-dialog .order-links li { flex-wrap: wrap; } .order-details-dialog .order-link-content { flex: 1 1 100%; } }
+
+.order-confirm-dialog { width: min(420px, calc(100% - 32px)); padding: 24px; }
+.order-confirm-dialog::backdrop { background: rgba(25, 20, 16, .52); }
+.order-confirm-dialog h2 { margin: 0 0 10px; font-size: 20px; }
+.order-confirm-dialog p { margin: 0 0 22px; color: #756d62; line-height: 1.5; }
+.order-confirm-dialog .actions { justify-content: flex-end; flex-wrap: wrap; }

@@ -858,6 +858,9 @@ export type Database = {
       }
       financeiro_despesas: {
         Row: {
+          cancelada_em: string | null
+          cancelada_por: string | null
+          motivo_cancelamento: string | null
           cartao_id: string | null
           categoria_id: string | null
           created_at: string
@@ -877,6 +880,9 @@ export type Database = {
           valor_total_centavos: number
         }
         Insert: {
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          motivo_cancelamento?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           created_at?: string
@@ -896,6 +902,9 @@ export type Database = {
           valor_total_centavos: number
         }
         Update: {
+          cancelada_em?: string | null
+          cancelada_por?: string | null
+          motivo_cancelamento?: string | null
           cartao_id?: string | null
           categoria_id?: string | null
           created_at?: string
@@ -2233,6 +2242,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      cancelar_despesa_financeira: {
+        Args: { p_despesa_id: string; p_motivo: string }
+        Returns: undefined
       }
       salvar_despesa_financeira: {
         Args: { p_despesa: Json; p_despesa_id: string }

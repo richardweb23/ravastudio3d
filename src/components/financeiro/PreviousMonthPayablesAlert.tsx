@@ -14,7 +14,8 @@ export default function PreviousMonthPayablesAlert({ page, revision }: { page: s
       const previousMonth = shiftMonth(currentMonth, -1);
       try {
         const { data, error } = await requireSupabase().from("financeiro_parcelas")
-          .select("id")
+          .select("id, financeiro_despesas!inner(cancelada_em)")
+          .is("financeiro_despesas.cancelada_em", null)
           .eq("pago", false)
           .gte("vencimento", previousMonth + "-01")
           .lt("vencimento", currentMonth + "-01")

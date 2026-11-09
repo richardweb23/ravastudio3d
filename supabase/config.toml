@@ -1,5 +1,19 @@
 project_id = "rava-studio-3d"
 
+[functions.instagram-webhook]
+verify_jwt = false
+
+[functions.instagram-worker]
+verify_jwt = false
+
+# This function verifies the original project's JWT in its own handler.
+[functions.instagram-sync]
+verify_jwt = false
+
+# Validates the main project's user session and active profile internally.
+[functions.instagram-admin]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321

@@ -77,6 +77,19 @@ test('caixa e reembolsos: migração, saldos, integridade e recebimentos',async 
   await op('estorno',{data:date,movimento_id:first.movimento_id,descricao:'Limpar fixture'});
   assert.equal(await saldo('Bonecos'),0);
  });
+ await t.test('cancelamento estorna pagamentos e preserva histórico',async()=>{
+  const d=(await one("select public.salvar_despesa_financeira(null,jsonb_build_object('nome','Compra cancelada','valor_total_centavos',20000,'forma_pagamento','pix','quantidade_parcelas',1,'primeiro_vencimento',current_date)) id")).id;
+  const p=(await one('select id from public.financeiro_parcelas where despesa_id=$1',[d])).id;
+  const payments=[{valor_centavos:10000,data_pagamento:date,pago_por_tipo:'socio',socio_id:richard},{valor_centavos:10000,data_pagamento:date,pago_por_tipo:'caixa',caixa:'Rava'}];
+  const initialCredit=Number((await partner()).saldo_centavos), initialCash=await saldo('Rava');
+  await db.query('select public.salvar_pagamentos_parcela($1,$2::jsonb)',[p,JSON.stringify(payments)]);
+  await db.query('select public.cancelar_despesa_financeira($1,$2)',[d,'Compra incorreta']);
+  assert.equal(await saldo('Rava'),initialCash); assert.equal(Number((await partner()).saldo_centavos),initialCredit);
+  assert.equal((await one('select motivo_cancelamento from public.financeiro_despesas where id=$1',[d])).motivo_cancelamento,'Compra incorreta');
+  assert.equal(Number((await one('select count(*) n from public.financeiro_pagamentos_parcela where parcela_id=$1 and estornado_em is not null',[p])).n),2);
+  await assert.rejects(db.query('select public.salvar_pagamentos_parcela($1,$2::jsonb)',[p,JSON.stringify(payments)]),/cancelada/i);
+  await assert.rejects(db.query('delete from public.financeiro_despesas where id=$1',[d]),/cancelada/i);
+ });
  await t.test('reembolso parcial vincula despesa e bloqueia desfazer a baixa; repetição não duplica',async()=>{
   const payload={data:date,caixa:'Rava',socio_id:richard,valor_centavos:50000,descricao:'Devolução parcial'};
   const key=randomUUID();reimbursement=await op('reembolso',payload,key);

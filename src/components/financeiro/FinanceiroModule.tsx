@@ -298,11 +298,13 @@ function Expenses({ data, socios, onReload, show }: WithData & Mutations) {
     show(editingId ? "Compra atualizada e parcelas recalculadas." : "Compra cadastrada e parcelas geradas.");
     reset(); onReload();
   }
-  async function remove(item: Expense) {
-    if (!window.confirm(`Excluir “${item.nome}” e todas as suas parcelas?`)) return;
-    const { error } = await requireSupabase().from("financeiro_despesas").delete().eq("id", item.id);
+  async function cancelExpense(item: Expense) {
+    const motivo = window.prompt(`Cancelar “${item.nome}”? As contas serão canceladas e as baixas serão estornadas. Informe o motivo:`);
+    if (motivo === null) return;
+    if (!motivo.trim()) return show("Informe o motivo do cancelamento.", "error");
+    const { error } = await requireSupabase().rpc("cancelar_despesa_financeira", { p_despesa_id: item.id, p_motivo: motivo.trim() });
     if (error) return show(error.message, "error");
-    show("Compra excluída."); if (editingId === item.id) reset(); onReload();
+    show("Compra cancelada e baixas estornadas."); if (editingId === item.id) reset(); onReload();
   }
   return (
     <>
@@ -329,8 +331,8 @@ function Expenses({ data, socios, onReload, show }: WithData & Mutations) {
         <DataTable heads={["Data", "ID da compra", "Compra", "Loja", "Categoria", "Pagamento", "Parcelas", "Total", "Responsável", "Status", "Ações"]} rows={filtered.map((item) => {
           const installments = installmentsByExpense.get(item.id) || [];
           const paid = installments.filter((row) => row.pago).length;
-          const status = paid === installments.length && installments.length ? "Paga" : paid ? "Parcialmente paga" : installments.some((row) => installmentStatus(row) === "vencido") ? "Vencida" : "Pendente";
-          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td>{item.numero_compra || "—"}</td><td><strong>{item.nome}</strong></td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{item.responsavel_empresa ? "RAVA" : item.responsavel_socio_id ? socios.find((partner) => partner.id === item.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td><StatusBadge value={{ Paga: "pago", "Parcialmente paga": "parcial", Vencida: "vencido", Pendente: "pendente" }[status]}>{status}</StatusBadge></td><td><div className="row-actions"><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => remove(item)}>Excluir</button></div></td></tr>;
+          const status = item.cancelada_em ? "Cancelada" : paid === installments.length && installments.length ? "Paga" : paid ? "Parcialmente paga" : installments.some((row) => installmentStatus(row) === "vencido") ? "Vencida" : "Pendente";
+          return <tr key={item.id}><td>{dateBR(item.data_compra)}</td><td>{item.numero_compra || "—"}</td><td><strong>{item.nome}</strong></td><td>{item.fornecedor || "—"}</td><td>{item.financeiro_categorias?.nome || "—"}</td><td>{paymentLabels[item.forma_pagamento]}</td><td>{paid}/{item.quantidade_parcelas}</td><td>{formatBRLCents(item.valor_total_centavos)}</td><td>{item.responsavel_empresa ? "RAVA" : item.responsavel_socio_id ? socios.find((partner) => partner.id === item.responsavel_socio_id)?.nome || "Sócio" : "Ambos"}</td><td><StatusBadge value={{ Paga: "pago", "Parcialmente paga": "parcial", Vencida: "vencido", Pendente: "pendente", Cancelada: "neutro" }[status]}>{status}</StatusBadge></td><td><div className="row-actions">{item.cancelada_em ? <button onClick={() => { edit(item); setEditingId(null); }}>Criar cópia</button> : <><button onClick={() => edit(item)}>Editar</button><button className="danger-text" onClick={() => cancelExpense(item)}>Cancelar compra</button></>}</div></td></tr>;
         })} empty="Nenhuma compra cadastrada." />
       </section>
     </>
@@ -530,7 +532,7 @@ export default function FinanceiroModule({ page, onNavigate, show, onDataChanged
     ]);
     const error = [socios, categorias, cartoes, despesas, parcelas].find((result) => result.error)?.error;
     if (error) show(error.message.includes("financeiro_") ? "A migration do módulo Financeiro ainda não foi aplicada no Supabase." : error.message, "error");
-    else setData({ socios: socios.data || [], categorias: categorias.data || [], cartoes: cartoes.data || [], despesas: despesas.data || [], parcelas: (parcelas.data || []).map(p => ({...p, financeiro_pagamentos_parcela: (p.financeiro_pagamentos_parcela || []).filter(x=>!x.estornado_em)})) });
+    else setData({ socios: socios.data || [], categorias: categorias.data || [], cartoes: cartoes.data || [], despesas: despesas.data || [], parcelas: (parcelas.data || []).filter(p => !(despesas.data || []).find(d => d.id === p.despesa_id)?.cancelada_em).map(p => ({...p, financeiro_pagamentos_parcela: (p.financeiro_pagamentos_parcela || []).filter(x=>!x.estornado_em)})) });
     if (!error) onDataChanged?.();
     setLoading(false);
   }, [show, onDataChanged]);
