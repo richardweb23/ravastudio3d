@@ -235,7 +235,7 @@ export default function DashboardBoard({
                         {data.pedidoItens.filter((item) => item.pedido_id === order.id).length} itens concluídos
                       </em>
                     </button>
-                    <OrderSubtasks order={order} tasks={data.subtarefas.filter(task => task.pedido_id === order.id)} onChange={onSubtaskChange} />
+                    <OrderSubtasks order={order} items={data.pedidoItens.filter(item => item.pedido_id === order.id)} tasks={data.subtarefas.filter(task => task.pedido_id === order.id)} onChange={onSubtaskChange} />
                     {status === "pronto" && (
                       <button
                         className="deliver-button"

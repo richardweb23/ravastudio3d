@@ -1,5 +1,6 @@
-import type { Order, Subtask } from "../../adminTypes";
+import type { Order, OrderItem, Subtask } from "../../adminTypes";
 import { errorMessage } from "../../adminTypes";
+import { formatNumber } from "../../lib/formatters.js";
 import type { ChangeSubtask } from "../../adminTypes";
 import { useRef, useState } from 'react';
 
@@ -12,7 +13,7 @@ function SubtaskRow({ task, editable, disabled, run, onChange }: { task: Subtask
     {editing && <form onSubmit={event => { event.preventDefault(); run(async () => { await onChange?.('update', task, { titulo: title.trim() }); setEditing(false); }); }}><input aria-label="Título da subtarefa" required maxLength={150} value={title} onChange={event => setTitle(event.target.value)} disabled={disabled} /><button className="primary" disabled={disabled || !title.trim()}>Salvar</button><button type="button" disabled={disabled} onClick={() => setEditing(false)}>Cancelar</button></form>}
   </li>;
 }
-export default function OrderSubtasks({ order, tasks = [], onChange, editable = false }: { order: Order; tasks?: Subtask[]; onChange?: ChangeSubtask; editable?: boolean }) {
+export default function OrderSubtasks({ order, tasks = [], items, onChange, editable = false }: { order: Order; tasks?: Subtask[]; items?: OrderItem[]; onChange?: ChangeSubtask; editable?: boolean }) {
   const [title, setTitle] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -25,6 +26,14 @@ export default function OrderSubtasks({ order, tasks = [], onChange, editable = 
     finally { lock.current = false; setBusy(false); }
   }
   const content = <>
+    {items && <div className="board-order-items">
+      <div className="board-expanded-heading"><h4>Itens do pedido</h4><span>{items.length}</span></div>
+      {items.length ? <ul>{items.map(item => <li key={item.id}>
+        <span className="board-item-quantity">{formatNumber(item.quantidade)}×</span>
+        <span className="board-item-info"><strong>{item.materiais?.nome || 'Produto'}</strong>{item.subtitulo && <small>{item.subtitulo}</small>}<small className={item.concluido ? 'board-item-done' : 'board-item-pending'}>{item.concluido ? 'Concluído' : 'Pendente'}</small></span>
+      </li>)}</ul> : <p>Nenhum item neste pedido.</p>}
+      <div className="board-expanded-heading"><h4>Subtarefas</h4><span>{tasks.filter(task => task.concluido).length}/{tasks.length}</span></div>
+    </div>}
     <ul>{tasks.map(task => <SubtaskRow key={task.id} task={task} editable={editable} disabled={disabled} run={run} onChange={onChange} />)}</ul>
     {!tasks.length && <p>Nenhuma subtarefa cadastrada.</p>}
     {editable && order.status !== 'entregue' && onChange && <form className="subtask-add" onSubmit={event => { event.preventDefault(); run(async () => { await onChange('create', { pedido_id: order.id }, { titulo: title.trim() }); setTitle(''); }); }}><input aria-label="Nova subtarefa" placeholder="Ex.: Imprimir tampa do kit" required maxLength={150} value={title} disabled={busy} onChange={event => setTitle(event.target.value)} /><button className="primary" disabled={busy || !title.trim()}>Adicionar</button></form>}
@@ -33,6 +42,6 @@ export default function OrderSubtasks({ order, tasks = [], onChange, editable = 
   </>;
   const count = `${tasks.filter(task => task.concluido).length} de ${tasks.length} subtarefas concluídas`;
   return <section className="order-subtasks" aria-busy={busy} draggable={false} onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}>
-    {editable ? <><h3>Subtarefas do pedido</h3><p>{count}</p>{content}</> : <details><summary>{count}</summary>{content}</details>}
+    {editable ? <><h3>Subtarefas do pedido</h3><p>{count}</p>{content}</> : <details><summary>{items ? <><span>Itens e subtarefas</span><small>{tasks.filter(task => task.concluido).length}/{tasks.length} concluídas</small></> : count}</summary>{content}</details>}
   </section>;
 }
