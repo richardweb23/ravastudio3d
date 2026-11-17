@@ -32,7 +32,7 @@ export async function verifyMetaComment(config: Config, comment: Comment) {
   if (!response.ok) throw new Error(`Falha ao verificar comentário (${response.status})`);
   const value = await response.json() as { id?: string; from?: { id?: string }; hidden?: boolean; parent_id?: string; timestamp?: string; media?: { id?: string; media_product_type?: string } };
   const type = value.media?.media_product_type;
-  return { createdAt: value.timestamp || '', mediaType: type === 'FEED' ? 'POST' : type === 'REELS' ? 'REEL' : 'UNKNOWN',
+  return { createdAt: value.timestamp || '', mediaType: type === 'FEED' ? 'POST' : type === 'REELS' ? 'REEL' : type === 'AD' ? 'AD' : 'UNKNOWN',
     belongsToAccount: value.id === comment.id && value.media?.id === comment.mediaId && value.from?.id === comment.authorId && value.hidden === false && !value.parent_id };
 }
 

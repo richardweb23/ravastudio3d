@@ -36,8 +36,8 @@ export function instagramAdminOperations(options: Options) {
   }
   return async (action: string, data: Record<string, unknown>): Promise<unknown> => {
     if (action === 'overview') {
-      const [settings, posts, bindings] = await Promise.all([db('instagram_configuracao?select=*'), allRows('instagram_publicacoes', 'publicada_em.desc.nullslast,id.asc'), allRows('instagram_publicacao_produtos', 'publicacao_id.asc,material_id.asc')]);
-      return { settings: settings?.[0] || null, posts, bindings };
+      const [settings, posts, bindings, ads] = await Promise.all([db('instagram_configuracao?select=*'), allRows('instagram_publicacoes', 'publicada_em.desc.nullslast,id.asc'), allRows('instagram_publicacao_produtos', 'publicacao_id.asc,material_id.asc'), allRows('instagram_anuncios', 'primeiro_evento.desc,id.asc')]);
+      return { settings: settings?.[0] || null, posts, bindings, ads };
     }
     if (action === 'summary') {
       const days = Number(data.days);
@@ -70,6 +70,12 @@ export function instagramAdminOperations(options: Options) {
       if (!postId(data.postId) || typeof data.enabled !== 'boolean') throw new Error('Publicação inválida');
       const updated = await db(`instagram_publicacoes?id=eq.${encodeURIComponent(data.postId)}`, { method: 'PATCH', body: JSON.stringify({ monitorada: data.enabled }), headers: { Prefer: 'return=representation' } });
       if (!Array.isArray(updated) || updated.length !== 1) throw new Error('Publicação não encontrada');
+      return { ok: true };
+    }
+    if (action === 'link_ad') {
+      if (!postId(data.adId) || (data.postId !== null && !postId(data.postId))) throw new Error('Associação de anúncio inválida');
+      const updated = await db(`instagram_anuncios?id=eq.${encodeURIComponent(data.adId)}`, { method: 'PATCH', body: JSON.stringify({ publicacao_original_id: data.postId }), headers: { Prefer: 'return=representation' } });
+      if (!Array.isArray(updated) || updated.length !== 1) throw new Error('Anúncio não encontrado');
       return { ok: true };
     }
     if (action === 'link' || action === 'unlink') {

@@ -22,7 +22,7 @@ export async function sendMetaPrivateReply(options: {
 
 /** Conservative precheck for posts and reels; Live requires separate validation. */
 export function metaCommentWithinWindow(createdAt: string, mediaType: string, now = Date.now()) {
-  if (!['POST', 'REEL'].includes(mediaType)) return false;
+  if (!['POST', 'REEL', 'AD'].includes(mediaType)) return false;
   const created = Date.parse(createdAt);
   return Number.isFinite(created) && created <= now && now - created < 7 * 24 * 60 * 60 * 1000;
 }

@@ -23,6 +23,13 @@ export function createInstagramDatabaseAdapter(baseUrl: string, secretKey: strin
     async record(comment: Comment, state: string, detail?: string) { await rpc('instagram_registrar_estado', { p_id: comment.id, p_estado: state, p_detalhe: detail ?? null }); },
     async products(mediaId: string) { return rpc<Array<{ nome: string; slug: string; preco_centavos: number; promocional_centavos: number | null }>>('instagram_produtos_publicos', { p_publicacao_id: mediaId }); },
     async productIds(mediaId: string) { const rows = await rpc<Array<{ material_id: string }>>('instagram_vinculos', { p_publicacao_id: mediaId }); return rows.map(row => row.material_id); },
+    async registerAd(mediaId: string) { await rpc('instagram_registrar_anuncio', { p_id: mediaId }); },
+    async adOriginal(mediaId: string): Promise<string | null> {
+      const response = await request(`${base.origin}/rest/v1/instagram_anuncios?id=eq.${encodeURIComponent(mediaId)}&select=publicacao_original_id`, { headers: { apikey: secretKey, Authorization: `Bearer ${secretKey}` } });
+      if (!response.ok) throw new Error('Anúncio indisponível');
+      const rows = await response.json() as Array<{ publicacao_original_id: string | null }>;
+      return rows[0]?.publicacao_original_id || null;
+    },
     async context(mediaId: string) { return rpc<{ configuracao: Record<string, unknown>; monitorada: boolean }>('instagram_contexto', { p_publicacao_id: mediaId }); },
     async saveMedia(items: unknown[]) { await rpc('instagram_sincronizar_publicacoes', { p_items: items }); },
     async clean() { await rpc('instagram_limpar_registros', {}); },

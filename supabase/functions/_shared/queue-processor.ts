@@ -1,6 +1,6 @@
 import { processInstagramComment } from './comment-processor.ts';
 
-type Comment = { id: string; text: string; mediaId: string; authorId: string };
+type Comment = { id: string; text: string; mediaId: string; authorId: string; isAd?: boolean };
 type Event = { digest: string; tentativa_id: string; payload: unknown };
 type Decision = { eligible: boolean; reason?: string; message?: string; publicReply?: string };
 type SendResult = { status: 'confirmed' | 'rejected' | 'unknown' };

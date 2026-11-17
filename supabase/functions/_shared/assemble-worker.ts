@@ -6,7 +6,7 @@ import { replyToMetaComment, verifyMetaComment } from './meta-comments.ts';
 import { parseMetaCommentEvents } from './meta-events.ts';
 import { readMainCatalog } from './main-catalog.ts';
 
-type Comment = { id: string; text: string; mediaId: string; authorId: string };
+type Comment = { id: string; text: string; mediaId: string; authorId: string; isAd?: boolean };
 type Verification = { createdAt: string; mediaType: string; belongsToAccount: boolean };
 type Result = { status: 'confirmed' | 'rejected' | 'unknown' };
 type Settings = { ativa: boolean; palavras_chave: string[]; resposta_publica: string; mensagem_produto: string; mensagem_alternativa: string; catalogo_url: string; whatsapp_url: string; sem_produto: 'ignorar' | 'catalogo' };
@@ -30,16 +30,23 @@ export async function runInstagramWorker(options: {
       return comments;
     },
     async decide(comment) {
-      const context = await db.context(comment.mediaId);
+      let productMediaId = comment.mediaId;
+      if (comment.isAd) {
+        await db.registerAd(comment.mediaId);
+        const original = await db.adOriginal(comment.mediaId);
+        if (!original) return { eligible: false, reason: 'Anúncio sem publicação original vinculada' };
+        productMediaId = original;
+      }
+      const context = await db.context(productMediaId);
       const settings = context.configuracao as unknown as Settings;
       if (!settings.ativa || !context.monitorada) return { eligible: false, reason: 'Automação desativada' };
       const verified = await (options.verifyComment || (item => verifyMetaComment({ apiVersion: options.apiVersion, token: options.token, request: options.request }, item)))(comment);
       const products = options.mainCatalogUrl && options.mainCatalogKey
-        ? await readMainCatalog({ url: options.mainCatalogUrl, publishableKey: options.mainCatalogKey, ids: await db.productIds(comment.mediaId), request: options.request })
-        : await db.products(comment.mediaId);
+        ? await readMainCatalog({ url: options.mainCatalogUrl, publishableKey: options.mainCatalogKey, ids: await db.productIds(productMediaId), request: options.request })
+        : await db.products(productMediaId);
       return decideInstagramReply({
         comment: comment.text, automationEnabled: settings.ativa, postEnabled: context.monitorada,
-        metaEligible: verified.belongsToAccount && metaCommentWithinWindow(verified.createdAt, verified.mediaType),
+        metaEligible: verified.belongsToAccount && (!comment.isAd || verified.mediaType === 'AD') && metaCommentWithinWindow(verified.createdAt, verified.mediaType),
         keywords: settings.palavras_chave, products: products.map(product => ({ ...product, disponivel: true })),
         missingProduct: settings.sem_produto, productTemplate: settings.mensagem_produto, fallbackTemplate: settings.mensagem_alternativa,
         publicReply: settings.resposta_publica, catalogUrl: settings.catalogo_url, whatsappUrl: settings.whatsapp_url, maxLength: 1000,

@@ -12,6 +12,7 @@ import { loadAllTableRows } from "../../services/tableRows.js";
 type Settings = { ativa: boolean; palavras_chave: string[]; resposta_publica: string; mensagem_produto: string; mensagem_alternativa: string; catalogo_url: string; whatsapp_url: string; sem_produto: string };
 type Post = { id: string; legenda: string; permalink: string | null; miniatura_url: string | null; publicada_em: string | null; monitorada: boolean };
 type Binding = { publicacao_id: string; material_id: string };
+type Ad = { id: string; publicacao_original_id: string | null; primeiro_evento: string };
 type Product = { material_id: string; titulo: string; status: string; materiais: { nome: string } | null };
 type Activity = { id: number; comentario: string | null; status: string; detalhe: string | null; created_at: string; publicacao_id: string | null };
 type Tab = "Resumo" | "Publicações" | "Atividade" | "Configurações";
@@ -31,6 +32,7 @@ export default function InstagramAdmin() {
   const [keywords, setKeywords] = useState("");
   const [posts, setPosts] = useState<Post[]>([]);
   const [bindings, setBindings] = useState<Binding[]>([]);
+  const [ads, setAds] = useState<Ad[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -52,7 +54,7 @@ export default function InstagramAdmin() {
     try {
       const db = client();
       const [overview, activity, stats, catalog] = await Promise.all([
-        instagramRequest<{ settings: Settings; posts: Post[]; bindings: Binding[] }>('overview'),
+        instagramRequest<{ settings: Settings; posts: Post[]; bindings: Binding[]; ads?: Ad[] }>('overview'),
         instagramRequest<{ rows: Activity[]; hasMore: boolean }>('activity', { page, status: activityFilter }),
         instagramRequest<{ identified: number; messages: number; attempts: number; failed: number }>('summary', { days: period }),
         loadAllTableRows(db.from("catalogo_produtos").select("material_id,titulo,status,materiais(nome)").eq('status', 'publicado'), ['material_id']),
@@ -61,6 +63,7 @@ export default function InstagramAdmin() {
       const config = overview.settings;
       setSettings(config); setKeywords(config.palavras_chave.join("\n"));
       setPosts(overview.posts || []); setBindings(overview.bindings || []);
+      setAds(overview.ads || []);
       setProducts((catalog.data || []) as unknown as Product[]); setActivities(activity.rows || []); setHasMore(activity.hasMore);
       setSummary(stats);
     } catch (err) { setError(err instanceof Error ? err.message : "Não foi possível carregar o módulo. Verifique se a migração foi aplicada no ambiente de teste."); }
@@ -96,6 +99,7 @@ export default function InstagramAdmin() {
     {loading ? <p>Carregando…</p> : !settings ? <button onClick={() => void refresh()}>Tentar novamente</button> : <>
       {tab === "Resumo" && <section className="panel instagram-section"><div className="instagram-section-head"><div><h2>Resumo</h2><p>Acompanhe o desempenho da automação.</p></div><label>Período<select value={period} onChange={event => setPeriod(Number(event.target.value))}><option value={7}>Últimos 7 dias</option><option value={30}>Últimos 30 dias</option><option value={90}>Últimos 90 dias</option></select></label></div><div className="instagram-summary-grid"><div><span>Automação</span><strong>{settings.ativa ? "Ativada" : "Desativada"}</strong></div><div><span>Publicações monitoradas</span><strong>{posts.filter(post => post.monitorada).length}</strong></div>{summary && <><div><span>Comentários identificados</span><strong>{summary.identified}</strong></div><div><span>Mensagens confirmadas</span><strong>{summary.messages}</strong></div><div><span>Falhas ou resultados incertos</span><strong>{summary.failed}</strong></div><div><span>Taxa de confirmação</span><strong>{summary.attempts ? `${Math.round(summary.messages / summary.attempts * 100)}%` : 'Sem tentativas'}</strong></div></>}</div></section>}
       {tab === "Publicações" && <section className="instagram-publications"><div className="instagram-toolbar"><div><h2>Publicações</h2><p>Vincule os produtos que aparecem em cada postagem.</p></div><button disabled={busy} onClick={() => void run(() => instagramRequest('sync', {}, 'instagram-sync'), 'Sincronização concluída.')}>Sincronizar publicações</button></div>
+        {ads.length > 0 && <div className="instagram-ad-panel"><h3>Publicações impulsionadas</h3><p>Associe cada anúncio à publicação original para usar os mesmos produtos. Confirme a correspondência antes de salvar.</p>{ads.map(ad => <div className="instagram-ad-row" key={ad.id}><div><strong>Anúncio {ad.id}</strong><span>Primeiro comentário: {new Date(ad.primeiro_evento).toLocaleDateString('pt-BR')}</span></div><label>Publicação original<SearchSelect aria-label={`Publicação original do anúncio ${ad.id}`} value={ad.publicacao_original_id || ''} disabled={busy} onChange={event => { const postId = event.target.value || null; void run(() => instagramRequest('link_ad', { adId: ad.id, postId }), 'Associação do anúncio atualizada.'); }}><option value="">Sem associação</option>{posts.map(post => <option key={post.id} value={post.id}>{post.publicada_em ? new Date(post.publicada_em).toLocaleDateString('pt-BR') : 'Sem data'} · {(post.legenda || 'Sem legenda').slice(0, 110)} · {post.id}</option>)}</SearchSelect></label>{ad.publicacao_original_id && posts.find(post => post.id === ad.publicacao_original_id)?.permalink && <a href={safeInstagramPermalink(posts.find(post => post.id === ad.publicacao_original_id)?.permalink || null) || undefined} target="_blank" rel="noopener noreferrer">Ver original ↗</a>}</div>)}</div>}
         <div className="instagram-filters"><label>Pesquisar publicação<input type="search" placeholder="Buscar pela legenda" value={query} onChange={event => setQuery(event.target.value)} /></label>
         <label className="instagram-filter-check"><input type="checkbox" checked={onlyUnlinked} onChange={event => setOnlyUnlinked(event.target.checked)} /> Somente sem produto</label></div>
         {!filtered.length && <p>Nenhuma publicação encontrada.</p>}

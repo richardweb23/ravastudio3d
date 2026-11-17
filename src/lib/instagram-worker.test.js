@@ -2,6 +2,43 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { runInstagramWorker } from '../../supabase/functions/_shared/assemble-worker.ts';
 
+test('anúncio sem associação é registrado e não envia mensagem', async () => {
+  const calls = [];
+  const request = async (url, init) => {
+    const name = new URL(url).pathname.split('/').at(-1); calls.push(name);
+    if (name === 'instagram_reservar_evento') return Response.json([{ digest: 'a', tentativa_id: 'b', payload: {} }]);
+    if (name === 'instagram_anuncios') return Response.json([{ publicacao_original_id: null }]);
+    if (name === 'instagram_registrar_estado') { assert.equal(JSON.parse(init.body).p_estado, 'ignorado'); return new Response(null, { status: 204 }); }
+    return Response.json(true);
+  };
+  const result = await runInstagramWorker({ supabaseUrl: 'https://test.supabase.co', serviceKey: 'test', token: 'test', accountId: '123', apiVersion: 'v27.0', request,
+    parse: () => [{ id: '456', mediaId: '789', authorId: '100', text: 'valor', isAd: true }] });
+  assert.equal(result, 'processed');
+  assert.ok(calls.includes('instagram_registrar_anuncio'));
+  assert.equal(calls.includes('messages'), false);
+  assert.equal(calls.includes('instagram_contexto'), false);
+});
+
+test('anúncio associado usa os produtos da publicação original e envia ao comentário do anúncio', async () => {
+  const calls = []; const id = '10000000-0000-4000-8000-000000000001';
+  const request = async (url, init) => {
+    const name = new URL(url).pathname.split('/').at(-1); calls.push(name);
+    if (name === 'instagram_reservar_evento') return Response.json([{ digest: 'a', tentativa_id: 'b', payload: {} }]);
+    if (name === 'instagram_anuncios') return Response.json([{ publicacao_original_id: '999' }]);
+    if (name === 'instagram_contexto') { assert.equal(JSON.parse(init.body).p_publicacao_id, '999'); return Response.json({ configuracao: { ativa: true, palavras_chave: ['valor'], resposta_publica: 'Enviado!', mensagem_produto: '{produtos}', mensagem_alternativa: '{catalogo} {whatsapp}', catalogo_url: 'https://example.com', whatsapp_url: '', sem_produto: 'ignorar' }, monitorada: true }); }
+    if (name === 'instagram_vinculos') { assert.equal(JSON.parse(init.body).p_publicacao_id, '999'); return Response.json([{ material_id: id }]); }
+    if (name === 'catalogo_publico') return Response.json({ total: 1, produtos: [{ id, nome: 'Peça', slug: 'peca', preco_centavos: 3500, promocional_centavos: null }] });
+    if (name === 'instagram_registrar_estado' || name === 'instagram_registrar_anuncio') return new Response(null, { status: 204 });
+    if (name === 'messages') { assert.equal(JSON.parse(init.body).recipient.comment_id, '456'); return Response.json({ recipient_id: '1', message_id: '2' }); }
+    return Response.json(true);
+  };
+  const result = await runInstagramWorker({ supabaseUrl: 'https://test.supabase.co', serviceKey: 'test', mainCatalogUrl: 'https://main.supabase.co', mainCatalogKey: 'public', token: 'test', accountId: '123', apiVersion: 'v27.0', request,
+    parse: () => [{ id: '456', mediaId: '789', authorId: '100', text: 'valor', isAd: true }],
+    verifyComment: async comment => { assert.equal(comment.mediaId, '789'); return { createdAt: new Date().toISOString(), mediaType: 'AD', belongsToAccount: true }; },
+    sendPublic: async () => ({ status: 'confirmed' }) });
+  assert.equal(result, 'processed'); assert.ok(calls.includes('messages'));
+});
+
 test('teste controlado reserva apenas o comentário autorizado e recusa lote misto', async () => {
   const calls = [];
   const request = async (url, init) => {

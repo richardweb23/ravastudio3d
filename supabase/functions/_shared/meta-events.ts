@@ -1,4 +1,4 @@
-type Comment = { id: string; text: string; mediaId: string; authorId: string };
+type Comment = { id: string; text: string; mediaId: string; authorId: string; isAd?: boolean };
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue | null { return value && typeof value === 'object' && !Array.isArray(value) ? value as ObjectValue : null; }
 
@@ -21,7 +21,7 @@ export function parseMetaCommentEvents(payload: unknown, accountId: string): Com
         const id = value?.comment_id ?? value?.id;
         if (value?.comment_id != null && value?.id != null && value.comment_id !== value.id) throw new Error('IDs de comentário conflitantes');
         if (typeof id !== 'string' || !/^\d+$/.test(id) || typeof from?.id !== 'string' || !/^\d+$/.test(from.id) || typeof media?.id !== 'string' || !/^\d+$/.test(media.id) || (value?.text !== undefined && typeof value.text !== 'string')) throw new Error('Comentário inválido');
-        result.push({ id, mediaId: media.id, authorId: from.id, text: typeof value?.text === 'string' ? value.text : '' });
+        result.push({ id, mediaId: media.id, authorId: from.id, text: typeof value?.text === 'string' ? value.text : '', ...(media.media_product_type === 'AD' ? { isAd: true } : {}) });
       }
     }
   }
