@@ -42,6 +42,6 @@ export default function OrderSubtasks({ order, tasks = [], items, onChange, edit
   </>;
   const count = `${tasks.filter(task => task.concluido).length} de ${tasks.length} subtarefas concluídas`;
   return <section className="order-subtasks" aria-busy={busy} draggable={false} onDragStart={event => { event.preventDefault(); event.stopPropagation(); }}>
-    {editable ? <><h3>Subtarefas do pedido</h3><p>{count}</p>{content}</> : <details><summary>{items ? <><span>Itens e subtarefas</span><small>{tasks.filter(task => task.concluido).length}/{tasks.length} concluídas</small></> : count}</summary>{content}</details>}
+    {editable ? <><h3>Subtarefas do pedido</h3><p>{count}</p>{content}</> : <details open={Boolean(items)}><summary>{items ? <><span>Itens e subtarefas</span><small>{tasks.filter(task => task.concluido).length}/{tasks.length} concluídas</small></> : count}</summary>{content}</details>}
   </section>;
 }
