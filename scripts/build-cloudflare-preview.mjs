@@ -18,12 +18,14 @@ export function previewEnvironment(env) {
   if (mode === 'live' && env.RAVA_LIVE_TEST_CONFIRMED !== 'allow-real-data') throw new Error('Teste com gestão real exige confirmação explícita.');
   const target = mode === 'staging' ? projectUrl(env.RAVA_STAGING_SUPABASE_URL, 'RAVA_STAGING_SUPABASE_URL') : production;
   if (mode === 'staging' && target === production) throw new Error('O Supabase de homologação deve ser diferente do projeto de produção.');
-  const key = ((mode === 'staging' ? env.RAVA_STAGING_SUPABASE_PUBLIC_KEY : env.RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY) || '').trim();
+  const keyName = mode === 'staging' ? 'RAVA_STAGING_SUPABASE_PUBLIC_KEY' : 'RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY';
+  const key = (env[keyName] || '').trim();
+  if (!key) throw new Error(`Variável ${keyName} ausente ou vazia.`);
   let legacyAnon = false;
   if (key.split('.').length === 3) {
     try { legacyAnon = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role === 'anon'; } catch { /* invalid JWT */ }
   }
-  if (!key.startsWith('sb_publishable_') && !legacyAnon) throw new Error('Informe somente a chave publishable ou anon do Supabase de homologação.');
+  if (!key.startsWith('sb_publishable_') && !legacyAnon) throw new Error(`A variável ${keyName} deve conter somente a chave publishable ou anon.`);
   return { ...env, VITE_SUPABASE_URL: target, VITE_SUPABASE_PUBLISHABLE_KEY: key, VITE_SUPABASE_ANON_KEY: '', VITE_INSTAGRAM_SUPABASE_URL: '', VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: '' };
 }
 
