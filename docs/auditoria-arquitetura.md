@@ -6,8 +6,8 @@ Data: 19/11/2026. Escopo: auditoria do código e planejamento; nenhuma alteraç�
 
 - Repositório `richardweb23/ravastudio3d`; `main` remota consultada via `git ls-remote` em `d536d4650a65776852c7bd7c3e0862059d105268`. Cópia local estava limpa e alinhada a essa referência antes da criação da branch `feat/cloudflare-migration`.
 - `.github/workflows/deploy.yml` define publicação no GitHub Pages ao receber push em `main`, manualmente e a cada hora (minuto 17). O artefato é `dist/`. Um push nessa branch pode publicar; não fazer push direto.
-- O último commit efetivamente implantado e as configurações de Pages e proteção de branch **não foram confirmados no GitHub**: CLI `gh` indisponível e API não acessível pela ferramenta de consulta. `main` remota não prova a versão implantada. Antes de criar tag de produção, confirmar o commit da última execução bem-sucedida e o deployment ativo no GitHub. Não há tags locais ou remotas retornadas na consulta; escolher `producao-estavel-AAAA-MM-DD-<sha>` após confirmação, sem sobrescrever referência existente.
-- A branch de migração parte da `main` remota conferida; não representa confirmação de que esse commit está efetivamente servido. Recomenda-se exigir pull request, revisão, verificações e restringir pushes em `main`, mas nenhuma configuração remota foi modificada.
+- A execução pública do GitHub Actions [44536457378](https://github.com/richardweb23/ravastudio3d/actions/runs/44536457378) publicou com sucesso o commit `d536d4650a65776852c7bd7c3e0862059d105268` em 19/11/2026. A tag `producao-estavel-2026-11-19-d536d46` foi criada localmente e no GitHub. As configurações do Pages e proteção de branch ainda não foram verificadas; a API de Pages retornou 404 sem autenticação.
+- A branch de migração parte da `main` remota conferida. A execução de publicação desse commit foi confirmada no Actions; configurações remotas de branch não foram modificadas. Recomenda-se exigir pull request, revisão, verificações e restringir pushes em `main`.
 
 ## 2. Arquitetura atual
 
@@ -82,7 +82,7 @@ Critérios por etapa: `npm run check` (tipos, testes de unidade, banco PGlite is
 
 ## 8. Pendências e decisões
 
-1. Confirmar o deployment ativo e criar tag no commit correto; verificar proteção de branch e autoridade de acesso ao GitHub.
+1. Verificar configurações do Pages e proteção de branch no GitHub; a execução de publicação e a tag de referência já foram confirmadas.
 2. Confirmar conta Cloudflare, controle dos dois domínios, registradores, DNS, plano e orçamento; analisar requisitos de nameserver e DNSSEC antes de escolher a hospedagem final.
 3. Confirmar disponibilidade de Supabase separado, autenticação, buckets e integrações fictícias para homologação.
 4. Obter identidade, catálogo e mapa de URLs antigos Rivoxel; decidir classificação de produtos e política de exposição pública entre marcas com base em dados reais.
