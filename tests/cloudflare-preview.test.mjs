@@ -35,3 +35,11 @@ test('teste com dados reais exige confirmação e chave pública de produção',
   assert.equal(result.VITE_INSTAGRAM_SUPABASE_URL, '');
   assert.throws(() => previewEnvironment({ ...live, RAVA_LIVE_TEST_CONFIRMED: 'allow-real-data', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_secret_proibida' }), /somente/);
 });
+
+test('Instagram só é ativado explicitamente no modo live com configuração pública válida', () => {
+  const env = { ...valid, RAVA_PREVIEW_MODE: 'live', RAVA_LIVE_TEST_CONFIRMED: 'allow-real-data', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_publishable_producao', RAVA_LIVE_INSTAGRAM_ENABLED: 'true', RAVA_INSTAGRAM_SUPABASE_URL: 'https://instagram.supabase.co', RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY: 'sb_publishable_instagram' };
+  assert.equal(previewEnvironment(env).VITE_INSTAGRAM_SUPABASE_URL, env.RAVA_INSTAGRAM_SUPABASE_URL);
+  assert.equal(previewEnvironment(env).VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY, env.RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY);
+  assert.equal(previewEnvironment({ ...env, RAVA_PREVIEW_MODE: 'staging' }).VITE_INSTAGRAM_SUPABASE_URL, '');
+  assert.throws(() => previewEnvironment({ ...env, RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY:'sb_secret_privada' }), /somente/);
+});

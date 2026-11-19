@@ -26,7 +26,13 @@ export function previewEnvironment(env) {
     try { legacyAnon = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role === 'anon'; } catch { /* invalid JWT */ }
   }
   if (!key.startsWith('sb_publishable_') && !legacyAnon) throw new Error(`A variável ${keyName} deve conter somente a chave publishable ou anon.`);
-  return { ...env, VITE_SUPABASE_URL: target, VITE_SUPABASE_PUBLISHABLE_KEY: key, VITE_SUPABASE_ANON_KEY: '', VITE_INSTAGRAM_SUPABASE_URL: '', VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: '' };
+  let instagramUrl = '', instagramKey = '';
+  if (mode === 'live' && env.RAVA_LIVE_INSTAGRAM_ENABLED === 'true') {
+    const instagram = previewEnvironment({ RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_URL: env.RAVA_INSTAGRAM_SUPABASE_URL, RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: env.RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY });
+    instagramUrl = instagram.VITE_SUPABASE_URL;
+    instagramKey = instagram.VITE_SUPABASE_PUBLISHABLE_KEY;
+  }
+  return { ...env, VITE_SUPABASE_URL: target, VITE_SUPABASE_PUBLISHABLE_KEY: key, VITE_SUPABASE_ANON_KEY: '', VITE_INSTAGRAM_SUPABASE_URL: instagramUrl, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramKey };
 }
 
 function run(args, env) {
