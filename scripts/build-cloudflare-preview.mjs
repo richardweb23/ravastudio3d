@@ -37,6 +37,7 @@ export async function buildPreview(env = process.env) {
   run(['node_modules/vite/bin/vite.js', 'build'], safeEnv);
   run(['scripts/gerar-paginas-catalogo.mjs'], safeEnv);
   await writeFile('dist/_headers', '/*\n  X-Robots-Tag: noindex, nofollow\n');
+  await writeFile('dist/__rava_homologacao.json', JSON.stringify({ mode: env.RAVA_PREVIEW_MODE || 'staging', supabaseUrl: safeEnv.VITE_SUPABASE_URL }));
   if (env.RAVA_PREVIEW_MODE === 'public') {
     await writeFile('dist/gestao/index.html', '<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="robots" content="noindex"><title>Gestão indisponível na prévia</title><body><main><h1>Gestão indisponível nesta prévia</h1><p>Esta versão serve apenas para validar o site público.</p><a href="/">Voltar ao site</a></main></body></html>');
   }
