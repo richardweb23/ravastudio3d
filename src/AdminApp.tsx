@@ -57,7 +57,7 @@ const baseNavigation = [
 
 const productNavigation = [
   ["vendas", "Vendas"],
-  ["pedidos", "Novo pedido"],
+  ["pedidos", "Pedidos"],
 ];
 
 const stockNavigation = [

@@ -31,7 +31,9 @@ export default function PedidosComLocal({
   const [editor, setEditor] = useState<Order | "new" | null>(null);
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [paymentFilter, setPaymentFilter] = useState("pendente");
+  const [paymentFilter, setPaymentFilter] = useState("todos");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
   const detailOrder = pedidos.find(order => order.id === detailId);
@@ -60,10 +62,13 @@ export default function PedidosComLocal({
             : "pendente",
     };
   };
+  const invalidPeriod = Boolean(startDate && endDate && startDate > endDate);
   const visible = pedidos
     .filter(
       (order) => (statusFilter === "todos" || order.status === statusFilter) &&
         (paymentFilter === "todos" || financial(order).status === paymentFilter) &&
+        !invalidPeriod && (!startDate || order.data_pedido >= startDate) &&
+        (!endDate || order.data_pedido <= endDate) &&
         order.cliente.toLocaleLowerCase("pt-BR").includes(search.trim().toLocaleLowerCase("pt-BR")),
     )
     .sort((a, b) =>
@@ -72,6 +77,14 @@ export default function PedidosComLocal({
         b.previsao_entrega || "9999-12-31",
       ),
     );
+
+  const totals = visible.reduce((result, order) => {
+    const info = financial(order);
+    result.total += Number(order.valor_total || 0);
+    result.paid += info.paid;
+    result.balance += info.balance;
+    return result;
+  }, { total: 0, paid: 0, balance: 0 });
 
   async function changeStatus(order: Order, status: Order["status"]) {
     if (order.status === "entregue") {
@@ -162,10 +175,12 @@ export default function PedidosComLocal({
           <h2>Pedidos cadastrados <small className="order-result-count">{visible.length} de {pedidos.length}</small></h2>
         </div>
         <div className="order-filters">
+          <div className="order-filters-heading"><h3>Filtros</h3><button type="button" className="link" disabled={statusFilter === "todos" && paymentFilter === "todos" && !search && !startDate && !endDate} onClick={() => { setStatusFilter("todos"); setPaymentFilter("todos"); setSearch(""); setStartDate(""); setEndDate(""); }}>Limpar filtros</button></div>
+          <div className="order-filter-fields">
           <label className="order-search">Buscar cliente<input type="search" placeholder="Nome do cliente" value={search} onChange={event => setSearch(event.target.value)} /></label>
           <label>
             Status do pedido
-            <SearchSelect className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+            <SearchSelect value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="todos">Todos</option>
               <option value="recebido">Recebidos</option>
               <option value="em_preparacao">Em preparação</option><option value="em_producao">Em produção</option>
@@ -175,13 +190,24 @@ export default function PedidosComLocal({
             </SearchSelect>
           </label>
           <label>Status pagamento
-            <SearchSelect className="filter-select" value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}>
+            <SearchSelect value={paymentFilter} onChange={event => setPaymentFilter(event.target.value)}>
               <option value="todos">Todos</option><option value="pendente">Pendente</option><option value="parcial">Parcial</option><option value="pago">Quitado</option>
             </SearchSelect>
           </label>
-          <button type="button" disabled={statusFilter === "todos" && paymentFilter === "todos" && !search} onClick={() => { setStatusFilter("todos"); setPaymentFilter("todos"); setSearch(""); }}>Limpar filtros</button>
+          <label>De<input type="date" value={startDate} onChange={event => setStartDate(event.target.value)} /></label>
+          <label>Até<input type="date" value={endDate} onChange={event => setEndDate(event.target.value)} /></label>
+          </div>
         </div>
-        <DataTable heads={["Cliente", "Entrega", "Etapa", "Pagamento", "Total", "Pago", "Restante", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
+        {invalidPeriod && <p className="negative order-period-error" role="alert">A data inicial deve ser anterior ou igual à data final.</p>}
+        <section className="sales-summary orders-summary" aria-labelledby="orders-summary-title">
+          <div className="sales-summary-heading"><h3 id="orders-summary-title">Resumo dos pedidos</h3><span>Conforme os filtros selecionados</span></div>
+          <dl className="sales-summary-metrics orders-summary-metrics">
+            <div><dt>Total dos pedidos</dt><dd>{fmtMoney(totals.total)}</dd><span>Valor dos pedidos selecionados</span></div>
+            <div><dt>Pago</dt><dd>{fmtMoney(totals.paid)}</dd><span>Recebimentos não estornados</span></div>
+            <div><dt>Pendente</dt><dd>{fmtMoney(totals.balance)}</dd><span>Saldo a receber</span></div>
+          </dl>
+        </section>
+        <DataTable pageSize={20} heads={["Cliente", "Entrega", "Etapa", "Pagamento", "Total", "Pago", "Restante", "Ações"]} empty="Nenhum pedido neste filtro." rows={visible.map((order) => {
           const info = financial(order);
           return (
             <tr key={order.id}>

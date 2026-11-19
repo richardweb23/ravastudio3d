@@ -4,28 +4,27 @@ interface TableProps {
   heads: string[];
   rows: ReactElement<{ children?: ReactNode }>[];
   empty?: string;
+  pageSize?: number;
   pagination?: { page: number; hasNext: boolean; loading?: boolean; onPageChange: (page: number) => void };
 }
 
 import { Children, cloneElement, isValidElement, useId, useState } from "react";
 import Empty from "./Empty.tsx";
 
-const PAGE_SIZE = 10;
-
-export default function DataTable({ heads, rows, empty, pagination }: TableProps) {
+export default function DataTable({ heads, rows, empty, pagination, pageSize = 10 }: TableProps) {
   const tableId = useId();
   const signature = JSON.stringify(rows.map((row, index) => row.key ?? index));
   const [position, setPosition] = useState({ signature, page: 0 });
   if (position.signature !== signature) setPosition({ signature, page: 0 });
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   const localPage = position.signature === signature ? Math.min(position.page, totalPages - 1) : 0;
   const page = pagination?.page ?? localPage;
-  const visibleRows = pagination ? rows.slice(0, PAGE_SIZE) : rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const visibleRows = pagination ? rows.slice(0, pageSize) : rows.slice(page * pageSize, (page + 1) * pageSize);
   const hasNext = pagination ? pagination.hasNext : page + 1 < totalPages;
   const changePage = (next: number) => pagination ? pagination.onPageChange(next) : setPosition({ signature, page: next });
   const actionColumns = heads.map((head, index) => head === "Ações" || (head === "" && index === heads.length - 1));
-  const first = rows.length ? page * PAGE_SIZE + 1 : 0;
-  const last = rows.length ? page * PAGE_SIZE + visibleRows.length : 0;
+  const first = rows.length ? page * pageSize + 1 : 0;
+  const last = rows.length ? page * pageSize + visibleRows.length : 0;
 
   return (
     <div className="data-table">
