@@ -14,10 +14,11 @@ function projectUrl(value, label) {
 export function previewEnvironment(env) {
   const production = projectUrl(env.RAVA_PRODUCTION_SUPABASE_URL, 'RAVA_PRODUCTION_SUPABASE_URL');
   const mode = env.RAVA_PREVIEW_MODE || 'staging';
-  if (!['staging', 'public'].includes(mode)) throw new Error('RAVA_PREVIEW_MODE deve ser staging ou public.');
-  const target = mode === 'public' ? production : projectUrl(env.RAVA_STAGING_SUPABASE_URL, 'RAVA_STAGING_SUPABASE_URL');
+  if (!['staging', 'public', 'live'].includes(mode)) throw new Error('RAVA_PREVIEW_MODE deve ser staging, public ou live.');
+  if (mode === 'live' && env.RAVA_LIVE_TEST_CONFIRMED !== 'allow-real-data') throw new Error('Teste com gestão real exige confirmação explícita.');
+  const target = mode === 'staging' ? projectUrl(env.RAVA_STAGING_SUPABASE_URL, 'RAVA_STAGING_SUPABASE_URL') : production;
   if (mode === 'staging' && target === production) throw new Error('O Supabase de homologação deve ser diferente do projeto de produção.');
-  const key = ((mode === 'public' ? env.RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY : env.RAVA_STAGING_SUPABASE_PUBLIC_KEY) || '').trim();
+  const key = ((mode === 'staging' ? env.RAVA_STAGING_SUPABASE_PUBLIC_KEY : env.RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY) || '').trim();
   let legacyAnon = false;
   if (key.split('.').length === 3) {
     try { legacyAnon = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString()).role === 'anon'; } catch { /* invalid JWT */ }

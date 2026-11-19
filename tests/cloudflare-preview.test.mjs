@@ -26,3 +26,12 @@ test('modo público usa somente chave pública e desativa integração Instagram
   assert.equal(env.VITE_INSTAGRAM_SUPABASE_URL, '');
   assert.throws(() => previewEnvironment({ ...valid, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_secret_real' }), /somente/);
 });
+
+test('teste com dados reais exige confirmação e chave pública de produção', () => {
+  const live = { ...valid, RAVA_PREVIEW_MODE: 'live', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_publishable_producao' };
+  assert.throws(() => previewEnvironment(live), /confirmação explícita/);
+  const result = previewEnvironment({ ...live, RAVA_LIVE_TEST_CONFIRMED: 'allow-real-data' });
+  assert.equal(result.VITE_SUPABASE_URL, valid.RAVA_PRODUCTION_SUPABASE_URL);
+  assert.equal(result.VITE_INSTAGRAM_SUPABASE_URL, '');
+  assert.throws(() => previewEnvironment({ ...live, RAVA_LIVE_TEST_CONFIRMED: 'allow-real-data', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_secret_proibida' }), /somente/);
+});
