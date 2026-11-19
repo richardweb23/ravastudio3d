@@ -49,3 +49,11 @@ Não configurar URLs ou chaves do Instagram real para a prévia. Um build falha 
 5. Comparar comportamento de URLs inexistentes, `404.html`, barras finais e redirecionamentos com GitHub Pages. Verificar geração de sitemap e o mecanismo futuro de atualização do catálogo: o build atual da prévia é pontual e não substitui o agendamento horário de produção.
 
 A mudança do domínio da Rava, ativação do novo deploy de produção, configuração de DNS e alterações no banco de produção exigem uma etapa posterior aprovada, com backup, inventário de DNS e rollback.
+
+## Atualização automática futura do catálogo
+
+O workflow `.github/workflows/cloudflare-catalogo.yml` é uma preparação para solicitar um novo build da Cloudflare a cada hora, no minuto 17, preservando a mesma frequência do Pages. Ele fica inativo por padrão: só executa na `main` quando a variável de repositório `CLOUDFLARE_CATALOGO_ATIVO` for exatamente `true`. O agendamento do GitHub só funciona quando o workflow estiver na branch padrão; ter o arquivo na branch de migração **não ativa o agendamento**. A execução manual também respeita o bloqueio. Nada disso substitui nem altera o workflow atual do GitHub Pages.
+
+Após aprovação da migração, configurar na Cloudflare um Deploy Hook vinculado à branch de produção adequada; armazenar sua URL como secret `CLOUDFLARE_CATALOGO_HOOK` no GitHub, nunca no código, logs ou chat. Uma URL de hook funciona como credencial. Configurar e validar separadamente o build de produção contra o Supabase de produção, incluindo Instagram, SEO e ausência de `noindex`; o comando `build:cloudflare:preview` é exclusivamente de testes e **não serve para produção**. Só após revisão, merge autorizado e teste do novo deploy ativar a variável. A resposta do hook apenas confirma que um build foi solicitado: acompanhar o status do build na Cloudflare e validar que o catálogo realmente foi atualizado. Uma falha de build deve preservar o último deploy válido; verificar esse comportamento antes da troca de DNS. Para interromper, definir a variável como `false` ou remover o hook; preservar o workflow original enquanto o rollback estiver disponível.
+
+Referência: [Deploy Hooks da Cloudflare](https://developers.cloudflare.com/workers/ci-cd/builds/deploy-hooks/).
