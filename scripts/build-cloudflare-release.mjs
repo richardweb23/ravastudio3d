@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { rm } from 'node:fs/promises';
+import { rm, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { previewEnvironment } from './build-cloudflare-preview.mjs';
 
@@ -25,6 +25,7 @@ export async function buildRelease(env = process.env) {
     const result = spawnSync(process.execPath, args, { env: release, stdio: 'inherit' });
     if (result.error || result.status !== 0) throw new Error('Falha ao preparar o build de produção.');
   }
+  await writeFile('dist/_headers', 'https://rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\nhttps://:preview.rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\nhttps://:worker.:account.workers.dev/*\n  X-Robots-Tag: noindex, nofollow\n');
   await rm('dist/CNAME', { force: true });
   console.log('Build de produção preparado; nenhuma publicação foi realizada.');
 }
