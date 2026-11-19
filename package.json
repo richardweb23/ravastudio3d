@@ -37,6 +37,7 @@
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1",
-    "vite": "^6.2.1"
+    "vite": "^6.2.1",
+    "wrangler": "^4.165.0"
   }
 }

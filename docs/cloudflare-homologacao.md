@@ -1,4 +1,6 @@
-# Prévia da Rava no Cloudflare Pages
+# Prévia da Rava na Cloudflare
+
+O painel disponível usa **Workers Builds**, portanto a configuração ativa usa `wrangler.jsonc`, assets em `dist` e `npx wrangler preview`; as instruções de Pages abaixo são referência alternativa. Configure as variáveis como **Build variables** do Worker, não apenas variáveis de runtime. O build inicial da `main` não contém o script de prévia; execute a branch `feat/cloudflare-migration` como preview. A configuração do Worker se chama `ravastudio3d`, sem domínio personalizado. O arquivo `_headers` também é suportado por Workers Static Assets.
 
 Esta preparação é para uma prévia de homologação, sem trocar DNS ou alterar o workflow do GitHub Pages. O projeto Cloudflare ainda precisa ser criado e testado; não anexar domínio público nesta etapa. Os arquivos em `dist/` são locais e não alteram o site em produção.
 
