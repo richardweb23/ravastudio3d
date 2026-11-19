@@ -78,8 +78,6 @@ Após essa validação, preparar em separado uma implantação de Rava fiel à p
 
 Fontes: [Cloudflare Worker Custom Domains](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/), [domínios de Preview](https://developers.cloudflare.com/workers/previews/custom-domains/), [Cloudflare DNSSEC](https://developers.cloudflare.com/dns/dnssec/).
 
-## Worker isolado para testar a Rivoxel
+## Teste com o mesmo Worker
 
-A configuração `wrangler.rivoxel-homologacao.jsonc` destina-se a um Worker **separado**, chamado `rivoxel-homologacao`; não alterar o Worker da prévia existente. Para esse Worker de teste, usar `npm run build:cloudflare:preview` e `npm run deploy:rivoxel:homologacao`, com `RAVA_PREVIEW_MODE=staging` e as variáveis do Supabase de homologação descritas acima. O deploy verifica que o artefato foi gerado no modo staging, usa a URL de teste configurada e inclui cabeçalho `noindex`; isso é uma salvaguarda adicional, não autenticação ou substituto de RLS. Não utilizar `npx wrangler deploy` diretamente nem apontar para o Supabase de produção. Não associar domínio até a zona estar ativa e a configuração ser validada pelo usuário.
-
-O teste local em 19/11/2026 gerou assets e a página do produto fictício usando exclusivamente o projeto de homologação, validou o marcador e o cabeçalho, e executou `wrangler deploy --dry-run`. Nenhum Worker ou domínio foi publicado por essa verificação. O projeto Cloudflare, o token de builds e as variáveis precisam ser configurados na conta do usuário antes de um deploy real. O domínio de teste mostrará a Rava com dados fictícios e deverá permanecer não indexável; não representa a versão final da Rivoxel.
+A prévia `feat-cloudflare-migration.rivoxel.com.br` usa o mesmo Worker `ravastudio3d` e o banco isolado de homologação. O domínio principal da Rivoxel ainda não foi associado ao Worker. A implementação multimarcas e o roteamento dos dois sites permanecem para uma fase posterior.
