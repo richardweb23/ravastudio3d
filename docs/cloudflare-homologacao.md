@@ -81,3 +81,9 @@ Fontes: [Cloudflare Worker Custom Domains](https://developers.cloudflare.com/wor
 ## Teste com o mesmo Worker
 
 A prévia `feat-cloudflare-migration.rivoxel.com.br` usa o mesmo Worker `ravastudio3d` e o banco isolado de homologação. O domínio principal da Rivoxel ainda não foi associado ao Worker. A implementação multimarcas e o roteamento dos dois sites permanecem para uma fase posterior.
+
+## Estado da homologação e segurança — 19/11/2026
+
+O domínio `rivoxel.com.br` foi associado ao mesmo Worker `ravastudio3d` para um teste com o banco fictício, `noindex` e Instagram desativado. Seu Worker de teste ainda **não é o build de produção da Rava**, e o DNS da Rava segue no Registro.br/GitHub Pages. Em consulta pública, a nova chave DNSSEC da Rivoxel foi publicada e validada (key tag 2371, algoritmo 13); os servidores respondem pela Cloudflare e os MX Umbler permanecem presentes. O DNSSEC e a disponibilidade devem ser conferidos novamente antes de operações posteriores.
+
+A branch de produção configurada atualmente no Worker da Cloudflare é `feat/cloudflare-migration`, exclusivamente para este teste com dados fictícios. Antes da migração real da Rava será necessário revisar e configurar o build de produção, as variáveis corretas, a branch `main`, a atualização do catálogo e o domínio, sem reutilizar a configuração de teste como se fosse produção. A conexão atual da Rivoxel mostrará o conteúdo do Worker ativo: a migração da Rava deve considerar explicitamente o impacto sobre essa URL e o estado anterior de rollback. O suporte a duas marcas e seus catálogos ainda não foi implementado.
