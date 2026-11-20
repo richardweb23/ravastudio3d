@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",
-    "test": "tsx --test src/lib/*.test.js tests/catalogo-seo.test.mjs",
+    "test": "tsx --test src/lib/*.test.js tests/catalogo-seo.test.mjs tests/cloudflare-preview.test.mjs tests/cloudflare-hook.test.mjs tests/cloudflare-release.test.mjs",
     "check": "npm run typecheck && npm run test && npm run test:db && npm run lint && npm run build",
     "test:db": "node --test tests/*-db.test.mjs",
     "dev:local": "vite --mode localtest --host 127.0.0.1 --port 5173 --strictPort",
@@ -16,7 +16,9 @@
     "db:local:stop": "supabase stop",
     "db:local:status": "supabase status",
     "db:local:reset": "supabase db reset --local",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:cloudflare:preview": "node scripts/build-cloudflare-preview.mjs",
+    "build:cloudflare:release": "node scripts/build-cloudflare-release.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.115.0",
@@ -36,6 +38,7 @@
     "tsx": "^4.23.15",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.72.1",
-    "vite": "^6.2.1"
+    "vite": "^6.2.1",
+    "wrangler": "^4.165.0"
   }
 }

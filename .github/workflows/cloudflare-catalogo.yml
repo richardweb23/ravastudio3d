@@ -1,0 +1,24 @@
+name: Atualizar catálogo na Cloudflare
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  atualizar:
+    if: github.ref == 'refs/heads/main' && vars.CLOUDFLARE_CATALOGO_ATIVO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Solicitar build na Cloudflare
+        env:
+          CLOUDFLARE_CATALOGO_HOOK: ${{ secrets.CLOUDFLARE_CATALOGO_HOOK }}
+        run: node scripts/acionar-build-cloudflare.mjs
