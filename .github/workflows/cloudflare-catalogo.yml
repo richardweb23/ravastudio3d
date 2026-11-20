@@ -3,7 +3,7 @@ name: Atualizar catálogo na Cloudflare
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '0 9 * * *' # 06:00 no horário de Brasília (UTC-3)
 
 permissions:
   contents: read
