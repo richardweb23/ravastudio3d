@@ -6,7 +6,7 @@ Data: 19/11/2026. Situação: proposta para revisão; nenhuma migration ou alter
 
 - Branch `feat/multi-brand`, criada a partir de `origin/main` no commit `3b31d0c6f2c5e47ac9898195729bde45e692e4c7`.
 - A Rava foi validada pelo responsável na Cloudflare; o GitHub Pages permanece como alternativa de retorno. Dois domínios utilizam o mesmo Worker. A Rivoxel apresenta a aplicação atual e permanece com `noindex` até o lançamento aprovado.
-- Este levantamento se baseia nos arquivos versionados, não em uma inspeção direta dos schemas, políticas ou dados atualmente implantados. Divergências no banco de produção e na homologação ainda precisam ser verificadas por leitura, sem incluir dados pessoais nem segredos no relatório.
+- O levantamento original se baseou nos arquivos versionados. Em 20/11/2026 foi feita uma comparação de metadados implantados, com diferenças e limites documentados em `docs/auditoria-ambientes-multimarcas.md`; Auth, acesso efetivo, dados e integrações ainda exigem validação.
 - O projeto `rava-homologacao` é o ambiente previsto para escrita e testes. Sua equivalência de migrations, funções, RLS, Auth e Storage precisa ser confirmada antes de qualquer alteração estrutural. O Instagram tem projeto e integrações próprios; não disparar eventos reais nos testes.
 - Toda mudança de produção exigirá pull request, plano e autorização específica para migrations; sem merge automático, alteração de DNS ou mudanças no layout da Rava nesta etapa.
 
