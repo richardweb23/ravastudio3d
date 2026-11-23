@@ -1,0 +1,19 @@
+:root { color: #e9edfa; background: #080b13; }
+.landing-intro { background-color: #0c1425; background-image: linear-gradient(90deg, rgba(5,9,19,.97) 0%, rgba(5,9,19,.86) 37%, rgba(5,9,19,.18) 72%), url('../assets/hero-vaso.png'); }
+.landing-intro .site-header, .landing-intro .hero-copy, .landing-intro .hero-lead { color: #f2f5ff; }
+.landing-intro .hero h1 em, h1 em, h2 em { color: #7593ff; }
+.landing-intro .hero h1 em::after { border-color: #7593ff; }
+.landing-intro .button-dark, .button-dark { color: white; background: #073bff; border-color: #073bff; }
+.collection-section { background: #080b13; }
+.piece-heading p, .hero-lead { color: #b8c1d3; }
+.about-rava { background: #141e32; }
+.about-rava-copy p, .about-rava-values { color: #c0cbe0; }
+.about-rava-copy h2, .about-rava-copy a { color: #fff; }
+.reviews-invitation, .catalog-invitation { background: #141e32; color: #f3f6ff; border-color: #34456a; }
+.reviews-invitation-copy span, .catalog-invitation-copy a { color: #c1cce5; }
+.footer { background: #101c37; }
+@media(max-width:640px) {
+  .landing-intro, .landing-intro .site-header { background: #0c1425; }
+  .landing-intro .hero-scene { background-image: url('../assets/hero-vaso.png'); }
+  .nav.is-open { background: #111b30; color: #fff; }
+}
