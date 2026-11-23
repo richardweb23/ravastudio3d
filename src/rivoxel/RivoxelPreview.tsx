@@ -13,9 +13,11 @@ export default function RivoxelPreview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [slug, setSlug] = useState(() => new URLSearchParams(window.location.search).get('produto') || '');
+  const [detalheLoading, setDetalheLoading] = useState(Boolean(slug));
+  const [detalheError, setDetalheError] = useState('');
 
   useEffect(() => {
-    const sync = () => setSlug(new URLSearchParams(window.location.search).get('produto') || '');
+    const sync = () => { const next = new URLSearchParams(window.location.search).get('produto') || ''; setDetalhe(null); setDetalheError(''); setDetalheLoading(Boolean(next)); setSlug(next); };
     window.addEventListener('popstate', sync);
     return () => window.removeEventListener('popstate', sync);
   }, []);
@@ -35,12 +37,16 @@ export default function RivoxelPreview() {
     if (!slug) return;
     publicCatalogForBrand('rivoxel', { p_slug: slug })
       .then(data => { if (current) setDetalhe(data.produtos[0] || null); })
-      .catch(() => { if (current) setError('Não foi possível carregar este produto.'); });
+      .catch(() => { if (current) setDetalheError('Não foi possível carregar este produto.'); })
+      .finally(() => { if (current) setDetalheLoading(false); });
     return () => { current = false; };
   }, [slug]);
 
   function abrir(slugProduto: string) {
+    if (slugProduto === slug) return;
     setDetalhe(null);
+    setDetalheError('');
+    setDetalheLoading(Boolean(slugProduto));
     const url = new URL(window.location.href);
     if (slugProduto) url.searchParams.set('produto', slugProduto); else url.searchParams.delete('produto');
     window.history.pushState(null, '', url);
@@ -65,7 +71,7 @@ export default function RivoxelPreview() {
         })}</div>
         {resultado.produtos.length < resultado.total && <button type="button" disabled={loading} onClick={() => setOffset(resultado.produtos.length)}>Carregar mais</button>}
       </section>
-      {slug && <section className="rivoxel-preview-detail" aria-label="Detalhes do produto"><button type="button" onClick={() => abrir('')}>Voltar ao catálogo</button>{detalhe ? <><h2>{detalhe.nome}</h2><p>{detalhe.descricao}</p></> : <p>Produto não encontrado ou indisponível.</p>}</section>}
+      {slug && <section className="rivoxel-preview-detail" aria-label="Detalhes do produto"><button type="button" onClick={() => abrir('')}>Voltar ao catálogo</button>{detalheLoading ? <p role="status">Carregando produto…</p> : detalheError ? <p role="alert">{detalheError}</p> : detalhe ? <><h2>{detalhe.nome}</h2><p>{detalhe.descricao}</p></> : <p>Produto não encontrado ou indisponível.</p>}</section>}
     </main>
     <footer>Rivoxel · conteúdo de homologação</footer>
   </div>;
