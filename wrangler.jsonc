@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ravastudio3d",
   "compatibility_date": "2026-11-19",
-  "assets": { "directory": "./dist" },
+  "main": "./workers/entrada.ts",
+  "assets": { "directory": "./dist", "binding": "ASSETS", "run_worker_first": true },
   "previews": {}
 }
