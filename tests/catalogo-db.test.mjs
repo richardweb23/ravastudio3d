@@ -151,6 +151,15 @@ test('catálogo: códigos, histórico, permissões, publicação, aliases e cicl
  await assert.rejects(db.exec(down),/bucket/i);
  await db.exec('rollback');
  await db.exec("delete from storage.buckets where id='catalogo-produtos'");
+ // As novas associações dependem do catálogo: rollback antigo deve recusar a
+ // remoção até uma reversão específica dessas dependências ser executada.
+ await assert.rejects(db.exec(down), /depend/i);
+ await db.exec('rollback');
+ await db.exec(`drop trigger marca_rava_material on public.materiais;
+   drop trigger marca_rava_categoria on public.catalogo_categorias;
+   drop trigger marca_rava_indicacao on public.catalogo_indicacoes;
+   drop function public.atribuir_marca_rava_ao_cadastro();
+   drop table public.marca_materiais, public.marca_categorias_catalogo, public.marca_indicacoes_catalogo;`);
  await db.exec(down);
  assert.equal((await one("select to_regclass('public.catalogo_produtos') value")).value,null);
  assert.deepEqual(await one('select custo_medio,quantidade_atual,categoria from public.materiais where id=$1',[product]),historical);
