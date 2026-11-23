@@ -121,3 +121,10 @@ Inventariar origem, acesso, propriedade dos ativos, produtos, imagens e URLs sem
 - A interface da branch apresenta seleção de marca, nome da marca nas categorias e filtro administrativo. Ainda não existe cadastro de produto Rivoxel nem hierarquia de subcategorias; não tratar esta etapa como implementação completa.
 - `npm run check`: 106 testes de aplicação, 60 de banco, tipos, lint e build passaram. Na homologação, criação de categoria Rivoxel foi testada com usuário autenticado em transação revertida; a categoria anterior permaneceu. Build da Cloudflare no commit `3f72384` foi concluído com sucesso. Falta validação visual e funcional do usuário na prévia.
 - Não houve migration em produção nem merge. Rollback exige reverter a interface antes de remover a RPC e os gatilhos; dados de categorias e suas associações precisam de preservação e revisão, especialmente se já existirem itens Rivoxel.
+
+## 13. Produtos por marca em homologação
+
+- Migrations `202611230005` e `202611230006` aplicadas apenas em `rava-homologacao`: o cadastro de produto, sua marca e estoque inicial são uma transação; duplicação mantém a marca do produto de origem e cria saldo zero e catálogo em rascunho. Cadastro legado continua compatível com a Rava.
+- `ProdutoForm` oferece marca para novos produtos na gestão de estoque e no catálogo. Produtos existentes mostram sua marca sem permitir troca por enquanto, pois pedidos, vendas, movimentações e relatórios históricos ainda precisam de regras de consistência. Links públicos de produtos não-Rava permanecem ocultos enquanto seu site não estiver pronto.
+- Testes locais: `npm run check`, com 106 testes de aplicação e 60 de banco, tipos, lint e build. Na homologação, cadastro de produto fictício Rivoxel com duas unidades foi testado por perfil ativo numa transação revertida. Falta validação visual do formulário e das regras de estoque em fluxos completos.
+- Não houve migration em produção nem merge. Antes de um rollback com produtos de outra marca, preservar seus vínculos e saldos; não reclassificar produtos automaticamente nem remover associações sem plano de dados e autorização.
