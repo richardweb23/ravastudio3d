@@ -16,13 +16,14 @@ import MarketplaceEditor from "./MarketplaceEditor.tsx";
 import "../../catalogo.css";
 import "./catalog-admin.css";
 export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<AdminData, "materiais" | "locais"> & { onSaved: () => Promise<void>; show: Show }) {
-  const [data, setData] = useState<Awaited<ReturnType<typeof adminCatalog>>>({ products: [], categories: [], images: [], indicacoes: [] });
+  const [data, setData] = useState<Awaited<ReturnType<typeof adminCatalog>>>({ products: [], categories: [], images: [], indicacoes: [], marcas: [], materialMarcas: [], categoriaMarcas: [], indicacaoMarcas: [] });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("");
+  const [marca, setMarca] = useState("");
   const [editing, setEditing] = useState(() => new URLSearchParams(window.location.search).get("produto"));
   const [creating, setCreating] = useState(false);
   const [marketEditing, setMarketEditing] = useState<Tables<"catalogo_indicacoes"> | "new" | null>(null);
@@ -45,11 +46,15 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
     finally { setBusy(false); }
   }
   const records = new Map(data.products.map(p => [p.material_id, p]));
+  const materialMarca = new Map(data.materialMarcas.map(v => [v.material_id, v.marca_id]));
+  const categoriaMarca = new Map(data.categoriaMarcas.map(v => [v.categoria_id, v.marca_id]));
+  const indicacaoMarca = new Map(data.indicacaoMarcas.map(v => [v.material_id, v.marca_id]));
+  const nomeMarca = (id?: string) => data.marcas.find(m => m.id === id)?.nome || "Sem marca";
   const normalized = (value: unknown) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const products = materiais.filter(p => {
     const record = records.get(p.id);
     return normalized(`${p.nome} ${record?.titulo || ""} ${catalogCode(p.codigo)}`).includes(normalized(search)) &&
-      (!category || record?.categoria_id === category) && (!status || (record?.status || "rascunho") === status);
+      (!marca || materialMarca.get(p.id) === marca) && (!category || record?.categoria_id === category) && (!status || (record?.status || "rascunho") === status);
   }).sort((a, b) => (records.get(a.id)?.ordem || 0) - (records.get(b.id)?.ordem || 0) || Number(a.codigo) - Number(b.codigo));
   const product = materiais.find(p => p.id === editing);
   async function duplicate(source: AdminData["materiais"][number]) {
@@ -83,14 +88,16 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
     <section className="panel table-panel">
       <div className="sales-filters">
         <label>Nome ou código<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar produto" /></label>
-        <label>Categoria do site<SearchSelect value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas</option>{data.categories.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
+        <label>Marca<SearchSelect value={marca} onChange={e => { setMarca(e.target.value); setCategory(""); }}><option value="">Todas</option>{data.marcas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect></label>
+        <label>Categoria do site<SearchSelect value={category} onChange={e => setCategory(e.target.value)}><option value="">Todas</option>{data.categories.filter(c => !marca || categoriaMarca.get(c.id) === marca).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</SearchSelect></label>
         <label>Status<SearchSelect value={status} onChange={e => setStatus(e.target.value)}><option value="">Todos</option><option value="rascunho">Não publicado</option><option value="publicado">Publicado</option><option value="inativo">Arquivado</option></SearchSelect></label>
       </div>
-      {loading ? <p role="status">Carregando catálogo…</p> : <DataTable heads={["Produto", "Categoria do site", "Preço", "Status", "Ordem", "Ações"]} empty="Nenhum produto encontrado." rows={products.map(item => {
+      {loading ? <p role="status">Carregando catálogo…</p> : <DataTable heads={["Produto", "Marca", "Categoria do site", "Preço", "Status", "Ordem", "Ações"]} empty="Nenhum produto encontrado." rows={products.map(item => {
         const record = records.get(item.id);
         const image = data.images.filter(i => i.material_id === item.id && i.estado === "pronta").sort((a, b) => a.ordem - b.ordem)[0];
         return <tr key={item.id}>
           <td><div className="catalog-admin-product">{image && <img src={catalogImageUrl(image.miniatura)} alt="" loading="lazy" />}<div><strong>{catalogCode(item.codigo)} · {record?.titulo || item.nome}</strong>{record?.titulo && <small>{item.nome}</small>}</div></div></td>
+          <td>{nomeMarca(materialMarca.get(item.id))}</td>
           <td>{data.categories.find(c => c.id === record?.categoria_id)?.nome || "—"}</td>
           <td>{record ? catalogMoney(record.promocional_centavos ?? record.preco_centavos) : "—"}</td>
           <td>{record?.status === "publicado" && data.categories.find(c => c.id === record.categoria_id)?.marketplace && !record.link_marketplace && <span>Marketplace sem link · </span>}{record?.status === "publicado" ? "Publicado" : record?.status === "inativo" ? "Arquivado" : "Não publicado"}</td><td>{record?.ordem || 0}</td>
@@ -99,7 +106,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
       })} />}
     </section>
     <section className="panel table-panel"><h2>Indicações Marketplace</h2><p>Produtos de terceiros, exibidos apenas na vitrine.</p>
-      <DataTable heads={["Produto", "Categoria", "Preço", "Status", "Ações"]} empty="Nenhuma indicação cadastrada." rows={data.indicacoes.filter(item => normalized(item.titulo).includes(normalized(search)) && (!category || item.categoria_id === category) && (!status || item.status === status)).map(item => <tr key={item.material_id}><td><strong>{item.titulo}</strong></td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td><td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(requireSupabase().from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{item.status==='publicado' && <a href={catalogLink(item.slug, window.location.origin, publishedPages.includes(item.slug))} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>)} />
+      <DataTable heads={["Produto", "Marca", "Categoria", "Preço", "Status", "Ações"]} empty="Nenhuma indicação cadastrada." rows={data.indicacoes.filter(item => normalized(item.titulo).includes(normalized(search)) && (!marca || indicacaoMarca.get(item.material_id) === marca) && (!category || item.categoria_id === category) && (!status || item.status === status)).map(item => <tr key={item.material_id}><td><strong>{item.titulo}</strong></td><td>{nomeMarca(indicacaoMarca.get(item.material_id))}</td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td><td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(requireSupabase().from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{item.status==='publicado' && <a href={catalogLink(item.slug, window.location.origin, publishedPages.includes(item.slug))} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>)} />
     </section>
     {marketEditing && <MarketplaceEditor record={marketEditing !== "new" ? marketEditing : null} categories={data.categories} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
     {product && <CatalogEditor key={product.id} product={product} record={records.get(product.id)} categories={data.categories} images={data.images.filter(i => i.material_id === product.id)} onSaved={refresh} onClose={() => setEditing(null)} />}

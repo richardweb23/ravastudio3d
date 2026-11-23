@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      marcas: {
+        Row: { id: string; slug: string; nome: string; ativa: boolean; created_at: string; updated_at: string }
+        Insert: { id?: string; slug: string; nome: string; ativa?: boolean; created_at?: string; updated_at?: string }
+        Update: { id?: string; slug?: string; nome?: string; ativa?: boolean; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      marca_materiais: {
+        Row: { material_id: string; marca_id: string }
+        Insert: { material_id: string; marca_id: string }
+        Update: { material_id?: string; marca_id?: string }
+        Relationships: []
+      }
+      marca_categorias_catalogo: {
+        Row: { categoria_id: string; marca_id: string }
+        Insert: { categoria_id: string; marca_id: string }
+        Update: { categoria_id?: string; marca_id?: string }
+        Relationships: []
+      }
+      marca_indicacoes_catalogo: {
+        Row: { material_id: string; marca_id: string }
+        Insert: { material_id: string; marca_id: string }
+        Update: { material_id?: string; marca_id?: string }
+        Relationships: []
+      }
       calculos_precificacao: {
         Row: {
           cliente: string | null

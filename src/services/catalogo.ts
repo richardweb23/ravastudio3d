@@ -26,10 +26,14 @@ export async function adminCatalog() {
     unwrap(loadAllTableRows(supabase.from("catalogo_categorias").select("*"))),
     unwrap(loadAllTableRows(supabase.from("catalogo_imagens").select("*"))),
     unwrap(loadAllTableRows(supabase.from("catalogo_indicacoes").select("*"), ["material_id"])),
+    unwrap(loadAllTableRows(supabase.from("marcas").select("*"))),
+    unwrap(loadAllTableRows(supabase.from("marca_materiais").select("*"), ["material_id"])),
+    unwrap(loadAllTableRows(supabase.from("marca_categorias_catalogo").select("*"), ["categoria_id"])),
+    unwrap(loadAllTableRows(supabase.from("marca_indicacoes_catalogo").select("*"), ["material_id"])),
   ]);
   const failed = results.find(r => r.status === "rejected");
   if (failed) throw failed.reason;
-  return { products: settled(results[0]) ?? [], categories: settled(results[1]) ?? [], images: settled(results[2]) ?? [], indicacoes: settled(results[3]) ?? [] };
+  return { products: settled(results[0]) ?? [], categories: settled(results[1]) ?? [], images: settled(results[2]) ?? [], indicacoes: settled(results[3]) ?? [], marcas: settled(results[4]) ?? [], materialMarcas: settled(results[5]) ?? [], categoriaMarcas: settled(results[6]) ?? [], indicacaoMarcas: settled(results[7]) ?? [] };
 }
 type ImageFiles = Pick<Tables<"catalogo_imagens">, "id" | "material_id" | "caminho" | "miniatura">;
 export function hasImageFiles(value: unknown): value is ImageFiles {
