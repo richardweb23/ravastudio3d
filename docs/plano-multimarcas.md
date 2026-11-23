@@ -124,7 +124,17 @@ Inventariar origem, acesso, propriedade dos ativos, produtos, imagens e URLs sem
 
 ## 13. Produtos por marca em homologação
 
+**Decisão posterior:** o responsável determinou que marca e categoria do site sejam geridas somente no catálogo e que o cadastro operacional e suas categorias internas permaneçam como na `main`. A seção abaixo registra uma etapa intermediária, já substituída pela seção 14.
+
 - Migrations `202611230005` e `202611230006` aplicadas apenas em `rava-homologacao`: o cadastro de produto, sua marca e estoque inicial são uma transação; duplicação mantém a marca do produto de origem e cria saldo zero e catálogo em rascunho. Cadastro legado continua compatível com a Rava.
 - `ProdutoForm` oferece marca para novos produtos na gestão de estoque e no catálogo. Produtos existentes mostram sua marca sem permitir troca por enquanto, pois pedidos, vendas, movimentações e relatórios históricos ainda precisam de regras de consistência. Links públicos de produtos não-Rava permanecem ocultos enquanto seu site não estiver pronto.
 - Testes locais: `npm run check`, com 106 testes de aplicação e 60 de banco, tipos, lint e build. Na homologação, cadastro de produto fictício Rivoxel com duas unidades foi testado por perfil ativo numa transação revertida. Falta validação visual do formulário e das regras de estoque em fluxos completos.
 - Não houve migration em produção nem merge. Antes de um rollback com produtos de outra marca, preservar seus vínculos e saldos; não reclassificar produtos automaticamente nem remover associações sem plano de dados e autorização.
+
+## 14. Correção: marca somente no site
+
+- `ProdutoForm` foi restaurado ao conteúdo da `main`; as categorias internas Rava, Rivoxel e Bonecos e o estoque permanecem sem alteração. A marca do site é selecionada no editor do catálogo; a associação inicial continua exclusiva por marca e não implementa ainda o mesmo produto em dois sites.
+- Migration `202611230007_corrigir_marca_produto.sql` aplicada somente na homologação: remove a RPC intermediária de cadastro com marca e cria uma ação explícita que altera apenas o vínculo no catálogo. A ação exige usuário ativo e versão de marca atual; bloqueia produto publicado ou categoria incompatível, sem alterar histórico comercial ou quantidade.
+- A pedido do responsável, o vínculo do produto de teste `Produto Rivoxel` na homologação foi corrigido para Rivoxel; categoria interna Rivoxel e saldo 1 foram preservados. A associação à categoria do site deve ser validada pela interface depois da atualização da prévia.
+- `npm run check`: 106 testes de aplicação e 60 de banco, tipos, lint e build. Testes cobrem a preservação de quantidade e pedidos durante a mudança de marca no catálogo. A prévia é atualizada pelo commit `ffa325c`. Nenhuma migration executada em produção.
+- Rollback exige restaurar a interface e a função de catálogo de modo compatível com as associações existentes; reverter código não restaura automaticamente classificações alteradas. Nenhuma troca de produção sem autorização e plano de recuperação de dados.
