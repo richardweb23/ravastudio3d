@@ -9,6 +9,7 @@ export type CatalogProduct = Pick<Tables<"catalogo_produtos">,
   nome: string;
   codigo: number | null;
   categoria: string | null;
+  categoria_id?: string | null;
   preco_centavos: number | null;
   marketplace: boolean;
   imagem_externa?: string | null;
