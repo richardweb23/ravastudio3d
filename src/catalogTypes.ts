@@ -17,6 +17,6 @@ export type CatalogProduct = Pick<Tables<"catalogo_produtos">,
 };
 export interface CatalogResult {
   produtos: CatalogProduct[];
-  categorias: Pick<Tables<"catalogo_categorias">, "id" | "nome">[];
+  categorias: (Pick<Tables<"catalogo_categorias">, "id" | "nome"> & { pai_id?: string | null })[];
   total: number;
 }

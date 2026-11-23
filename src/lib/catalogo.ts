@@ -1,4 +1,9 @@
 export const catalogCode = (value: unknown) => String(value ?? "").padStart(3, "0");
+export function catalogCategories<T extends { id: string; pai_id?: string | null }>(categories: T[]): T[] {
+  const parents = new Set(categories.map(c => c.id));
+  const roots = categories.filter(c => !c.pai_id || !parents.has(c.pai_id));
+  return roots.flatMap(root => [root, ...categories.filter(c => c.pai_id === root.id)]);
+}
 export const catalogSlug = (value: unknown) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 export const catalogMoney = (cents: number | null) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(cents) / 100);
 export function catalogCents(value: unknown) {
