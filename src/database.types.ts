@@ -1935,6 +1935,10 @@ export type Database = {
       }
     }
     Functions: {
+      salvar_categoria_marca: {
+        Args: { p_categoria_id: string | null; p_marca_id: string; p_nome: string; p_slug: string; p_ativa: boolean; p_marketplace: boolean }
+        Returns: string
+      }
       alterar_caixa_venda: {
         Args: { p_caixa: string; p_venda_id: string; p_versao: number }
         Returns: undefined

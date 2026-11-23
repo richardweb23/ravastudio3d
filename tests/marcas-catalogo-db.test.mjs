@@ -38,6 +38,8 @@ test('vinculação à Rava preserva cadastros legados e novos cadastros', async 
   await db.query('update public.marca_categorias_catalogo set marca_id=$1 where categoria_id=$2', [rivoxel, novaCategoria.id]);
   await db.query('update public.marca_indicacoes_catalogo set marca_id=$1 where material_id=$2', [rivoxel, novaIndicacao.material_id]);
   await db.query("insert into public.catalogo_produtos(material_id,slug,descricao,status,categoria_id) values($1,'legado-produto','Peça Rava','publicado',$2),($3,'novo-produto','Peça Rivoxel','publicado',$4)", [material.id,categoria.id,novo.id,novaCategoria.id]);
+  await assert.rejects(db.query('update public.catalogo_produtos set categoria_id=$1 where material_id=$2', [novaCategoria.id, material.id]), /mesma marca/i);
+  await assert.rejects(db.query('update public.catalogo_indicacoes set categoria_id=$1 where material_id=$2', [categoria.id, novaIndicacao.material_id]), /mesma marca/i);
   await db.query("update public.catalogo_indicacoes set status='publicado',descricao='Indicação Rivoxel' where material_id=$1", [novaIndicacao.material_id]);
   const catalog = async (marca, slug = null) => (await one('select public.catalogo_publico_marca($1, p_slug => $2) result', [marca,slug])).result;
   assert.equal((await catalog('rava')).total, 1);
@@ -54,4 +56,14 @@ test('vinculação à Rava preserva cadastros legados e novos cadastros', async 
   await assert.rejects(db.query('select * from public.marca_materiais'), /permission denied/i);
   await db.exec('reset role; set role authenticated');
   await assert.rejects(db.query('update public.marca_materiais set marca_id=$1', [brand]), /permission denied/i);
+  await assert.rejects(db.query("select public.salvar_categoria_marca(null,$1,'Teste','teste',true,false)", [rivoxel]), /não autorizado/i);
+  await db.exec('reset role');
+  const user = '10000000-0000-4000-8000-000000000005';
+  await db.query('insert into auth.users(id,email) values($1,$2)', [user,'marcas@example.invalid']);
+  await db.query("update public.profiles set ativo=true where id=$1", [user]);
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
+  await db.exec('set role authenticated');
+  const criada = await one("select public.salvar_categoria_marca(null,$1,'Categoria Rivoxel','categoria-rivoxel',true,false) id", [rivoxel]);
+  assert.equal((await one('select marca_id from public.marca_categorias_catalogo where categoria_id=$1', [criada.id])).marca_id, rivoxel);
+  await assert.rejects(db.query("select public.salvar_categoria_marca($1,$2,'Legada','legada',true,true)", [categoria.id,rivoxel]), /outra marca/i);
 });
