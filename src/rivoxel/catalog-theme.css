@@ -1,0 +1,6 @@
+.catalog-site { background:#eef1f8; color:#121a2a; }
+.catalog-site::before { background-image:linear-gradient(to bottom,rgba(12,27,59,.25),#eef1f8 96%),url('../assets/hero-vaso.png'); }
+.catalog-site-header img { background:#101c37; border-radius:6px; padding:4px; }
+.catalog-search, .catalog-menu-trigger, .catalog-card { border-color:#b7c7ee; }
+.catalog-cta, .catalog-more { background:#073bff; color:white; }
+.catalog-footer { background:#101c37; color:white; }
