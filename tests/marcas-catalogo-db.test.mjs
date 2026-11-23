@@ -67,6 +67,12 @@ test('vinculação à Rava preserva cadastros legados e novos cadastros', async 
   await db.exec('set role authenticated');
   const criada = await one("select public.salvar_categoria_marca(null,$1,'Categoria Rivoxel','categoria-rivoxel',true,false) id", [rivoxel]);
   assert.equal((await one('select marca_id from public.marca_categorias_catalogo where categoria_id=$1', [criada.id])).marca_id, rivoxel);
+  const sub = await one("select public.salvar_categoria_site(null,$1,'Subcategoria','subcategoria',true,false,$2) id", [rivoxel,criada.id]);
+  assert.equal((await one('select pai_id from public.catalogo_categorias where id=$1', [sub.id])).pai_id, criada.id);
+  await assert.rejects(db.query("select public.salvar_categoria_site(null,$1,'Outra','outra',true,false,$2)", [brand,criada.id]), /mesma marca/i);
+  await assert.rejects(db.query("select public.salvar_categoria_site(null,$1,'Nível três','nivel-tres',true,false,$2)", [rivoxel,sub.id]), /dois níveis/i);
+  await assert.rejects(db.query("select public.salvar_categoria_site($1,$2,'Categoria Rivoxel','categoria-rivoxel',true,false,$3)", [criada.id,rivoxel,novaCategoria.id]), /com subcategorias/i);
+  await assert.rejects(db.query("select public.salvar_categoria_site($1,$2,'Categoria Rivoxel','categoria-rivoxel',true,false,null)", [criada.id,brand]), /mesma marca/i);
   await assert.rejects(db.query("select public.salvar_categoria_marca($1,$2,'Legada','legada',true,true)", [categoria.id,rivoxel]), /outra marca/i);
   const item = await one("select public.salvar_material(null,'Peça nova',2,4,$1,'Rava',0,0) id", [local]);
   assert.equal((await one('select marca_id from public.marca_materiais where material_id=$1', [item.id])).marca_id, brand);

@@ -82,6 +82,7 @@ export type Database = {
       }
       catalogo_categorias: {
         Row: {
+          pai_id: string | null
           ativa: boolean
           created_at: string
           id: string
@@ -90,6 +91,7 @@ export type Database = {
           slug: string
         }
         Insert: {
+          pai_id?: string | null
           ativa?: boolean
           created_at?: string
           id?: string
@@ -98,6 +100,7 @@ export type Database = {
           slug: string
         }
         Update: {
+          pai_id?: string | null
           ativa?: boolean
           created_at?: string
           id?: string
@@ -1935,6 +1938,10 @@ export type Database = {
       }
     }
     Functions: {
+      salvar_categoria_site: {
+        Args: { p_categoria_id: string | null; p_marca_id: string; p_nome: string; p_slug: string; p_ativa: boolean; p_marketplace: boolean; p_pai_id: string | null }
+        Returns: string
+      }
       alterar_marca_material: {
         Args: { p_material_id: string; p_marca_atual: string; p_nova_marca: string }
         Returns: undefined

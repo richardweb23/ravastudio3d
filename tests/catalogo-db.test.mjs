@@ -155,7 +155,12 @@ test('catálogo: códigos, histórico, permissões, publicação, aliases e cicl
  // remoção até uma reversão específica dessas dependências ser executada.
  await assert.rejects(db.exec(down), /depend/i);
  await db.exec('rollback');
- await db.exec(`drop trigger categoria_marca_produto on public.catalogo_produtos;
+ await db.exec(`drop trigger catalogo_validar_pai on public.catalogo_categorias;
+   drop trigger catalogo_validar_marca_hierarquia on public.marca_categorias_catalogo;
+   drop function public.validar_pai_categoria_site();
+   drop function public.validar_marca_hierarquia_categoria();
+   drop function public.salvar_categoria_site(uuid,uuid,text,text,boolean,boolean,uuid);
+   drop trigger categoria_marca_produto on public.catalogo_produtos;
    drop trigger categoria_marca_indicacao on public.catalogo_indicacoes;
    drop function public.validar_categoria_mesma_marca();
    drop function public.salvar_categoria_marca(uuid,uuid,text,text,boolean,boolean);
