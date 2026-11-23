@@ -1935,6 +1935,10 @@ export type Database = {
       }
     }
     Functions: {
+      cadastrar_material_marca: {
+        Args: { p_marca_id: string; p_nome: string; p_custo_medio: number; p_quantidade: number; p_local_id: string | null; p_categoria: string; p_filamento_gramas: number; p_filamento_valor_kg: number }
+        Returns: string
+      }
       salvar_categoria_marca: {
         Args: { p_categoria_id: string | null; p_marca_id: string; p_nome: string; p_slug: string; p_ativa: boolean; p_marketplace: boolean }
         Returns: string

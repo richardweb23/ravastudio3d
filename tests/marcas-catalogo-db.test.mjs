@@ -61,9 +61,18 @@ test('vinculação à Rava preserva cadastros legados e novos cadastros', async 
   const user = '10000000-0000-4000-8000-000000000005';
   await db.query('insert into auth.users(id,email) values($1,$2)', [user,'marcas@example.invalid']);
   await db.query("update public.profiles set ativo=true where id=$1", [user]);
+  const local = (await one("insert into public.locais_estoque(nome,tipo) values('Local teste marcas','principal') returning id")).id;
   await db.query("select set_config('request.jwt.claim.sub',$1,false)", [user]);
   await db.exec('set role authenticated');
   const criada = await one("select public.salvar_categoria_marca(null,$1,'Categoria Rivoxel','categoria-rivoxel',true,false) id", [rivoxel]);
   assert.equal((await one('select marca_id from public.marca_categorias_catalogo where categoria_id=$1', [criada.id])).marca_id, rivoxel);
   await assert.rejects(db.query("select public.salvar_categoria_marca($1,$2,'Legada','legada',true,true)", [categoria.id,rivoxel]), /outra marca/i);
+  const item = await one("select public.cadastrar_material_marca($1,'Peça nova',2,4,$2,'Rava',0,0) id", [rivoxel,local]);
+  assert.equal((await one('select marca_id from public.marca_materiais where material_id=$1', [item.id])).marca_id, rivoxel);
+  assert.equal(Number((await one('select quantidade from public.estoque_por_local where material_id=$1 and local_id=$2', [item.id,local])).quantidade), 4);
+  await assert.rejects(db.query("select public.cadastrar_material_marca($1,'Inválido',2,4,$2,'Rava',0,0)", ['00000000-0000-4000-8000-000000000000',local]), /marca ativa/i);
+  const copia = await one('select public.duplicar_catalogo($1) id', [novo.id]);
+  assert.equal((await one('select marca_id from public.marca_materiais where material_id=$1', [copia.id])).marca_id, rivoxel);
+  assert.equal(Number((await one('select quantidade_atual from public.materiais where id=$1', [copia.id])).quantidade_atual), 0);
+  assert.equal((await one('select status from public.catalogo_produtos where material_id=$1', [copia.id])).status, 'rascunho');
 });
