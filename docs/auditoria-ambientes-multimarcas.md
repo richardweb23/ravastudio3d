@@ -19,6 +19,13 @@ Data: 20/11/2026. Consultas SQL de leitura de metadados em produção `nmwiqjhxi
 3. Não registrar migrations antigas em produção como aplicadas sem um plano próprio de reconciliação revisado e aprovado. Preparar futuras migrations a partir do schema real observado, com pré-condições e verificações seguras para instalações sem histórico.
 4. Prosseguir para o desenho e testes das migrations de marca na branch `feat/multi-brand` apenas quando o isolamento e os testes de escrita em homologação estiverem comprovados. Cada alteração de banco em produção continua condicionada a autorização explícita e plano de recuperação.
 
+## Complemento de 23/11/2026
+
+- O responsável confirmou que a tela apresentada pertence ao projeto de homologação e que o usuário existente pode ser usado em testes. A tela de Auth mostrava Site URL `http://localhost:3000` e nenhuma Redirect URL; será necessário cadastrar a URL exata da prévia isolada antes de testar recuperação de senha. Não foi alterada a configuração.
+- A consulta agregada no projeto de homologação encontrou um perfil ativo, um material, um produto no catálogo, um pedido, nenhuma categoria, venda, despesa ou imagem do bucket. Essas contagens não demonstram por si só que todo o conteúdo é fictício ou que as integrações estão isoladas.
+- Para as tabelas consultadas, `has_table_privilege` identificou SELECT anônimo em produção para `tarefas`, `pedido_subtarefas` e a view `financeiro_despesas_resumo`, mas não em homologação. As duas tabelas possuem RLS e a view usa `security_invoker`; privilégios SQL não confirmam acesso efetivo a linhas. Testes completos via API com perfis apropriados continuam pendentes; nenhuma permissão foi alterada.
+- Falta comprovar o alvo real do build de prévia, fluxo de login e recuperação, Storage com dados fictícios, perfil sem autorização e bloqueio de integrações externas antes de considerar a homologação pronta para testes de escrita. Não apontar a prévia de teste ao banco de produção.
+
 ## Escopo da comparação
 
 Foram comparados hashes de tipos/defaults e nulabilidade de colunas; definição de constraints; políticas de `public`; corpos e atributos selecionados de funções; definições de views e índices; metadados de gatilhos; sinalizadores de RLS; grants de tabela e permissões explícitas de execução; nomes e propriedades selecionadas de buckets e políticas de Storage. Não foram verificadas todas as configurações de roles, default privileges, dependências, extensões, jobs, Auth, segredos, arquivos, dados, backups, contagens de registros de negócio nem acesso efetivo via API.
