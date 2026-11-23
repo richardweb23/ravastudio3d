@@ -26,10 +26,11 @@ type NullableRpc = {
 type CatalogRpc = PublicSchema["Functions"]["catalogo_publico"];
 export type AppDatabase = Omit<Database, "public"> & {
   public: Omit<PublicSchema, "Functions"> & {
-    Functions: Omit<Functions, "catalogo_publico" | "financeiro_resumo" | "financeiro_extrato" | keyof NullableRpc> & { [K in keyof NullableRpc]: NullArgs<Functions[K], NullableRpc[K]> } & {
+    Functions: Omit<Functions, "catalogo_publico" | "catalogo_publico_marca" | "financeiro_resumo" | "financeiro_extrato" | keyof NullableRpc> & { [K in keyof NullableRpc]: NullArgs<Functions[K], NullableRpc[K]> } & {
       financeiro_resumo: Omit<Functions["financeiro_resumo"], "Returns"> & { Returns: CashSummary };
       financeiro_extrato: Omit<Functions["financeiro_extrato"], "Returns"> & { Returns: Movement[] };
       catalogo_publico: Omit<CatalogRpc, "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
+      catalogo_publico_marca: Omit<Functions["catalogo_publico_marca"], "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
     };
   };
 };

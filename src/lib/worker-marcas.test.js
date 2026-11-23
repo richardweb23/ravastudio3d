@@ -17,5 +17,9 @@ test('Worker separa domínios e preserva assets da Rava', async () => {
   }
   const invalid = await atender(new Request('https://rivoxel.com.br.atacante.test/'), assets);
   assert.equal(invalid.status, 404);
-  assert.equal(calls, 2);
+  const restricted = await atender(new Request('https://ravastudio3d.com.br/rivoxel-preview/'), assets);
+  assert.equal(restricted.status, 404);
+  const preview = await atender(new Request('https://feat-multi-brand.rivoxel.com.br/rivoxel-preview/'), assets);
+  assert.equal(preview.status, 200);
+  assert.equal(calls, 3);
 });

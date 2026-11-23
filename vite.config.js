@@ -42,6 +42,7 @@ export default defineConfig(({ mode }) => {
         gestao: resolve(projectDir, "gestao/index.html"),
         links: resolve(projectDir, "links/index.html"),
         catalogo: resolve(projectDir, "catalogo/index.html"),
+        ...(process.env.RAVA_PREVIEW_MODE === "staging" ? { rivoxelPreview: resolve(projectDir, "rivoxel-preview/index.html") } : {}),
       },
     },
   },

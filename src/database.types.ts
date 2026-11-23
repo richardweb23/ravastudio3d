@@ -1938,6 +1938,10 @@ export type Database = {
       }
     }
     Functions: {
+      catalogo_publico_marca: {
+        Args: { p_marca: string; p_busca?: string; p_categoria?: string | null; p_ordem?: string; p_offset?: number; p_slug?: string | null }
+        Returns: Json
+      }
       salvar_categoria_site: {
         Args: { p_categoria_id: string | null; p_marca_id: string; p_nome: string; p_slug: string; p_ativa: boolean; p_marketplace: boolean; p_pai_id: string | null }
         Returns: string

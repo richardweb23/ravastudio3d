@@ -1,0 +1,10 @@
+/* Formatação provisória exclusiva para validação funcional. */
+.rivoxel-preview{font-family:system-ui,sans-serif;max-width:1100px;margin:auto;padding:0 20px;color:#262626}
+.rivoxel-preview-notice{background:#fff4d6;padding:12px;text-align:center}
+.rivoxel-preview header{display:flex;justify-content:space-between;align-items:center;padding:24px 0;border-bottom:1px solid #ddd}
+.rivoxel-preview main>section{padding:28px 0}
+.rivoxel-preview-filters{display:flex;gap:16px;flex-wrap:wrap}
+.rivoxel-preview label{display:grid;gap:6px}.rivoxel-preview input,.rivoxel-preview select,.rivoxel-preview button{padding:10px}
+.rivoxel-preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
+.rivoxel-preview article{border:1px solid #ddd;padding:16px}.rivoxel-preview article img{width:100%;aspect-ratio:1;object-fit:cover}
+.rivoxel-preview footer{border-top:1px solid #ddd;padding:24px 0}.rivoxel-preview-detail{border-top:1px solid #ddd}

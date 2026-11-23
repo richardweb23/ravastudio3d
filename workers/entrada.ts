@@ -10,7 +10,11 @@ const previasRava = new Set([
 ]);
 
 export async function atender(request: Request, assets: Assets): Promise<Response> {
-  const host = new URL(request.url).hostname.toLowerCase();
+  const url = new URL(request.url);
+  const host = url.hostname.toLowerCase();
+  if (/^\/(?:rivoxel-preview)(?:\/|$)/i.test(url.pathname) && !previasRava.has(host)) {
+    return new Response('Página não encontrada.', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' } });
+  }
   const marca = marcaDoHostname(host) ?? (previasRava.has(host) ? 'rava' : null);
   if (!marca) return new Response('Domínio não configurado.', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' } });
 

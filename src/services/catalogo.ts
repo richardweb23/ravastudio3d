@@ -13,6 +13,12 @@ export const publicCatalog = async (params: Database["public"]["Functions"]["cat
   if (!supabase) throw Error("Catálogo indisponível. Tente novamente mais tarde.");
   return supabase.rpc("catalogo_publico", params).then(result => { if (result.error) throw result.error; return result.data; });
 };
+export const publicCatalogForBrand = async (brand: "rava" | "rivoxel", params: Omit<Database["public"]["Functions"]["catalogo_publico_marca"]["Args"], "p_marca">): Promise<CatalogResult> => {
+  if (!supabase) throw Error("Catálogo indisponível. Tente novamente mais tarde.");
+  const result = await supabase.rpc("catalogo_publico_marca", { ...params, p_marca: brand });
+  if (result.error) throw result.error;
+  return result.data;
+};
 export const saveCatalog = (id: string, data: Json, version?: number | null) => unwrap(requireSupabase().rpc("salvar_catalogo", { p_material_id: id, p_dados: data, p_versao: version ?? undefined }));
 export const imageAction = (action: string, product: string, image: string | null = null, data: Json = {}) => unwrap(requireSupabase().rpc("operar_imagem_catalogo", { p_acao: action, p_produto: product, p_imagem: image ?? undefined, p_dados: data }));
 function settled<T>(result: PromiseSettledResult<T>) {
