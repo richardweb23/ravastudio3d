@@ -4,33 +4,12 @@ import SearchSelect from './SearchSelect.tsx';
 import { formatMoney } from "../lib/formatters.js";
 import { PRODUCT_CATEGORIES } from "../lib/produtos.js";
 import { filamentProductionCost, updateProductFilament } from "../lib/productCost.js";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { requireSupabase } from "../supabase.js";
 
 export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [], produto = null, onSaved, onCancel, show }: Pick<AdminData, "locais"> & Partial<Pick<AdminData, "materiais" | "estoqueLocal">> & { produto?: AdminData["materiais"][number] | null; onSaved: (id: string) => void; onCancel?: () => void; show: Show }) {
   const editing = produto?.id;
   const costHelpId = useId();
-  const [marcas, setMarcas] = useState<{ id: string; nome: string; slug: string }[]>([]);
-  const [marcaId, setMarcaId] = useState("");
-  const [marcaError, setMarcaError] = useState("");
-  useEffect(() => {
-    let active = true;
-    async function loadMarcas() {
-      const client = requireSupabase();
-      const lista = await client.from("marcas").select("id,nome,slug").eq("ativa", true).order("nome");
-      if (lista.error) throw lista.error;
-      let selected = lista.data.find(m => m.slug === "rava")?.id || "";
-      if (editing) {
-        const vinculo = await client.from("marca_materiais").select("marca_id").eq("material_id", editing).maybeSingle();
-        if (vinculo.error) throw vinculo.error;
-        selected = vinculo.data?.marca_id || "";
-      }
-      if (!selected || !lista.data.some(m => m.id === selected)) throw Error("Não foi possível identificar uma marca ativa para o produto.");
-      if (active) { setMarcas(lista.data); setMarcaId(selected); setMarcaError(""); }
-    }
-    loadMarcas().catch(() => { if (active) setMarcaError("Não foi possível carregar a marca do produto. Reabra a tela para tentar novamente."); });
-    return () => { active = false; };
-  }, [editing]);
   const [form, setForm] = useState<{ nome: string; categoria: string; custo_medio: number | string; filamento_gramas: number | string; filamento_valor_kg: number | string; quantidade: string; local_id: string }>(() => {
     const productStock = estoqueLocal.filter(item => item.material_id === produto?.id);
     const preferredStock = productStock.find(item => item.quantidade > 0) || productStock[0];
@@ -57,11 +36,11 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
   }
   async function addMaterial(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!marcaId || marcaError) return show("Não foi possível identificar a marca do produto.", "error");
     let calculated;
     try { calculated = filamentProductionCost(form.filamento_gramas, form.filamento_valor_kg); }
     catch (error) { return show(errorMessage(error, "Custo inválido."), "error"); }
-    const payload = {
+    const { data: savedId, error } = await requireSupabase().rpc("salvar_material", {
+      p_material_id: editing || null,
       p_nome: form.nome,
       p_categoria: form.categoria,
       p_custo_medio: Number(calculated ?? (form.custo_medio || 0)),
@@ -69,10 +48,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
       p_filamento_valor_kg: Number(form.filamento_valor_kg || 0),
       p_quantidade: Number(form.quantidade || 0),
       p_local_id: form.local_id || null,
-    };
-    const { data: savedId, error } = editing
-      ? await requireSupabase().rpc("salvar_material", { ...payload, p_material_id: editing })
-      : await requireSupabase().rpc("cadastrar_material_marca", { ...payload, p_marca_id: marcaId });
+    });
     if (error) return show(errorMessage(error, "Custo inválido."), "error");
     show(editing ? "Produto atualizado." : "Produto cadastrado no local selecionado.");
     setForm({ nome: "", categoria: "Rivoxel", custo_medio: "", filamento_gramas: 0, filamento_valor_kg: 100, quantidade: "", local_id: "" });
@@ -83,8 +59,6 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
           <h2>{editing ? "Editar produto" : "Novo produto"}</h2>
           <div className="form-grid">
           {editing && produto.codigo != null && <p style={{ gridColumn: "1 / -1" }}>Código do produto: <strong>{String(produto.codigo).padStart(3, "0")}</strong></p>}
-          <label>Marca<SearchSelect value={marcaId} onChange={event => setMarcaId(event.target.value)} disabled={Boolean(editing) || !marcas.length} required><option value="">Selecione</option>{marcas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect>{editing && <small>A marca de um produto existente será alterável em uma etapa posterior.</small>}</label>
-          {marcaError && <p role="alert">{marcaError}</p>}
           <label>
             Nome do produto
             <input
@@ -181,7 +155,7 @@ export default function ProdutoForm({ materiais = [], locais, estoqueLocal = [],
             {automaticCost !== null && <small id={costHelpId} aria-live="polite">Calculado automaticamente pelo consumo de filamento.</small>}
           </fieldset>
           <div className="actions">
-            <button className="primary" disabled={!marcaId || Boolean(marcaError)}>
+            <button className="primary">
               {editing ? "Salvar alterações" : "Cadastrar produto"}
             </button>
             {editing && (
