@@ -22,6 +22,7 @@ export default function RivoxelPreview() {
   const [offset, setOffset] = useState(0);
   const [resultado, setResultado] = useState<CatalogResult>(empty);
   const [vitrine, setVitrine] = useState<CatalogResult>(empty);
+  const [vitrineDestaques, setVitrineDestaques] = useState<CatalogResult>(empty);
   const [detalhe, setDetalhe] = useState<CatalogProduct | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,6 +35,7 @@ export default function RivoxelPreview() {
   useEffect(() => {
     let current = true;
     publicCatalogForBrand('rivoxel', { p_ordem: 'novos' }).then(data => { if (current) setVitrine(data); }).catch(() => {});
+    publicCatalogForBrand('rivoxel', { p_ordem: 'destaque' }).then(data => { if (current) setVitrineDestaques(data); }).catch(() => {});
     return () => { current = false; };
   }, []);
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function RivoxelPreview() {
     const product = vitrine.produtos.find(p => p.categoria_id && (p.categoria_id === c.id || filhos.has(p.categoria_id)) && photo(p));
     return { ...c, image: product ? photo(product, 'principal') : '' };
   }).filter(c => c.image).slice(0, 6), [vitrine]);
-  const destaques = vitrine.produtos.filter(p => p.destaque).slice(0, 4);
+  const destaques = vitrineDestaques.produtos.filter(p => p.destaque).slice(0, 4);
   const novidades = vitrine.produtos.length >= 3 ? vitrine.produtos.slice(0, 4) : [];
   const productCard = (product: CatalogProduct) => {
     const image = photo(product);
