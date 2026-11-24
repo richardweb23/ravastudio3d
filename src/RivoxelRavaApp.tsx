@@ -26,7 +26,7 @@ function Header() {
     <button className="menu-toggle" type="button" aria-expanded={open} aria-controls="site-nav" onClick={() => setOpen(!open)}>{open ? 'Fechar' : 'Menu'} <span aria-hidden="true">{open ? '×' : '☰'}</span></button>
     <nav id="site-nav" className={`nav${open ? ' is-open' : ''}`} aria-label="Navegação principal">
       <a href="#inicio" onClick={() => setOpen(false)}>Início</a><a href={urls.catalog} onClick={() => setOpen(false)}>Catálogo</a><a href={urls.links} onClick={() => setOpen(false)}>Links</a><a href="#colecoes" onClick={() => setOpen(false)}>Produtos</a><a href="#sobre" onClick={() => setOpen(false)}>Sobre</a><a href="#contato" onClick={() => setOpen(false)}>Contato</a>
-      
+      <a className="nav-management-link" href="https://ravastudio3d.com.br/gestao/#/" aria-label="Acessar área de gestão da Rava" title="Área de gestão" onClick={() => setOpen(false)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="12" cy="8" r="3.5" /><path d="M5.5 20c.6-4 2.8-6 6.5-6s5.9 2 6.5 6" /></svg></a>
     </nav>
   </header>;
 }
