@@ -1,40 +1,44 @@
-:root { color: #e9edfa; background: #080b13; }
-.landing-intro { background-color: #0c1425; background-image: linear-gradient(90deg, rgba(5,9,19,.97) 0%, rgba(5,9,19,.86) 37%, rgba(5,9,19,.18) 72%), url('../assets/hero-vaso.png'); }
+:root { color: #e9edfa; background: var(--brand-background); }
+.landing-intro { background-color: var(--brand-hero-background); background-image: linear-gradient(90deg, rgba(5,9,19,.97) 0%, rgba(5,9,19,.86) 37%, rgba(5,9,19,.18) 72%), url('../assets/hero-vaso.png'); }
 .landing-intro .site-header, .landing-intro .hero-copy, .landing-intro .hero-lead { color: #f2f5ff; }
 .landing-intro .hero h1, .landing-intro .hero .text-link { color: #f2f5ff; }
-.landing-intro .hero h1 em, h1 em, h2 em { color: #7593ff; }
-.landing-intro .hero h1 em::after { border-color: #7593ff; }
-.landing-intro .button-dark, .button-dark { color: white; background: #073bff; border-color: #073bff; }
-.collection-section { background: #080b13; }
+.landing-intro .hero h1 em, h1 em, h2 em { color: var(--brand-border); }
+.landing-intro .hero h1 em::after { border-color: var(--brand-border); }
+.landing-intro .button-dark, .button-dark { color: white; background: var(--brand-primary); border-color: var(--brand-primary); }
+.collection-section { background: var(--brand-background); }
 .piece-heading p, .hero-lead { color: #b8c1d3; }
-.about-rava { background: #141e32; }
+.about-rava { background: var(--brand-surface-dark); }
 .about-rava-copy p, .about-rava-values { color: #c0cbe0; }
 .about-rava-copy h2, .about-rava-copy a { color: #fff; }
-.reviews-invitation, .catalog-invitation { background: #141e32; color: #f3f6ff; border-color: #34456a; }
+.reviews-invitation, .catalog-invitation { background: var(--brand-surface-dark); color: #f3f6ff; border-color: #34456a; }
 .reviews-invitation-copy span, .catalog-invitation-copy a { color: #c1cce5; }
-.footer { background: #101c37; }
-.site-shell { background: #080b13; color: #fff; }
-.site-shell :focus-visible { outline-color: #7593ff; }
-.nav > a:not(.nav-cta):hover { color: #a9bbff; }
-.menu-toggle { color: #fff; border-color: #7593ff; }
-.piece { background: #141e32; }
+.footer { background: var(--brand-footer); }
+.site-shell { background: var(--brand-background); color: #fff; }
+.site-shell :focus-visible { outline-color: var(--brand-border); }
+.nav > a:not(.nav-cta):hover { color: var(--brand-accent-light); }
+.menu-toggle { color: #fff; border-color: var(--brand-border); }
+.piece { background: var(--brand-surface-dark); }
 .piece-heading h3 { color: #fff; }
-.piece-index, .piece-arrow { background: #fff; color: #073bff; }
-.about-rava-image > span { background: #fff; color: #073bff; }
-.about-rava-copy .about-rava-eyebrow, .about-rava-copy h2 em { color: #a9bbff; }
+.piece-index, .piece-arrow { background: #fff; color: var(--brand-primary); }
+.about-rava-image > span { background: #fff; color: var(--brand-primary); }
+.about-rava-copy .about-rava-eyebrow, .about-rava-copy h2 em { color: var(--brand-accent-light); }
 .about-rava-copy > p:not(.about-rava-eyebrow), .about-rava-values span { color: #e2e8ff; }
-.about-rava-values span { border-color: #7593ff; }
-.about-rava-copy .under-link { color: #fff; border-color: #7593ff; }
-.reviews-invitation-icon { background: #073bff; color: #fff; }
-.reviews-invitation-copy p { color: #a9bbff; }
+.about-rava-values span { border-color: var(--brand-border); }
+.about-rava-copy .under-link { color: #fff; border-color: var(--brand-border); }
+.reviews-invitation-icon { background: var(--brand-primary); color: #fff; }
+.reviews-invitation-copy p { color: var(--brand-accent-light); }
 .reviews-invitation-copy h2 { color: #fff; }
-.reviews-invitation > a { color: #fff; border-color: #7593ff; }
-.reviews-invitation > a:hover { color: #fff; background: #073bff; }
-.catalog-invitation-copy { border-color: #7593ff; }
+.reviews-invitation > a { color: #fff; border-color: var(--brand-border); }
+.reviews-invitation > a:hover { color: #fff; background: var(--brand-primary); }
+.catalog-invitation-copy { border-color: var(--brand-border); }
 .catalog-invitation-copy > a { color: #b8c7ff; }
 .footer-description { color: #fff; }
+@media (max-width:900px) {
+  .site-header .menu-toggle { color:var(--brand-menu-text); border-color:var(--brand-menu-border); }
+  .site-header .nav.is-open { background:var(--brand-menu-bg); color:var(--brand-menu-text); }
+}
 @media(max-width:640px) {
-  .landing-intro, .landing-intro .site-header { background: #0c1425; }
+  .landing-intro, .landing-intro .site-header { background: var(--brand-hero-background); }
   .landing-intro .hero-scene { background-image: url('../assets/hero-vaso.png'); }
-  .nav.is-open { background: #111b30; color: #fff; }
+  .nav.is-open { background: var(--brand-menu-bg); color: #fff; }
 }

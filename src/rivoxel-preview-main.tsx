@@ -1,6 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import './theme-tokens.css';
 
+document.documentElement.dataset.theme = 'rivoxel';
 const isHome = window.location.pathname.replace(/\/?$/, '/') === '/rivoxel-preview/';
 const root = createRoot(document.getElementById('root')!);
 if (isHome) {

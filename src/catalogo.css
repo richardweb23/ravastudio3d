@@ -30,7 +30,7 @@ body:has(.catalog-site) { margin:0; }
 .catalog-nav { display:flex;gap:10px;margin-top:10px; }
 .catalog-menu { position:relative;min-width:0; }
 .catalog-menu-trigger { display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:49px;max-width:320px;padding:7px 13px;border:1px solid #d9cfc3;border-radius:10px;background:#f8f2eb;color:#38291f;text-align:left; }
-.catalog-menu-trigger:hover,.catalog-menu-trigger[aria-expanded=true],.catalog-menu-trigger.is-selected { border-color:#a57450;background:#f2e6da; }
+.catalog-menu-trigger:hover,.catalog-menu-trigger[aria-expanded=true],.catalog-menu-trigger.is-selected { border-color:var(--brand-catalog-hover-border, #a57450);background:var(--brand-catalog-hover-bg, #f2e6da); }
 .catalog-menu-trigger>span { display:grid;gap:2px;min-width:0; }
 .catalog-menu-trigger small { color:#826f60;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase; }
 .catalog-menu-trigger strong { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600; }
@@ -40,8 +40,8 @@ body:has(.catalog-site) { margin:0; }
 .catalog-menu-sort .catalog-menu-panel { width:210px; }
 .catalog-menu-panel p { margin:0;padding:10px 10px 8px;color:#88786b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em; }
 .catalog-menu-panel button { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:44px;padding:10px;border:0;border-radius:8px;background:transparent;color:#342820;text-align:left;font-size:14px; }
-.catalog-menu-panel button:hover,.catalog-menu-panel button.is-current { background:#f3e7db; }
-.catalog-menu-panel button.is-current { color:#8b4e27;font-weight:600; }
+.catalog-menu-panel button:hover,.catalog-menu-panel button.is-current { background:var(--brand-catalog-item-hover, #f3e7db); }
+.catalog-menu-panel button.is-current { color:var(--brand-catalog-selected, #8b4e27);font-weight:600; }
 .catalog-count { color:#686259;font-size:12px;margin:14px 0; }
 .catalog-toolbar { display:flex;align-items:center;justify-content:space-between;gap:12px;margin:12px 0; }
 .catalog-toolbar .catalog-count { margin:0; }

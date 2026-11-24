@@ -1,0 +1,44 @@
+/* Valores padrão para a Rava. O tema seleciona os mesmos papéis por marca. */
+:root {
+  --brand-primary: #a45a2a;
+  --brand-primary-hover: #75401f;
+  --brand-focus: #956b41;
+  --brand-menu-bg: #f7f3ec;
+  --brand-menu-text: #3b3027;
+  --brand-menu-border: #d7cabc;
+  --brand-catalog-hover-bg: #f2e6da;
+  --brand-catalog-hover-border: #a57450;
+  --brand-catalog-item-hover: #f3e7db;
+  --brand-catalog-selected: #8b4e27;
+  --brand-links-hover-bg: #fffdf9;
+  --brand-links-hover-border: #b99473;
+}
+
+:root[data-theme="rivoxel"] {
+  --brand-background: #080b13;
+  --brand-hero-background: #0c1425;
+  --brand-surface-dark: #141e32;
+  --brand-footer: #101c37;
+  --brand-text-light: #fff;
+  --brand-text-dark: #080b13;
+  --brand-text-muted: #d1dbf3;
+  --brand-accent-light: #a9bbff;
+  --brand-border: #7593ff;
+  --brand-surface-light: #fff;
+  --brand-surface-tint: #e9efff;
+  --brand-border-light: #b7c7ee;
+  --brand-text-secondary: #303a50;
+  --brand-accent-text: #274aa8;
+  --brand-primary: #073bff;
+  --brand-primary-hover: #315dff;
+  --brand-focus: #7593ff;
+  --brand-menu-bg: #111b30;
+  --brand-menu-text: #fff;
+  --brand-menu-border: #7593ff;
+  --brand-catalog-hover-bg: #e9efff;
+  --brand-catalog-hover-border: #073bff;
+  --brand-catalog-item-hover: #e9efff;
+  --brand-catalog-selected: #073bff;
+  --brand-links-hover-bg: #1c2b49;
+  --brand-links-hover-border: #7190ff;
+}

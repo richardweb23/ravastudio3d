@@ -60,4 +60,4 @@
 .links-feedback-success { color:#24553a; background:#e3f2e8; border-color:#91bc9f; }
 .links-dialog { color-scheme:dark; }
 .links-dialog .links-eyebrow { color:#c2a786; }
-@media (hover:hover) { .links-card:hover { background:#fffdf9; border-color:#b99473; } }
+@media (hover:hover) { .links-card:hover { background:var(--brand-links-hover-bg, #fffdf9); border-color:var(--brand-links-hover-border, #b99473); } }

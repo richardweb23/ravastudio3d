@@ -180,7 +180,7 @@ h1 em,h2 em { color:#a36b40; font-weight:400; }
 .hero-lead { max-width:340px; margin-top:8px; color:#3f3027; font-size:15px; line-height:1.55; }
 .hero-actions { flex-direction:column; align-items:flex-start; gap:12px; }
 .hero .button-dark,.catalog-invitation .button-dark { min-height:50px; border:0; border-radius:40px; background:#a45a2a; color:#fffaf2; font-size:13px; }
-.hero .button-dark:hover,.catalog-invitation .button-dark:hover { background:#75401f; }
+.hero .button-dark:hover,.catalog-invitation .button-dark:hover { background:var(--brand-primary-hover, #75401f); }
 .hero .text-link { color:#5e4432; }
 .hero-composition { position:relative; display:grid; grid-template-columns:1.05fr .82fr .8fr; grid-template-rows:1fr 1fr; gap:10px; height:460px; padding:20px 6% 20px 0; background:transparent; }
 .hero-photo,.hero-product { border-radius:120px 120px 12px 12px; background:#e4d2c0; }
