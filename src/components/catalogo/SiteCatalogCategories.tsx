@@ -9,6 +9,7 @@ type Item = { id: string; nome: string; tipo: 'produto' | 'indicacao' };
 export default function SiteCatalogCategories({ itens, onConfig }: { itens: Item[]; onConfig: (config: SiteConfiguracao) => void }) {
   const [config, setConfig] = useState<SiteConfiguracao | null>(null);
   const [principal, setPrincipal] = useState<SitePrincipal>('rava');
+  const [classPrincipal, setClassPrincipal] = useState<SitePrincipal | ''>('');
   const [nome, setNome] = useState('');
   const [item, setItem] = useState('');
   const [subcategoria, setSubcategoria] = useState('');
@@ -65,11 +66,11 @@ export default function SiteCatalogCategories({ itens, onConfig }: { itens: Item
           void run(async () => { const { error: failure } = await requireSupabase().rpc('site_salvar_subcategoria', { p_id: c.id, p_principal_id: c.principal_id, p_nome: c.nome, p_ativa: !c.ativa }); if (failure) throw failure; }, 'Subcategoria atualizada.');
         }}>{c.ativa ? 'Desativar' : 'Ativar'}</button>
       </li>)}</ul></div>)}
-      <form className="catalog-admin-form" onSubmit={event => { event.preventDefault(); if (!selected) return; void run(async () => {
+      <form className="catalog-admin-form" onSubmit={event => { event.preventDefault(); if (!selected || !classPrincipal) return; void run(async () => {
         const db = requireSupabase();
         const result = selected.tipo === 'produto'
-          ? await db.rpc('site_classificar_produto', { p_produto_id: selected.id, p_principal_id: principal, p_subcategoria_id: subcategoria || null })
-          : await db.rpc('site_classificar_indicacao', { p_indicacao_id: selected.id, p_principal_id: principal, p_subcategoria_id: subcategoria || null });
+          ? await db.rpc('site_classificar_produto', { p_produto_id: selected.id, p_principal_id: classPrincipal, p_subcategoria_id: subcategoria || null })
+          : await db.rpc('site_classificar_indicacao', { p_indicacao_id: selected.id, p_principal_id: classPrincipal, p_subcategoria_id: subcategoria || null });
         if (result.error) throw result.error;
       }, 'Classificação do site atualizada.'); }}>
         <h3>Classificar produto para o site</h3>
@@ -78,13 +79,13 @@ export default function SiteCatalogCategories({ itens, onConfig }: { itens: Item
             const value = e.target.value; setItem(value);
             const found = itens.find(candidate => `${candidate.tipo}:${candidate.id}` === value);
             const existing = found?.tipo === 'produto' ? config.produtos.find(c => c.produto_id === found.id) : config.indicacoes.find(c => c.indicacao_id === found?.id);
-            if (existing) { setPrincipal(existing.principal_id); setSubcategoria(existing.subcategoria_id || ''); }
-            else setSubcategoria('');
+            if (existing) { setClassPrincipal(existing.principal_id); setSubcategoria(existing.subcategoria_id || ''); }
+            else { setClassPrincipal(''); setSubcategoria(''); }
           }}><option value="">Selecione um produto</option>{itens.map(value => <option key={`${value.tipo}:${value.id}`} value={`${value.tipo}:${value.id}`}>{value.nome}{value.tipo === 'indicacao' ? ' (indicação)' : ''}</option>)}</select></label>
-          <label>Categoria principal<select value={principal} disabled={busy} onChange={e => { setPrincipal(e.target.value as SitePrincipal); setSubcategoria(''); }}>{config.principais.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
-          <label>Subcategoria<select value={subcategoria} disabled={busy} onChange={e => setSubcategoria(e.target.value)}><option value="">Sem subcategoria</option>{config.subcategorias.filter(c => c.principal_id === principal && c.ativa).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
+          <label>Categoria principal<select required value={classPrincipal} disabled={busy} onChange={e => { setClassPrincipal(e.target.value as SitePrincipal | ''); setSubcategoria(''); }}><option value="">Selecione</option>{config.principais.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
+          <label>Subcategoria<select value={subcategoria} disabled={busy || !classPrincipal} onChange={e => setSubcategoria(e.target.value)}><option value="">Sem subcategoria</option>{config.subcategorias.filter(c => c.principal_id === classPrincipal && c.ativa).map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}</select></label>
         </div>
-        <button type="submit" disabled={busy || !selected}>Salvar classificação</button>
+        <button type="submit" disabled={busy || !selected || !classPrincipal}>Salvar classificação</button>
       </form>
     </>}
   </section>;

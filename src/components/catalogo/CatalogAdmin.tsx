@@ -40,10 +40,10 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
   useEffect(() => { fetch('/catalogo-paginas.json', { cache: 'no-cache' }).then(response => response.ok ? response.json() : []).then(pages => { if (Array.isArray(pages)) setPublishedPages(pages); }).catch(() => {}); }, []);
   const refresh = useCallback(async () => {
     setError("");
-    try { setData(await adminCatalog()); }
+    try { setData(await adminCatalog(categoriasExperimentais)); }
     catch (err) { setError(errorMessage(err, "Não foi possível atualizar o catálogo.")); throw err; }
     finally { setLoading(false); }
-  }, []);
+  }, [categoriasExperimentais]);
   useEffect(() => { refresh().catch(() => {}); }, [refresh]);
   async function run(action: () => Promise<unknown>) {
     if (busy) return;
@@ -61,6 +61,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
     if (!site || (subcategoriaId && !siteConfig?.subcategorias.find(c => c.id === subcategoriaId && c.ativa))) return null;
     return catalogSiteLink(site, slug, window.location.origin);
   };
+  const classificacaoAtiva = (value?: { subcategoria_id: string | null }) => Boolean(value && (!value.subcategoria_id || siteConfig?.subcategorias.some(c => c.id === value.subcategoria_id && c.ativa)));
   const normalized = (value: unknown) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const products = materiais.filter(p => {
     const record = records.get(p.id);
@@ -111,7 +112,7 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
       {loading ? <p role="status">Carregando catálogo…</p> : <DataTable heads={["Produto", ...(categoriasExperimentais ? ["Categoria principal", "Subcategoria"] : ["Marca no site", "Categoria do site"]), "Preço", "Status", "Ordem", "Ações"]} empty="Nenhum produto encontrado." rows={products.map(item => {
         const record = records.get(item.id);
         const classificacao = siteConfig?.produtos.find(c => c.produto_id === item.id);
-        const destino = record?.status === 'publicado' && (!record.categoria_id || data.categories.find(c => c.id === record.categoria_id)?.ativa) && (categoriasExperimentais
+        const destino = record?.status === 'publicado' && (categoriasExperimentais || !record.categoria_id || data.categories.find(c => c.id === record.categoria_id)?.ativa) && (categoriasExperimentais
           ? siteLink(classificacao?.principal_id, record.slug, classificacao?.subcategoria_id)
           : materialMarca.get(item.id) === data.marcas.find(m => m.slug === 'rivoxel')?.id
             ? catalogSiteLink('rivoxel', record.slug, window.location.origin)
@@ -123,8 +124,8 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
           {!categoriasExperimentais && <><td>{nomeMarca(materialMarca.get(item.id))}</td><td>{data.categories.find(c => c.id === record?.categoria_id)?.nome || "—"}</td></>}
           {categoriasExperimentais && <><td>{siteConfig?.principais.find(c => c.id === classificacao?.principal_id)?.nome || '—'}</td><td>{siteConfig?.subcategorias.find(c => c.id === classificacao?.subcategoria_id)?.nome || '—'}</td></>}
           <td>{record ? catalogMoney(record.promocional_centavos ?? record.preco_centavos) : "—"}</td>
-          <td>{record?.status === "publicado" && data.categories.find(c => c.id === record.categoria_id)?.marketplace && !record.link_marketplace && <span>Marketplace sem link · </span>}{record?.status === "publicado" ? "Publicado" : record?.status === "inativo" ? "Arquivado" : "Não publicado"}</td><td>{record?.ordem || 0}</td>
-          <td><div className="row-actions"><button disabled={busy} onClick={() => setEditing(item.id)}>Editar catálogo</button><button disabled={busy} onClick={() => duplicate(item)}>Duplicar</button>{record && <button disabled={busy} onClick={() => run(async () => { await saveCatalog(item.id, { ...record, status: record.status === "publicado" ? "rascunho" : "publicado" }, record.versao); })}>{record.status === "publicado" ? "Despublicar" : "Publicar"}</button>}{destino && <a href={destino} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td>
+          <td>{record?.status === "publicado" && data.categories.find(c => c.id === record.categoria_id)?.marketplace && !record.link_marketplace && <span>Marketplace sem link · </span>}{record?.status === "publicado" ? "Publicado" : record?.status === "inativo" ? "Arquivado" : "Não publicado"}{categoriasExperimentais && record?.status === 'publicado' && !classificacaoAtiva(classificacao) && <span> · Categoria do site ausente ou inativa</span>}</td><td>{record?.ordem || 0}</td>
+          <td><div className="row-actions"><button disabled={busy} onClick={() => setEditing(item.id)}>Editar catálogo</button><button disabled={busy} onClick={() => duplicate(item)}>Duplicar</button>{record && <button disabled={busy || (categoriasExperimentais && record.status !== 'publicado' && !classificacaoAtiva(classificacao))} title={categoriasExperimentais && record.status !== 'publicado' && !classificacaoAtiva(classificacao) ? 'Escolha uma categoria principal e uma subcategoria ativa antes de publicar.' : undefined} onClick={() => run(async () => { await saveCatalog(item.id, { ...record, status: record.status === "publicado" ? "rascunho" : "publicado" }, record.versao); })}>{record.status === "publicado" ? "Despublicar" : "Publicar"}</button>}{destino && <a href={destino} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td>
         </tr>;
       })} />}
     </section>
@@ -134,17 +135,17 @@ export default function CatalogAdmin({ materiais, locais, onSaved, show }: Pick<
         return normalized(item.titulo).includes(normalized(search)) && (!marca || (categoriasExperimentais ? classificacao?.principal_id === marca : indicacaoMarca.get(item.material_id) === marca)) && (!category || (categoriasExperimentais ? classificacao?.subcategoria_id === category : item.categoria_id === category)) && (!status || item.status === status);
       }).map(item => {
         const classificacao = siteConfig?.indicacoes.find(c => c.indicacao_id === item.material_id);
-        const destino = item.status === 'publicado' && (!item.categoria_id || data.categories.find(c => c.id === item.categoria_id)?.ativa) && (categoriasExperimentais
+        const destino = item.status === 'publicado' && (categoriasExperimentais || !item.categoria_id || data.categories.find(c => c.id === item.categoria_id)?.ativa) && (categoriasExperimentais
           ? siteLink(classificacao?.principal_id, item.slug, classificacao?.subcategoria_id)
           : indicacaoMarca.get(item.material_id) === data.marcas.find(m => m.slug === 'rivoxel')?.id
             ? catalogSiteLink('rivoxel', item.slug, window.location.origin)
             : indicacaoMarca.get(item.material_id) === data.marcas.find(m => m.slug === 'rava')?.id
               ? catalogLink(item.slug, window.location.origin, publishedPages.includes(item.slug)) : null);
-        return <tr key={item.material_id}><td><strong>{item.titulo}</strong></td>{!categoriasExperimentais ? <><td>{nomeMarca(indicacaoMarca.get(item.material_id))}</td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td></> : <><td>{siteConfig?.principais.find(c => c.id === classificacao?.principal_id)?.nome || '—'}</td><td>{siteConfig?.subcategorias.find(c => c.id === classificacao?.subcategoria_id)?.nome || '—'}</td></>}<td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(requireSupabase().from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{destino && <a href={destino} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>;
+        return <tr key={item.material_id}><td><strong>{item.titulo}</strong></td>{!categoriasExperimentais ? <><td>{nomeMarca(indicacaoMarca.get(item.material_id))}</td><td>{data.categories.find(c=>c.id===item.categoria_id)?.nome || '—'}</td></> : <><td>{siteConfig?.principais.find(c => c.id === classificacao?.principal_id)?.nome || '—'}</td><td>{siteConfig?.subcategorias.find(c => c.id === classificacao?.subcategoria_id)?.nome || '—'}</td></>}<td>{catalogMoney(item.preco_centavos)}</td><td>{item.status === 'publicado' ? 'Publicado' : item.status === 'inativo' ? 'Arquivado' : 'Não publicado'}{categoriasExperimentais && item.status === 'publicado' && !classificacaoAtiva(classificacao) && <span> · Categoria do site ausente ou inativa</span>}</td><td><div className="row-actions"><button onClick={()=>setMarketEditing(item)}>Editar</button><button onClick={()=>{if(window.confirm(`Excluir a indicação “${item.titulo}”?`))run(()=>unwrap(requireSupabase().from('catalogo_indicacoes').delete().eq('material_id',item.material_id)));}}>Excluir</button>{destino && <a href={destino} target="_blank" rel="noopener noreferrer">Ver no site ↗</a>}</div></td></tr>;
       })} />
     </section>
-    {marketEditing && <MarketplaceEditor record={marketEditing !== "new" ? marketEditing : null} categories={data.categories.filter(c => categoriaMarca.get(c.id) === (marketEditing === "new" ? data.marcas.find(m => m.slug === "rava")?.id : indicacaoMarca.get(marketEditing.material_id)))} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
-    {product && <CatalogEditor key={product.id} product={product} record={records.get(product.id)} marcas={data.marcas} marcaAtual={materialMarca.get(product.id) || ""} categories={data.categories.filter(c => categoriaMarca.get(c.id) === materialMarca.get(product.id))} images={data.images.filter(i => i.material_id === product.id)} onSaved={refresh} onClose={() => setEditing(null)} />}
+    {marketEditing && <MarketplaceEditor record={marketEditing !== "new" ? marketEditing : null} siteClassificado={marketEditing !== 'new' && classificacaoAtiva(siteConfig?.indicacoes.find(c => c.indicacao_id === marketEditing.material_id))} categories={categoriasExperimentais ? data.categories : data.categories.filter(c => categoriaMarca.get(c.id) === (marketEditing === "new" ? data.marcas.find(m => m.slug === "rava")?.id : indicacaoMarca.get(marketEditing.material_id)))} onSaved={refresh} onClose={()=>setMarketEditing(null)} />}
+    {product && <CatalogEditor key={product.id} product={product} record={records.get(product.id)} marcas={data.marcas} marcaAtual={materialMarca.get(product.id) || ""} siteClassificado={classificacaoAtiva(siteConfig?.produtos.find(c => c.produto_id === product.id))} categories={categoriasExperimentais ? data.categories : data.categories.filter(c => categoriaMarca.get(c.id) === materialMarca.get(product.id))} images={data.images.filter(i => i.material_id === product.id)} onSaved={refresh} onClose={() => setEditing(null)} />}
     {creating && <CatalogDialog title="Cadastrar produto na Gestão" onClose={() => setCreating(false)}><ProdutoForm locais={locais} show={show} onSaved={async id => { await onSaved(); setCreating(false); setEditing(id); }} /></CatalogDialog>}
     {categoryModal && <CatalogDialog title="Categorias do site" onClose={() => setCategoryModal(false)} busy={busy}>
       <p>Estas categorias são exclusivas do catálogo. Ao desativar uma categoria, seus produtos deixam de aparecer no site.</p>

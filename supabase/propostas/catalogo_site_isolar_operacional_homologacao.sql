@@ -22,18 +22,6 @@ end; $$;
 revoke all on function public.site_vinculo_legado_no_catalogo() from public,anon,authenticated;
 create trigger aa_site_vinculo_legado before insert on public.catalogo_produtos for each row execute function public.site_vinculo_legado_no_catalogo();
 
--- A indicação pertence apenas ao catálogo; a categoria legada continua
--- preservada quando já existe, mas não é exigida para novas indicações.
-alter table public.catalogo_indicacoes alter column categoria_id drop not null;
-create or replace function public.validar_indicacao_catalogo() returns trigger language plpgsql set search_path='' as $$
-begin
- if new.categoria_id is not null and not exists(select 1 from public.catalogo_categorias where id=new.categoria_id and marketplace) then raise exception 'Selecione uma categoria Marketplace'; end if;
- if exists(select 1 from public.catalogo_slugs where slug=new.slug) then raise exception 'Este endereço já pertence a outro produto'; end if;
- if new.status='publicado' and new.categoria_id is not null and not exists(select 1 from public.catalogo_categorias where id=new.categoria_id and ativa) then raise exception 'Selecione uma categoria ativa'; end if;
- if tg_op='UPDATE' then new.updated_at:=now(); new.versao:=old.versao+1; end if;
- return new;
-end;$$;
-
 -- Definição anterior à etapa intermediária de vínculo de marca.
 create or replace function public.duplicar_catalogo(p_produto uuid) returns uuid language plpgsql security definer set search_path='' as $$
 declare m public.materiais; c public.catalogo_produtos; novo uuid; codigo bigint;

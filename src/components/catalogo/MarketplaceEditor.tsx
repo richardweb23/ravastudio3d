@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { requireSupabase } from '../../supabase.js';
 import { catalogCents, catalogSlug, marketplaceUrl } from '../../lib/catalogo.js';
 import CatalogDialog from './CatalogDialog.tsx';
-export default function MarketplaceEditor({ record, categories, onClose, onSaved }: { record: Tables<"catalogo_indicacoes"> | null; categories: Tables<"catalogo_categorias">[]; onClose: () => void; onSaved: () => Promise<void> }) {
+export default function MarketplaceEditor({ record, categories, siteClassificado = false, onClose, onSaved }: { record: Tables<"catalogo_indicacoes"> | null; categories: Tables<"catalogo_categorias">[]; siteClassificado?: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
   const categoriasExperimentais = import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true';
   const [form,setForm]=useState(() => ({ titulo:record?.titulo || '', descricao:record?.descricao || '', resumo:record?.resumo || '', price:((record?.preco_centavos || 0)/100).toFixed(2), categoria_id:record?.categoria_id || '', link_marketplace:record?.link_marketplace || '', imagem_externa:record?.imagem_externa || '', status:record?.status || 'rascunho' }));
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -16,6 +16,7 @@ export default function MarketplaceEditor({ record, categories, onClose, onSaved
       if(!marketplaceUrl(form.link_marketplace)) throw Error('Informe um link de compra HTTP ou HTTPS válido.');
       if(form.imagem_externa && !marketplaceUrl(form.imagem_externa)) throw Error('Informe um link de imagem HTTP ou HTTPS válido.');
       if(form.status==='publicado' && !form.descricao.trim()) throw Error('Preencha a descrição para publicar.');
+      if(categoriasExperimentais && form.status==='publicado' && !siteClassificado) throw Error('Escolha uma categoria principal e, se houver, uma subcategoria ativa no Catálogo do Site antes de publicar.');
       const payload={titulo:form.titulo.trim(), descricao:form.descricao.trim(), resumo:form.resumo.trim(), preco_centavos:catalogCents(form.price), categoria_id:categoriasExperimentais ? record?.categoria_id ?? null : form.categoria_id, link_marketplace:form.link_marketplace.trim(), imagem_externa:form.imagem_externa.trim() || null, status:form.status};
       setBusy(true);
       const query=record ? requireSupabase().from('catalogo_indicacoes').update(payload).eq('material_id',record.material_id).eq('versao',record.versao) : requireSupabase().from('catalogo_indicacoes').insert({...payload,slug:`${catalogSlug(form.titulo).slice(0,100) || 'indicacao'}-${crypto.randomUUID()}`});

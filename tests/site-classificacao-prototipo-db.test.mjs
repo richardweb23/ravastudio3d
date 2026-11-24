@@ -188,6 +188,7 @@ test('transferência de homologação preserva produtos, preços e categorias an
   await assert.rejects(db.exec(transfer), /já contém dados/i);
   await db.exec('rollback');
   assert.deepEqual(await snapshot(), before);
+  await db.exec(readFileSync('supabase/propostas/catalogo_site_indicacoes_compatibilidade.sql', 'utf8'));
   await db.exec(readFileSync('supabase/propostas/catalogo_site_isolar_operacional_homologacao.sql', 'utf8'));
   assert.equal((await one("select pg_get_functiondef('public.duplicar_catalogo(uuid)'::regprocedure) definition")).definition, originalDuplication);
   assert.equal((await one("select pg_get_functiondef('public.catalogo_publico(text,uuid,text,integer,text)'::regprocedure) definition")).definition, originalPublicCatalog);
@@ -210,6 +211,7 @@ test('transferência de homologação preserva produtos, preços e categorias an
   assert.equal(copyData.categoria, 'Bonecos');
   assert.equal(Number(copyData.quantidade_atual), 0);
   assert.equal(copyData.status, 'rascunho');
+  await db.exec('set role authenticated');
   const newIndication = (await one(`insert into public.catalogo_indicacoes(titulo,slug,descricao,status,preco_centavos,categoria_id,link_marketplace)
     values('Nova indicação','nova-indicacao-isolada','Descrição','publicado',1250,null,'https://example.com') returning material_id`)).material_id;
   const geek = (await one("select id from public.site_subcategorias where principal_id='rivoxel' and nome='Geek'")).id;
@@ -218,6 +220,9 @@ test('transferência de homologação preserva produtos, preços e categorias an
   assert.ok(site.produtos.some(p => p.id === newIndication && p.categoria === 'Geek' && p.marketplace));
   assert.equal((await one('select categoria_id from public.catalogo_indicacoes where material_id=$1', [newIndication])).categoria_id, null);
   assert.equal((await one("select categoria_id from public.catalogo_indicacoes where slug='indicacao-teste'")).categoria_id, '20000000-0000-4000-8000-000000000011');
+  await db.exec("update public.catalogo_categorias set ativa=false where id='20000000-0000-4000-8000-000000000011'");
+  await db.exec("update public.catalogo_indicacoes set resumo='Editada' where slug='indicacao-teste'");
+  assert.equal((await one("select public.site_catalogo_publico('rava') r")).r.total, 2);
 });
 
 test('padrão Rava alcança somente publicações existentes e conserva o catálogo legado', async t => {
@@ -258,6 +263,7 @@ test('padrão Rava alcança somente publicações existentes e conserva o catál
   const previous = (await one('select public.catalogo_publico() r')).r;
   await db.exec(readFileSync('supabase/propostas/catalogo_site_categorias.sql', 'utf8'));
   await db.exec(readFileSync('supabase/propostas/catalogo_site_padrao_rava_publicados.sql', 'utf8'));
+  await db.exec(readFileSync('supabase/propostas/catalogo_site_indicacoes_compatibilidade.sql', 'utf8'));
   assert.deepEqual(await snapshot(), before);
   const classifications = (await db.query('select produto_id,principal_id from public.site_classificacao_produtos order by produto_id')).rows;
   assert.deepEqual(classifications, [
@@ -272,4 +278,8 @@ test('padrão Rava alcança somente publicações existentes e conserva o catál
   assert.deepEqual(comparable(next.produtos), comparable(previous.produtos));
   assert.deepEqual(next.categorias.map(c => c.nome).sort(), previous.categorias.map(c => c.nome).sort());
   assert.equal((await one("select public.site_catalogo_publico('rivoxel') r")).r.total, 0);
+  await db.exec("update public.catalogo_categorias set ativa=false where id='20000000-0000-4000-8000-000000000021'");
+  assert.equal((await one("select public.site_catalogo_publico('rava') r")).r.total, 3);
+  await db.exec("update public.site_subcategorias set ativa=false where nome='Decoração' and principal_id='rava'");
+  assert.equal((await one("select public.site_catalogo_publico('rava') r")).r.total, 1);
 });

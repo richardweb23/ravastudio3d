@@ -119,7 +119,7 @@ returns jsonb language sql stable security definer set search_path='' as $$
   join public.site_classificacao_produtos sc on sc.produto_id=c.material_id and sc.principal_id=p_principal_id
   left join public.site_subcategorias s on s.id=sc.subcategoria_id and s.principal_id=sc.principal_id and s.ativa
   left join public.catalogo_categorias antiga on antiga.id=c.categoria_id
-  where c.status='publicado' and (c.categoria_id is null or antiga.ativa) and (sc.subcategoria_id is null or s.id is not null)
+  where c.status='publicado' and (sc.subcategoria_id is null or s.id is not null)
    and (p_subcategoria_id is null or s.id=p_subcategoria_id)
    and (p_slug is null or c.material_id=(select sl.material_id from public.catalogo_slugs sl where sl.slug=p_slug))
    and (coalesce(p_busca,'')='' or coalesce(nullif(c.titulo,''),m.nome) ilike '%'||left(p_busca,150)||'%')
@@ -130,8 +130,7 @@ returns jsonb language sql stable security definer set search_path='' as $$
   from public.catalogo_indicacoes c
   join public.site_classificacao_indicacoes sc on sc.indicacao_id=c.material_id and sc.principal_id=p_principal_id
   left join public.site_subcategorias s on s.id=sc.subcategoria_id and s.principal_id=sc.principal_id and s.ativa
-  left join public.catalogo_categorias antiga on antiga.id=c.categoria_id and antiga.ativa and antiga.marketplace
-  where c.status='publicado' and (c.categoria_id is null or antiga.id is not null) and (sc.subcategoria_id is null or s.id is not null)
+  where c.status='publicado' and (sc.subcategoria_id is null or s.id is not null)
    and (p_subcategoria_id is null or s.id=p_subcategoria_id)
    and (p_slug is null or c.slug=p_slug)
    and (coalesce(p_busca,'')='' or c.titulo ilike '%'||left(p_busca,150)||'%')

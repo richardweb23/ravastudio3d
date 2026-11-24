@@ -32,17 +32,17 @@ function settled<T>(result: PromiseSettledResult<T>) {
   if (result.status === "rejected") throw result.reason;
   return result.value;
 }
-export async function adminCatalog() {
+export async function adminCatalog(categoriasDoSite = false) {
   const supabase = requireSupabase();
   const results = await Promise.allSettled([
     unwrap(loadAllTableRows(supabase.from("catalogo_produtos").select("*"), ["material_id"])),
     unwrap(loadAllTableRows(supabase.from("catalogo_categorias").select("*"))),
     unwrap(loadAllTableRows(supabase.from("catalogo_imagens").select("*"))),
     unwrap(loadAllTableRows(supabase.from("catalogo_indicacoes").select("*"), ["material_id"])),
-    unwrap(loadAllTableRows(supabase.from("marcas").select("*"))),
-    unwrap(loadAllTableRows(supabase.from("marca_materiais").select("*"), ["material_id"])),
-    unwrap(loadAllTableRows(supabase.from("marca_categorias_catalogo").select("*"), ["categoria_id"])),
-    unwrap(loadAllTableRows(supabase.from("marca_indicacoes_catalogo").select("*"), ["material_id"])),
+    categoriasDoSite ? Promise.resolve([] as Tables<"marcas">[]) : unwrap(loadAllTableRows(supabase.from("marcas").select("*"))),
+    categoriasDoSite ? Promise.resolve([] as Tables<"marca_materiais">[]) : unwrap(loadAllTableRows(supabase.from("marca_materiais").select("*"), ["material_id"])),
+    categoriasDoSite ? Promise.resolve([] as Tables<"marca_categorias_catalogo">[]) : unwrap(loadAllTableRows(supabase.from("marca_categorias_catalogo").select("*"), ["categoria_id"])),
+    categoriasDoSite ? Promise.resolve([] as Tables<"marca_indicacoes_catalogo">[]) : unwrap(loadAllTableRows(supabase.from("marca_indicacoes_catalogo").select("*"), ["material_id"])),
   ]);
   const failed = results.find(r => r.status === "rejected");
   if (failed) throw failed.reason;

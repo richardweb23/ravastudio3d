@@ -9,7 +9,7 @@ import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../li
 import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, uploadCatalogImage } from "../../services/catalogo.js";
 import CatalogDialog from "./CatalogDialog.tsx";
 import ProductDetail from "./ProductDetail.tsx";
-export default function CatalogEditor({ product, record, images, categories, marcas, marcaAtual, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; marcas: Tables<"marcas">[]; marcaAtual: string; onClose: () => void; onSaved: () => Promise<void> }) {
+export default function CatalogEditor({ product, record, images, categories, marcas, marcaAtual, siteClassificado = false, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; marcas: Tables<"marcas">[]; marcaAtual: string; siteClassificado?: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
   const categoriasExperimentais = import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true';
   const suggestLink = (title?: string | null) => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
   const [saved, setSaved] = useState<Tables<"catalogo_produtos"> | null | undefined>(record);
@@ -51,7 +51,8 @@ export default function CatalogEditor({ product, record, images, categories, mar
     if (promo !== null && promo >= price) throw Error("O preço promocional deve ser menor que o preço de venda.");
     if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug)) throw Error("Use letras minúsculas, números e hífens no endereço.");
     if (form.status === "publicado" && !form.descricao.trim()) throw Error("Preencha a descrição para publicar.");
-    if (form.status === "publicado" && form.categoria_id && !categories.find(c => c.id === form.categoria_id)?.ativa) throw Error("Escolha uma categoria ativa para publicar.");
+    if (categoriasExperimentais && form.status === "publicado" && !siteClassificado) throw Error("Escolha uma categoria principal e, se houver, uma subcategoria ativa no Catálogo do Site antes de publicar.");
+    if (!categoriasExperimentais && form.status === "publicado" && form.categoria_id && !categories.find(c => c.id === form.categoria_id)?.ativa) throw Error("Escolha uma categoria ativa para publicar.");
     if (form.link_marketplace && !marketplaceUrl(form.link_marketplace)) throw Error("Informe um link de compra HTTP ou HTTPS válido.");
     if (form.status === "publicado" && categories.find(c => c.id === form.categoria_id)?.marketplace && !marketplaceUrl(form.link_marketplace)) throw Error("Informe o link de compra para publicar este produto Marketplace.");
     return { ...form, preco_centavos: price, promocional_centavos: promo, peso_gramas: form.peso_gramas === "" ? null : Number(form.peso_gramas), ordem: Number(form.ordem) };
@@ -94,6 +95,7 @@ export default function CatalogEditor({ product, record, images, categories, mar
     <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(save, "Produto salvo."); }}>
       <fieldset disabled={busy}>
         <p>Nome na Gestão: <strong>{product.nome}</strong> · Código: <strong>{catalogCode(product.codigo)}</strong></p>
+        {categoriasExperimentais && !siteClassificado && <p>Para publicar, salve como não publicado e escolha uma categoria principal e, se necessário, uma subcategoria ativa em “Categorias do Catálogo do Site”.</p>}
         {!categoriasExperimentais && <div className="form-grid"><label>Marca no site<SearchSelect value={novaMarca} onChange={e => setNovaMarca(e.target.value)}><option value="">Selecione</option>{marcas.filter(m => m.ativa).map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect></label><div><button type="button" disabled={!novaMarca || novaMarca === marcaAtual || dirty} onClick={() => run(async () => { await unwrap(requireSupabase().rpc('alterar_marca_material', { p_material_id: product.id, p_marca_atual: marcaAtual, p_nova_marca: novaMarca })); await onSaved(); }, 'Marca no site atualizada.')}>Alterar marca no site</button><small>Salve as alterações antes de mudar a marca. O cadastro e o estoque do produto permanecem os mesmos.</small></div></div>}
         <div className="form-grid">
           {field("Título no catálogo (opcional)", "titulo", { maxLength: 180, placeholder: product.nome })}
