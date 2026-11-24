@@ -29,3 +29,15 @@ test('interrompe geração se a paginação estiver incompleta', async () => {
   try { await assert.rejects(loadProducts('https://example.com', 'public-key'), /Paginação/); }
   finally { globalThis.fetch = original; }
 });
+
+test('geração por site consulta apenas a categoria principal escolhida', async () => {
+  const original = globalThis.fetch;
+  let request;
+  globalThis.fetch = async (url, options) => { request = { url, body: JSON.parse(options.body) }; return { ok: true, json: async () => ({ total: 0, produtos: [] }) }; };
+  try {
+    await loadProducts('https://example.com', 'public-key', 'rava');
+    assert.equal(request.url, 'https://example.com/rest/v1/rpc/site_catalogo_publico');
+    assert.equal(request.body.p_principal_id, 'rava');
+    await assert.rejects(loadProducts('https://example.com', 'public-key', 'outra'), /inválida/i);
+  } finally { globalThis.fetch = original; }
+});

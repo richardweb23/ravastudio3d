@@ -1,0 +1,51 @@
+# Revisão para publicação dos sites Rava e Rivoxel
+
+Data: 24/11/2026. Escopo: separar a apresentação e o catálogo dos sites, preservando integralmente caixas, categorias operacionais, cadastro de produtos, estoque, pedidos, vendas e financeiro.
+
+## Regra funcional confirmada
+
+Na gestão, **Catálogo do Site** terá `Rava` e `Rivoxel` como categorias principais, cada uma com suas subcategorias. O site da Rava exibirá somente produtos da categoria principal Rava e apresentará as respectivas subcategorias no filtro de busca; o site da Rivoxel exibirá somente produtos da categoria principal Rivoxel e apresentará as respectivas subcategorias no filtro de busca.
+
+Essa classificação existe apenas para publicação no site. Ela não altera nem deriva das categorias operacionais `Rava`, `Rivoxel` e `Bonecos`, e não altera caixas, valores, estoque, pedidos, vendas ou financeiro. Propostas anteriores com seleção de marca independente da categoria principal não representam a regra funcional confirmada.
+
+**Padrão solicitado, atualizado pelo responsável:** somente os produtos que já estiverem publicados receberão Rava como categoria principal inicial no Catálogo do Site. Produtos não publicados e produtos que ainda não têm cadastro no catálogo não precisam de ação nesta etapa. Isso não altera status, valores, estoque ou categoria operacional. Os itens já publicados preservam suas subcategorias de site quando a correspondência for segura. A classificação Rivoxel será feita no Catálogo do Site. A lista e suas contagens devem ser reavaliadas imediatamente antes da implantação; não usar a categoria operacional para decidir o padrão.
+
+Consulta agregada de produção em 24/11/2026: 114 produtos cadastrados, dos quais 48 tinham registro no catálogo e 43 destes estavam publicados; havia duas entradas de catálogo sem categoria e uma indicação Marketplace. Essas contagens são um retrato do momento, não um limite fixo para a migração.
+
+## Estado conferido
+
+- O layout e a navegação da Rivoxel foram validados na prévia; a seleção pelo domínio definitivo ainda não está ativada no código de produção.
+- Em consulta de metadados somente leitura ao Supabase de produção, a tabela `marca_materiais`, a função `catalogo_publico_marca` e o gatilho `marca_rava_material` estavam ausentes. Esta consulta não verifica todo o schema nem garante, por si só, que ele coincida com as migrations do repositório.
+- As migrations `202611230001` a `202611230009` são parte do histórico da homologação. Não devem ser aplicadas como uma sequência automática em produção: foram construídas em etapas e algumas extrapolam o escopo confirmado.
+
+## Pontos que impedem a promoção direta
+
+1. `202611230002` adiciona um gatilho em `materiais`, tabela do cadastro operacional. Assim, o cadastro de um produto passa a depender da criação de vínculo de marca, mesmo fora do catálogo. A nova solução não deve introduzir dependências de marca na criação ou alteração operacional de produtos.
+2. `202611230005` cria uma função de cadastro operacional com marca e `202611230007` a remove. `202611230006` substitui a função de duplicação e a faz depender do vínculo de marca; a remoção da primeira função não desfaz a substituição da segunda. A solução final deve preservar o comportamento operacional existente.
+3. `202611230003` substitui a função pública de catálogo já consumida pela Rava e por integrações. É necessário preservar seu contrato e comparar os resultados, incluindo paginação, produtos, indicações e categorias, antes de qualquer mudança. A seleção por site não deve alterar mensagens ou fluxos existentes de forma indireta.
+4. A associação atual é exclusiva por produto. Ao mudar o vínculo para Rivoxel, o produto deixa de aparecer na consulta da Rava. Isso é um comportamento da implementação de homologação, não uma autorização para reclassificar dados de produção ou remover produtos publicados do site atual.
+5. O build de produção ainda não inclui a página da Rivoxel. O gerador de páginas e sitemap é específico da Rava; a versão em homologação contém `noindex`. Antes de publicar, preparar roteamento, arquivos, SEO, atualização do catálogo e retorno à versão anterior para ambos os domínios.
+
+## Direção para a próxima implementação
+
+- Manter a classificação de exibição em estruturas do catálogo, sem gatilhos em `materiais` nem alteração das funções de caixa, estoque, pedidos ou vendas. A ausência de classificação deve manter a compatibilidade com a Rava existente; não inferir o site pela categoria operacional.
+- Preparar as categorias principais Rava e Rivoxel e suas subcategorias na gestão do catálogo, com consultas públicas filtradas pela categoria principal e permissões revisadas. Preservar a função legada e seus consumidores até comprovar compatibilidade. Catálogos publicados são públicos; domínio e filtro não substituem as políticas de acesso do banco.
+- Testar em banco isolado a criação e duplicação operacional, incluindo cenário em que a camada de catálogo esteja indisponível; comparar o catálogo anterior da Rava com a nova apresentação e verificar que caixa, categoria interna, estoque e histórico não são modificados. Testar também as indicações e a integração existente.
+- Produzir uma migration nova e específica para o estado real de produção, com pré-condições, estratégia de preservação de dados, rollback e revisão separada. A aplicação em produção e o lançamento continuam condicionados a autorização específica após a preparação e validação.
+
+Nenhum código de produção ou dado foi alterado nesta revisão; a consulta remota foi somente leitura.
+
+## Protótipo local da classificação do site
+
+- `supabase/propostas/catalogo_site_categorias.sql` é um protótipo separado das migrations: cria categorias principais Rava e Rivoxel, subcategorias e classificação de produtos e indicações vinculadas exclusivamente a registros do catálogo. Não instala gatilhos nem altera tabelas ou funções operacionais.
+- `tests/site-classificacao-prototipo-db.test.mjs` valida em banco PostgreSQL isolado a classificação, a rejeição de subcategoria da outra categoria principal e preservação dos dados existentes de produto, preço do catálogo e caixa. Também cobre bloqueio a usuários inativos, acesso anônimo direto, isolamento dos catálogos, filtros e paginação.
+- A proposta inclui uma consulta pública própria que filtra por categoria principal e subcategoria antes de paginar, sem substituir a consulta legada. O serviço de frontend tem um adaptador tipado, mas as páginas atuais ainda não o utilizam.
+- Uma interface experimental de categorias e classificação e os filtros públicos foram preparados sob `VITE_SITE_CATEGORIAS_EXPERIMENTAL=true`; a configuração padrão continua usando o fluxo anterior. A interface experimental depende da proposta SQL e não deve ser habilitada no build publicado antes da preparação de dados e da revisão das dependências anteriores. Não foi testada em navegador com banco conectado.
+- A proposta `catalogo_site_transferencia_homologacao.sql` copia as categorias e classifica os produtos e indicações já publicados do modelo anterior de homologação, sem atualizar ou excluir os registros originais. Ela aborta se já houver dados novos, vínculos ausentes ou divergentes, ou categorias anteriores com subníveis que ainda precisem de tratamento. Um teste isolado comparou os catálogos antes e depois e confirmou preservação de produtos, preços, categorias, pedidos e caixas. A proposta ainda não foi aplicada na homologação.
+- A transferência acima é somente para os dados de teste e preserva a classificação anterior de homologação. Ela não implementa o padrão inicial de produção: somente itens já publicados devem receber a categoria principal Rava; os demais não devem ser classificados nesta etapa.
+- Para o modelo anterior de produção, `catalogo_site_padrao_rava_publicados.sql` prepara o padrão Rava exclusivamente para produtos e indicações já publicados e preserva suas categorias de site como subcategorias. O teste isolado inclui produtos com categorias operacionais diferentes, produto sem categoria do site, rascunho, produto fora do catálogo e indicações; somente os publicados são classificados. O arquivo é uma proposta, ainda não aplicada ou aprovada para produção.
+- Consulta somente leitura à homologação em 24/11/2026 encontrou duas categorias sem subníveis, dois produtos no catálogo e nenhuma indicação; não foram encontrados vínculos ausentes ou divergentes nos produtos e categorias consultados. Esses números descrevem apenas o momento da consulta e não autorizam inferir dados de produção.
+- A proposta `catalogo_site_isolar_operacional_homologacao.sql` restaura a definição anterior de duplicação, remove o gatilho de marca do cadastro operacional e mantém o vínculo legado temporariamente apenas na gravação de catálogo. Um teste isolado confirmou que `salvar_material` permanece igual, um novo produto operacional mantém o estoque sem criar vínculo de site e uma cópia conserva a categoria operacional. A proposta permite que novas indicações sejam classificadas pelo site sem exigir categoria legada; as indicações antigas preservam sua categoria.
+- Em 24/11/2026 as três propostas foram ensaiadas juntas no banco de homologação em uma transação com `ROLLBACK`: a comparação dos dados de materiais, produtos do catálogo, categorias, indicações, pedidos, vendas e caixas passou. Também passaram as chamadas de configuração com perfil ativo e das consultas públicas como anônimo. Depois, uma consulta confirmou que o rollback deixou ausentes as novas tabelas e preservou o gatilho anterior. O ensaio não instala nem registra migrations.
+- Antes de instalar a proposta, definir como registrar e reconciliar a migration exclusiva de homologação e concluir a validação do build experimental conectado, incluindo as integrações que ainda usam a consulta legada e o comportamento de novas indicações nela. Sem isso, a prévia anterior deve permanecer em uso.
+- Ainda faltam compatibilidade e migração dos dados de homologação, revisão das dependências de marca antigas e do fluxo Marketplace, validação visual e funcional completa e plano específico para produção. O protótipo não está implantado em nenhum ambiente e não deve ser tratado como migration pronta.

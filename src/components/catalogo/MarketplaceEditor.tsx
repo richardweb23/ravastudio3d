@@ -6,6 +6,7 @@ import { requireSupabase } from '../../supabase.js';
 import { catalogCents, catalogSlug, marketplaceUrl } from '../../lib/catalogo.js';
 import CatalogDialog from './CatalogDialog.tsx';
 export default function MarketplaceEditor({ record, categories, onClose, onSaved }: { record: Tables<"catalogo_indicacoes"> | null; categories: Tables<"catalogo_categorias">[]; onClose: () => void; onSaved: () => Promise<void> }) {
+  const categoriasExperimentais = import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true';
   const [form,setForm]=useState(() => ({ titulo:record?.titulo || '', descricao:record?.descricao || '', resumo:record?.resumo || '', price:((record?.preco_centavos || 0)/100).toFixed(2), categoria_id:record?.categoria_id || '', link_marketplace:record?.link_marketplace || '', imagem_externa:record?.imagem_externa || '', status:record?.status || 'rascunho' }));
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const change=(name: keyof typeof form,value: string)=>setForm(current=>({...current,[name]:value}));
@@ -15,7 +16,7 @@ export default function MarketplaceEditor({ record, categories, onClose, onSaved
       if(!marketplaceUrl(form.link_marketplace)) throw Error('Informe um link de compra HTTP ou HTTPS válido.');
       if(form.imagem_externa && !marketplaceUrl(form.imagem_externa)) throw Error('Informe um link de imagem HTTP ou HTTPS válido.');
       if(form.status==='publicado' && !form.descricao.trim()) throw Error('Preencha a descrição para publicar.');
-      const payload={titulo:form.titulo.trim(), descricao:form.descricao.trim(), resumo:form.resumo.trim(), preco_centavos:catalogCents(form.price), categoria_id:form.categoria_id, link_marketplace:form.link_marketplace.trim(), imagem_externa:form.imagem_externa.trim() || null, status:form.status};
+      const payload={titulo:form.titulo.trim(), descricao:form.descricao.trim(), resumo:form.resumo.trim(), preco_centavos:catalogCents(form.price), categoria_id:categoriasExperimentais ? record?.categoria_id ?? null : form.categoria_id, link_marketplace:form.link_marketplace.trim(), imagem_externa:form.imagem_externa.trim() || null, status:form.status};
       setBusy(true);
       const query=record ? requireSupabase().from('catalogo_indicacoes').update(payload).eq('material_id',record.material_id).eq('versao',record.versao) : requireSupabase().from('catalogo_indicacoes').insert({...payload,slug:`${catalogSlug(form.titulo).slice(0,100) || 'indicacao'}-${crypto.randomUUID()}`});
       const {error:err}=await query.select('material_id').single(); if(err) throw err;
@@ -26,7 +27,8 @@ export default function MarketplaceEditor({ record, categories, onClose, onSaved
     <p>Este produto aparece somente no catálogo e não cria produto nem estoque na Gestão.</p>
     <form className="catalog-admin-form" onSubmit={save}><fieldset disabled={busy}>
       <label>Nome do produto<input required maxLength={180} value={form.titulo} onChange={e=>change('titulo',e.target.value)} /></label>
-      <label>Categoria Marketplace<SearchSelect required value={form.categoria_id} onChange={e=>change('categoria_id',e.target.value)}><option value="">Selecione uma categoria</option>{categories.filter(c=>c.marketplace && (c.ativa || c.id===form.categoria_id)).map(c=><option key={c.id} value={c.id}>{c.nome}{!c.ativa?' (inativa)':''}</option>)}</SearchSelect></label>
+      {!categoriasExperimentais && <label>Categoria Marketplace<SearchSelect required value={form.categoria_id} onChange={e=>change('categoria_id',e.target.value)}><option value="">Selecione uma categoria</option>{categories.filter(c=>c.marketplace && (c.ativa || c.id===form.categoria_id)).map(c=><option key={c.id} value={c.id}>{c.nome}{!c.ativa?' (inativa)':''}</option>)}</SearchSelect></label>}
+      {categoriasExperimentais && <p>Após salvar, escolha a categoria principal e a subcategoria em “Categorias do Catálogo do Site”.</p>}
       <label>Link de compra<input type="url" required maxLength={2048} placeholder="https://..." value={form.link_marketplace} onChange={e=>change('link_marketplace',e.target.value)} /></label>
       <label>Link da imagem (opcional)<input type="url" maxLength={2048} placeholder="https://..." value={form.imagem_externa} onChange={e=>change('imagem_externa',e.target.value)} /></label>
       <label>Preço de referência (R$)<input type="number" min="0" step="0.01" required value={form.price} onChange={e=>change('price',e.target.value)} /></label>

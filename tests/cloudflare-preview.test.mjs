@@ -20,6 +20,12 @@ test('prévia aceita somente chave pública identificável', () => {
   assert.throws(() => previewEnvironment({ ...valid, RAVA_STAGING_SUPABASE_PUBLIC_KEY: jwt('service_role') }), /somente/);
 });
 
+test('categorias experimentais só são habilitadas explicitamente no ambiente isolado', () => {
+  assert.equal(previewEnvironment(valid).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
+  assert.equal(previewEnvironment({ ...valid, VITE_SITE_CATEGORIAS_EXPERIMENTAL: 'true' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'true');
+  assert.equal(previewEnvironment({ ...valid, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_publishable_publica', VITE_SITE_CATEGORIAS_EXPERIMENTAL: 'true' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
+});
+
 test('modo público usa somente chave pública e desativa integração Instagram', () => {
   const env = previewEnvironment({ ...valid, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_publishable_publica' });
   assert.equal(env.VITE_SUPABASE_URL, valid.RAVA_PRODUCTION_SUPABASE_URL);

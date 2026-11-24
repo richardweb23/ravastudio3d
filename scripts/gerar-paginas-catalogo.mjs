@@ -8,11 +8,12 @@ const imageUrl = (product, supabaseUrl) => product.imagens?.[0]?.caminho
   ? `${supabaseUrl}/storage/v1/object/public/catalogo-produtos/${product.imagens[0].caminho.split('/').map(encodeURIComponent).join('/')}`
   : safeUrl(product.imagem_externa) || `${site}/rava-compartilhamento.png`;
 
-export async function loadProducts(url, key) {
+export async function loadProducts(url, key, site = null) {
+  if (site !== null && site !== 'rava' && site !== 'rivoxel') throw new Error('Categoria principal inválida.');
   const products = [];
   let total;
   for (let offset = 0; ; offset += 24) {
-    const response = await fetch(`${url}/rest/v1/rpc/catalogo_publico`, { method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_ordem: 'novos', p_offset: offset }) });
+    const response = await fetch(`${url}/rest/v1/rpc/${site ? 'site_catalogo_publico' : 'catalogo_publico'}`, { method: 'POST', headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...(site ? { p_principal_id: site } : {}), p_ordem: 'novos', p_offset: offset }) });
     if (!response.ok) throw new Error(`Falha ao consultar catálogo (HTTP ${response.status}).`);
     const page = await response.json();
     if (!Array.isArray(page.produtos) || !Number.isSafeInteger(page.total) || page.total < 0 || (total !== undefined && total !== page.total)) throw new Error('O catálogo mudou ou retornou dados inválidos; tente gerar novamente.');
@@ -51,7 +52,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const url = (process.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
   const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!safeUrl(url) || !key) throw new Error('Configure a URL e a chave pública do Supabase para gerar as páginas.');
-  const products = await loadProducts(url, key);
+  const products = await loadProducts(url, key, process.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true' ? 'rava' : null);
   await generatePages(products, url);
   console.log(`${products.length} páginas de produtos geradas.`);
 }

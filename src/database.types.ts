@@ -166,7 +166,7 @@ export type Database = {
       }
       catalogo_indicacoes: {
         Row: {
-          categoria_id: string
+          categoria_id: string | null
           cores: string
           created_at: string
           descricao: string
@@ -190,7 +190,7 @@ export type Database = {
           versao: number
         }
         Insert: {
-          categoria_id: string
+          categoria_id: string | null
           cores?: string
           created_at?: string
           descricao?: string
@@ -214,7 +214,7 @@ export type Database = {
           versao?: number
         }
         Update: {
-          categoria_id?: string
+          categoria_id?: string | null
           cores?: string
           created_at?: string
           descricao?: string

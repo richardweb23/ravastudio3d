@@ -31,6 +31,15 @@ export type AppDatabase = Omit<Database, "public"> & {
       financeiro_extrato: Omit<Functions["financeiro_extrato"], "Returns"> & { Returns: Movement[] };
       catalogo_publico: Omit<CatalogRpc, "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
       catalogo_publico_marca: Omit<Functions["catalogo_publico_marca"], "Returns"> & { Returns: import("./catalogTypes").CatalogResult };
+      // Contrato da proposta local; não pressupõe que a função já exista no projeto conectado.
+      site_catalogo_publico: {
+        Args: { p_principal_id: "rava" | "rivoxel"; p_busca?: string; p_subcategoria_id?: string; p_ordem?: string; p_offset?: number; p_slug?: string };
+        Returns: import("./catalogTypes").CatalogResult;
+      };
+      site_configuracao_catalogo: { Args: Record<string, never>; Returns: import("./siteCatalogTypes").SiteConfiguracao };
+      site_salvar_subcategoria: { Args: { p_id: string | null; p_principal_id: import("./siteCatalogTypes").SitePrincipal; p_nome: string; p_ativa: boolean }; Returns: string };
+      site_classificar_produto: { Args: { p_produto_id: string; p_principal_id: import("./siteCatalogTypes").SitePrincipal; p_subcategoria_id: string | null }; Returns: undefined };
+      site_classificar_indicacao: { Args: { p_indicacao_id: string; p_principal_id: import("./siteCatalogTypes").SitePrincipal; p_subcategoria_id: string | null }; Returns: undefined };
     };
   };
 };

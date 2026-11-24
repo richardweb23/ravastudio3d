@@ -10,6 +10,7 @@ import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, 
 import CatalogDialog from "./CatalogDialog.tsx";
 import ProductDetail from "./ProductDetail.tsx";
 export default function CatalogEditor({ product, record, images, categories, marcas, marcaAtual, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; marcas: Tables<"marcas">[]; marcaAtual: string; onClose: () => void; onSaved: () => Promise<void> }) {
+  const categoriasExperimentais = import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true';
   const suggestLink = (title?: string | null) => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
   const [saved, setSaved] = useState<Tables<"catalogo_produtos"> | null | undefined>(record);
   const [automaticLink, setAutomaticLink] = useState(() => !record?.slug || record.slug === suggestLink(record?.titulo));
@@ -63,7 +64,7 @@ export default function CatalogEditor({ product, record, images, categories, mar
     finally { setBusy(false); }
   }
   async function save() {
-    if (novaMarca !== marcaAtual) throw Error("Confirme a alteração de marca antes de salvar o catálogo.");
+    if (!categoriasExperimentais && novaMarca !== marcaAtual) throw Error("Confirme a alteração de marca antes de salvar o catálogo.");
     const value = await saveCatalog(product.id, data(), saved?.versao);
     setSaved(value); setDirty(false); await onSaved();
   }
@@ -93,10 +94,10 @@ export default function CatalogEditor({ product, record, images, categories, mar
     <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(save, "Produto salvo."); }}>
       <fieldset disabled={busy}>
         <p>Nome na Gestão: <strong>{product.nome}</strong> · Código: <strong>{catalogCode(product.codigo)}</strong></p>
-        <div className="form-grid"><label>Marca no site<SearchSelect value={novaMarca} onChange={e => setNovaMarca(e.target.value)}><option value="">Selecione</option>{marcas.filter(m => m.ativa).map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect></label><div><button type="button" disabled={!novaMarca || novaMarca === marcaAtual || dirty} onClick={() => run(async () => { await unwrap(requireSupabase().rpc('alterar_marca_material', { p_material_id: product.id, p_marca_atual: marcaAtual, p_nova_marca: novaMarca })); await onSaved(); }, 'Marca no site atualizada.')}>Alterar marca no site</button><small>Salve as alterações antes de mudar a marca. O cadastro e o estoque do produto permanecem os mesmos.</small></div></div>
+        {!categoriasExperimentais && <div className="form-grid"><label>Marca no site<SearchSelect value={novaMarca} onChange={e => setNovaMarca(e.target.value)}><option value="">Selecione</option>{marcas.filter(m => m.ativa).map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect></label><div><button type="button" disabled={!novaMarca || novaMarca === marcaAtual || dirty} onClick={() => run(async () => { await unwrap(requireSupabase().rpc('alterar_marca_material', { p_material_id: product.id, p_marca_atual: marcaAtual, p_nova_marca: novaMarca })); await onSaved(); }, 'Marca no site atualizada.')}>Alterar marca no site</button><small>Salve as alterações antes de mudar a marca. O cadastro e o estoque do produto permanecem os mesmos.</small></div></div>}
         <div className="form-grid">
           {field("Título no catálogo (opcional)", "titulo", { maxLength: 180, placeholder: product.nome })}
-          <label>Categoria do site<SearchSelect value={form.categoria_id} onChange={e => change("categoria_id", e.target.value)}><option value="">Sem categoria</option>{categories.map(c => <option value={c.id} key={c.id}>{c.pai_id ? `${categories.find(p => p.id === c.pai_id)?.nome || "Categoria"} › ` : ""}{c.nome}{!c.ativa ? " (inativa)" : ""}</option>)}</SearchSelect></label>
+          {!categoriasExperimentais && <label>Categoria do site<SearchSelect value={form.categoria_id} onChange={e => change("categoria_id", e.target.value)}><option value="">Sem categoria</option>{categories.map(c => <option value={c.id} key={c.id}>{c.pai_id ? `${categories.find(p => p.id === c.pai_id)?.nome || "Categoria"} › ` : ""}{c.nome}{!c.ativa ? " (inativa)" : ""}</option>)}</SearchSelect></label>}
           {categories.find(c => c.id === form.categoria_id)?.marketplace && field("Link de compra no Marketplace", "link_marketplace", { type: "url", maxLength: 2048, placeholder: "https://..." })}
           {field("Preço de venda (R$)", "price", { type: "number", min: 0, max: 10000000, step: ".01", required: true })}
           {field("Preço promocional (R$)", "promo", { type: "number", min: 0, max: 10000000, step: ".01" })}

@@ -2,7 +2,7 @@ import type { CatalogProduct, CatalogResult } from "./catalogTypes";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import logo from "../logo.svg";
-import { publicCatalog, catalogImageUrl } from "./services/catalogo.js";
+import { publicCatalog, publicCatalogForSite, catalogImageUrl } from "./services/catalogo.js";
 import { catalogCategories, catalogLink, catalogMoney, catalogWhatsapp, marketplaceUrl } from "./lib/catalogo.js";
 import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
 import ProductDetail from "./components/catalogo/ProductDetail.tsx";
@@ -50,7 +50,9 @@ export default function CatalogPage() {
     let current = true;
     let analyticsTimer: number | undefined;
     setLoading(true); setError("");
-    publicCatalog({ p_busca: query, p_categoria: category || undefined, p_ordem: order, p_offset: offset }).then(data => {
+    (import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true'
+      ? publicCatalogForSite('rava', { p_busca: query, p_subcategoria_id: category || undefined, p_ordem: order, p_offset: offset })
+      : publicCatalog({ p_busca: query, p_categoria: category || undefined, p_ordem: order, p_offset: offset })).then(data => {
       if (current) {
         setResult(previous => ({ ...data, produtos: offset ? [...new Map([...previous.produtos, ...data.produtos].map(p => [p.id, p])).values()] : data.produtos }));
         if (!query) lastSearch.current = '';
@@ -74,7 +76,7 @@ export default function CatalogPage() {
     if (!slug) { setDetailStatus(""); setDetailLoading(false); return; }
     setDetailLoading(true);
     setDetailStatus("Carregando produto…");
-    publicCatalog({ p_slug: slug }).then(data => {
+    (import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true' ? publicCatalogForSite('rava', { p_slug: slug }) : publicCatalog({ p_slug: slug })).then(data => {
       if (!current) return;
       const product = data.produtos[0];
       if (product && directEntry.current === slug) {

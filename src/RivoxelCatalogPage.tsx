@@ -2,7 +2,7 @@ import type { CatalogProduct, CatalogResult } from "./catalogTypes";
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useRef, useState } from "react";
 import logo from "./rivoxel/assets/logo-branca.png";
-import { publicCatalogForBrand, catalogImageUrl } from "./services/catalogo.js";
+import { publicCatalogForBrand, publicCatalogForSite, catalogImageUrl } from "./services/catalogo.js";
 import { catalogCategories, catalogMoney, marketplaceUrl } from "./lib/catalogo.js";
 import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
 import ProductDetail from "./RivoxelProductDetail.tsx";
@@ -54,7 +54,9 @@ export default function CatalogPage() {
     let current = true;
     let analyticsTimer: number | undefined;
     setLoading(true); setError("");
-    publicCatalogForBrand("rivoxel", { p_busca: query, p_categoria: category || undefined, p_ordem: order, p_offset: offset }).then(data => {
+    (import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true'
+      ? publicCatalogForSite('rivoxel', { p_busca: query, p_subcategoria_id: category || undefined, p_ordem: order, p_offset: offset })
+      : publicCatalogForBrand("rivoxel", { p_busca: query, p_categoria: category || undefined, p_ordem: order, p_offset: offset })).then(data => {
       if (current) {
         setResult(previous => ({ ...data, produtos: offset ? [...new Map([...previous.produtos, ...data.produtos].map(p => [p.id, p])).values()] : data.produtos }));
         if (!query) lastSearch.current = '';
@@ -78,7 +80,7 @@ export default function CatalogPage() {
     if (!slug) { setDetailStatus(""); setDetailLoading(false); return; }
     setDetailLoading(true);
     setDetailStatus("Carregando produto…");
-    publicCatalogForBrand("rivoxel", { p_slug: slug }).then(data => {
+    (import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true' ? publicCatalogForSite('rivoxel', { p_slug: slug }) : publicCatalogForBrand("rivoxel", { p_slug: slug })).then(data => {
       if (!current) return;
       const product = data.produtos[0];
       if (product && directEntry.current === slug) {

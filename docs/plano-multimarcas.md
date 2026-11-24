@@ -1,5 +1,9 @@
 # Plano técnico: Rava e Rivoxel
 
+> **Definição funcional confirmada pelo responsável em 24/11/2026:** no **Catálogo do Site**, `Rava` e `Rivoxel` serão categorias principais, cada uma com suas próprias subcategorias. O site da Rava exibirá somente os produtos da categoria principal Rava e oferecerá suas subcategorias no filtro de busca; o site da Rivoxel fará o mesmo com a categoria principal Rivoxel e suas subcategorias. Esta é uma classificação de publicação do site. As propostas anteriores de separar por marca no cadastro operacional ou tratar marca como uma seleção independente da categoria principal estão superadas.
+>
+> A mudança se limita ao Catálogo do Site e à apresentação pública. Não modificar caixas, valores, categorias operacionais dos produtos, cadastro, estoque, pedidos, vendas ou financeiro para fazer essa separação. As categorias operacionais existentes `Rava`, `Rivoxel` e `Bonecos` permanecem como estão e não devem ser usadas para inferir a categoria do site.
+>
 > **Escopo confirmado em 24/11/2026:** a separação entre Rava e Rivoxel é somente para apresentação e catálogo dos sites. Caixas, categorias operacionais, estoque, pedidos, vendas, financeiro e demais fluxos do sistema de gestão não devem ser separados nem alterados para identificar marca. As propostas anteriores neste documento que sugerem essa separação estão superadas. Qualquer suporte ao catálogo deve ser restrito à gestão do que aparece nos sites e preservar o comportamento operacional existente.
 >
 > Antes de publicar, revisar as migrations já preparadas em homologação: as etapas intermediárias `202611230005` e `202611230006` envolveram funções de cadastro ou duplicação de produtos, e a `202611230007` removeu a primeira função. Não aplicar essa sequência automaticamente em produção; preparar e verificar uma solução compatível com o escopo confirmado e com o estado real do banco.

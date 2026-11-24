@@ -19,6 +19,13 @@ export const publicCatalogForBrand = async (brand: "rava" | "rivoxel", params: O
   if (result.error) throw result.error;
   return result.data;
 };
+/** Contrato novo, ainda não conectado às páginas enquanto a proposta não for implantada. */
+export const publicCatalogForSite = async (principal: "rava" | "rivoxel", params: { p_busca?: string; p_subcategoria_id?: string; p_ordem?: string; p_offset?: number; p_slug?: string }): Promise<CatalogResult> => {
+  if (!supabase) throw Error("Catálogo indisponível. Tente novamente mais tarde.");
+  const result = await supabase.rpc("site_catalogo_publico", { ...params, p_principal_id: principal });
+  if (result.error) throw result.error;
+  return result.data;
+};
 export const saveCatalog = (id: string, data: Json, version?: number | null) => unwrap(requireSupabase().rpc("salvar_catalogo", { p_material_id: id, p_dados: data, p_versao: version ?? undefined }));
 export const imageAction = (action: string, product: string, image: string | null = null, data: Json = {}) => unwrap(requireSupabase().rpc("operar_imagem_catalogo", { p_acao: action, p_produto: product, p_imagem: image ?? undefined, p_dados: data }));
 function settled<T>(result: PromiseSettledResult<T>) {
