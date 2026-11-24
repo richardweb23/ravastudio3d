@@ -1,4 +1,13 @@
-.rava-links-body { background:var(--brand-background); color:#fff; color-scheme:dark; }
+.rava-links-body {
+  background-color:#234a92;
+  background-image:linear-gradient(to bottom, rgba(5,14,34,.74), var(--brand-background) 760px), url('../assets/hero-vaso.png');
+  background-blend-mode:normal, luminosity;
+  background-size:100% 100%, 300% auto;
+  background-position:left top;
+  background-repeat:no-repeat;
+  color:#fff;
+  color-scheme:dark;
+}
 .links-shell { background:none; }
 .links-shell :focus-visible { outline-color:var(--brand-border); }
 .links-logo { background:var(--brand-footer); border-color:#4164bc; }
