@@ -13,12 +13,12 @@ const previasRava = new Set([
 export async function atenderRivoxel(request: Request, assets: Assets): Promise<Response> {
   const url = new URL(request.url);
   const paginas: Record<string, string> = {
-    '/': '/rivoxel-preview/index.html',
-    '/index.html': '/rivoxel-preview/index.html',
-    '/catalogo/': '/rivoxel-preview/catalogo/index.html',
-    '/catalogo/index.html': '/rivoxel-preview/catalogo/index.html',
-    '/links/': '/rivoxel-preview/links/index.html',
-    '/links/index.html': '/rivoxel-preview/links/index.html',
+    '/': '/rivoxel-preview/',
+    '/index.html': '/rivoxel-preview/',
+    '/catalogo/': '/rivoxel-preview/catalogo/',
+    '/catalogo/index.html': '/rivoxel-preview/catalogo/',
+    '/links/': '/rivoxel-preview/links/',
+    '/links/index.html': '/rivoxel-preview/links/',
   };
   if (url.pathname === '/catalogo' || url.pathname === '/links') {
     url.pathname += '/';

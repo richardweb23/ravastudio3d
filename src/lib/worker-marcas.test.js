@@ -30,9 +30,9 @@ test('roteamento preparado da Rivoxel serve as próprias páginas e conserva a c
     return new Response(url.pathname + url.search, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   } };
   for (const [path, expected] of [
-    ['/', '/rivoxel-preview/index.html'],
-    ['/catalogo/?produto=peca', '/rivoxel-preview/catalogo/index.html?produto=peca'],
-    ['/links/', '/rivoxel-preview/links/index.html'],
+    ['/', '/rivoxel-preview/'],
+    ['/catalogo/?produto=peca', '/rivoxel-preview/catalogo/?produto=peca'],
+    ['/links/', '/rivoxel-preview/links/'],
     ['/assets/site.js', '/assets/site.js'],
   ]) {
     const response = await atenderRivoxel(new Request(`https://rivoxel.com.br${path}`), assets);
@@ -50,7 +50,7 @@ test('roteamento preparado da Rivoxel serve as próprias páginas e conserva a c
 test('alias de homologação usa as URLs da Rivoxel sem ativar domínio público', async () => {
   const assets = { async fetch(req) { return new Response(new URL(req.url).pathname); } };
   const alias = 'https://feat-multi-brand-ravastudio3d.studiorava3d.workers.dev';
-  for (const [path, expected] of [['/', '/rivoxel-preview/index.html'], ['/catalogo/', '/rivoxel-preview/catalogo/index.html'], ['/links/', '/rivoxel-preview/links/index.html']]) {
+  for (const [path, expected] of [['/', '/rivoxel-preview/'], ['/catalogo/', '/rivoxel-preview/catalogo/'], ['/links/', '/rivoxel-preview/links/']]) {
     const response = await atender(new Request(alias + path), assets);
     assert.equal(response.status, 200);
     assert.equal(await response.text(), expected);
