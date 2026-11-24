@@ -62,7 +62,7 @@
   color:var(--brand-text-light);
   border-color:#435a88;
 }
-.catalog-menu-trigger small, .catalog-result-count { color:#c1ceec; }
+.catalog-menu-trigger small, .catalog-count { color:#c1ceec; }
 .catalog-menu-trigger:hover, .catalog-menu-trigger[aria-expanded=true], .catalog-menu-trigger.is-selected {
   background:#203967;
   border-color:var(--brand-border);
