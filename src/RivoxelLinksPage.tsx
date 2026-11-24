@@ -1,10 +1,13 @@
 import logo from './rivoxel/assets/logo-branca.png';
+import { rivoxelUrls } from './lib/rivoxel-urls.js';
+
+const urls = rivoxelUrls(window.location.hostname);
 
 const links = [
-  { title: 'Conheça nosso catálogo', description: 'Explore nossos produtos em impressão 3D', href: '/rivoxel-preview/catalogo/' },
+  { title: 'Conheça nosso catálogo', description: 'Explore nossos produtos em impressão 3D', href: urls.catalog },
   { title: 'Fale conosco no WhatsApp', description: '+55 21 98447-0594', href: 'https://wa.me/5521984470594' },
   { title: 'Acompanhe no Instagram', description: '@rivoxel.3d', href: 'https://www.instagram.com/rivoxel.3d/' },
-  { title: 'Conheça nosso site', description: 'Ideias que ganham forma', href: '/rivoxel-preview/' },
+  { title: 'Conheça nosso site', description: 'Ideias que ganham forma', href: urls.home },
 ];
 
 export default function RivoxelLinksPage() {

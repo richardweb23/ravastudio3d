@@ -4,6 +4,7 @@ import CatalogDialog from "./components/catalogo/CatalogDialog.tsx";
 import { catalogCode, catalogMoney, marketplaceUrl } from "./lib/catalogo.js";
 import { catalogImageUrl } from "./services/catalogo.js";
 import { trackCatalogClick } from "./lib/catalogoAnalytics.js";
+import { rivoxelUrls } from "./lib/rivoxel-urls.js";
 export default function ProductDetail({ product, onClose, preview = false }: { product: CatalogProduct; onClose: () => void; preview?: boolean }) {
   const [selected, setSelected] = useState(0);
   const images = product.imagens || [];
@@ -20,7 +21,7 @@ export default function ProductDetail({ product, onClose, preview = false }: { p
         {!product.marketplace && <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>}
         <p className="catalog-description">{product.descricao}</p>
         <dl>{[["Material", product.material], ["Dimensões", product.dimensoes], ["Peso", product.peso_gramas != null && `${product.peso_gramas} g`], ["Cores", product.cores], ["Prazo de produção", product.prazo], ["Personalização", product.personalizavel && (product.marketplace ? "Disponível — consulte o anúncio" : "Disponível — consulte pelo WhatsApp")]].filter(([, value]) => value).map(([label, value]) => <div key={String(label)}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
-        {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-cta" href={marketplaceUrl(product.link_marketplace) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={() => { if (!preview) trackCatalogClick(product, 'comprar_marketplace', 'detalhes'); }}>Comprar produto ↗</a> : <p>Link de compra indisponível.</p>) : <a className="catalog-cta" href={"https://wa.me/5521984470594?text=" + encodeURIComponent("Olá! Vi " + product.nome + " no catálogo da Rivoxel e gostaria de mais informações. " + window.location.href)} target="_blank" rel="noopener noreferrer" onClick={() => { if (!preview) trackCatalogClick(product, 'pedir_whatsapp', 'detalhes'); }}>Quero este produto ↗</a>}
+        {product.marketplace ? (marketplaceUrl(product.link_marketplace) ? <a className="catalog-cta" href={marketplaceUrl(product.link_marketplace) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={() => { if (!preview) trackCatalogClick(product, 'comprar_marketplace', 'detalhes'); }}>Comprar produto ↗</a> : <p>Link de compra indisponível.</p>) : <a className="catalog-cta" href={"https://wa.me/5521984470594?text=" + encodeURIComponent("Olá! Vi " + product.nome + " no catálogo da Rivoxel e gostaria de mais informações. " + window.location.origin + rivoxelUrls(window.location.hostname).product(product.slug))} target="_blank" rel="noopener noreferrer" onClick={() => { if (!preview) trackCatalogClick(product, 'pedir_whatsapp', 'detalhes'); }}>Quero este produto ↗</a>}
       </div>
     </div>
   </CatalogDialog>;

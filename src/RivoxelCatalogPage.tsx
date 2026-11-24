@@ -7,8 +7,10 @@ import { catalogCategories, catalogMoney, marketplaceUrl } from "./lib/catalogo.
 import { catalogClickParameters, catalogSearchTerm, trackCatalogClick, trackCatalogEvent } from "./lib/catalogoAnalytics.js";
 import ProductDetail from "./RivoxelProductDetail.tsx";
 import CatalogDialog from "./components/catalogo/CatalogDialog.tsx";
+import { rivoxelUrls } from "./lib/rivoxel-urls.js";
 const currentSlug = () => new URLSearchParams(window.location.search).get("produto") || window.location.pathname.match(/^\/produto\/([a-z0-9-]+)\/?$/)?.[1] || null;
-const catalogLink = (slug: string, _origin?: string, _published?: boolean) => "/rivoxel-preview/catalogo/?produto=" + encodeURIComponent(slug);
+const urls = rivoxelUrls(window.location.hostname);
+const catalogLink = urls.product;
 const catalogWhatsapp = (product: CatalogProduct) => "https://wa.me/5521984470594?text=" + encodeURIComponent("Olá! Vi " + product.nome + " no catálogo da Rivoxel e gostaria de mais informações. " + window.location.origin + catalogLink(product.slug));
 export default function CatalogPage() {
   const [search, setSearch] = useState("");
@@ -95,17 +97,17 @@ export default function CatalogPage() {
     directEntry.current = null;
     trackCatalogClick(product, 'ver_detalhes', 'lista');
     setDetail(null); setDetailLoading(true); setDetailStatus("");
-    window.history.pushState(null, "", catalogLink(product.slug, window.location.origin, publishedPages.includes(product.slug))); setSlug(product.slug);
+    window.history.pushState(null, "", catalogLink(product.slug)); setSlug(product.slug);
   }
   function close() {
-    window.history.replaceState(null, "", "/rivoxel-preview/catalogo/"); setSlug(null);
+    window.history.replaceState(null, "", urls.catalog); setSlug(null);
   }
   const orderOptions = [["novos", "Mais recentes"], ["destaque", "Destaques"], ["preco_asc", "Menor preço"], ["preco_desc", "Maior preço"]];
   const categoryName = result.categorias.find(item => String(item.id) === category)?.nome || "Todas as categorias";
   return <div className="catalog-site">
     <a className="catalog-skip" href="#produtos">Ir para os produtos</a>
     <header className="catalog-site-header">
-      <a href="/rivoxel-preview/" aria-label="Rivoxel — início"><img src={logo} alt="Rivoxel" /></a>
+      <a href={urls.home} aria-label="Rivoxel — início"><img src={logo} alt="Rivoxel" /></a>
       <nav className="catalog-social-links" aria-label="Redes sociais da Rivoxel">
         <a href="https://www.instagram.com/rivoxel.3d/" target="_blank" rel="noopener noreferrer" aria-label="Instagram da Rivoxel (abre em nova aba)" title="Instagram">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.7" r="1" fill="currentColor" stroke="none"/></svg>
@@ -141,7 +143,7 @@ export default function CatalogPage() {
         {error ? <div className="catalog-message" role="alert">{error}<button onClick={() => setRetry(r => r + 1)}>Tentar novamente</button></div> : <>
           {!loading && !result.produtos.length && <div className="catalog-empty"><h2>{query || category ? "Nenhum produto encontrado" : "Novas criações estão chegando"}</h2><p>{query || category ? "Experimente outro nome ou categoria." : "Converse com a gente para conhecer as possibilidades."}</p></div>}
           <div className={`catalog-grid${view === "list" ? " catalog-list" : ""}`} aria-busy={loading}>{result.produtos.map(product => <article className="catalog-card" key={product.id}>
-            <a className="catalog-card-open" href={catalogLink(product.slug, window.location.origin, publishedPages.includes(product.slug))} onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); open(product); } }} aria-label={`Ver detalhes de ${product.nome}`}>
+            <a className="catalog-card-open" href={catalogLink(product.slug)} onClick={event => { if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) { event.preventDefault(); open(product); } }} aria-label={`Ver detalhes de ${product.nome}`}>
               <div className={`catalog-card-photo${product.marketplace ? ' catalog-card-photo-marketplace' : ''}`}>{product.imagens[0] || product.imagem_externa ? <img loading="lazy" decoding="async" src={product.imagens[0] ? catalogImageUrl(product.imagens[0].miniatura) : product.imagem_externa ?? undefined} alt={product.imagens[0]?.alt || product.nome} /> : <span>Imagem em breve</span>}{product.destaque && <span className="catalog-featured">Destaque</span>}</div>
               <div className="catalog-card-copy"><p className="catalog-eyebrow">{product.categoria || "Feito em 3D"}</p><h2>{product.nome}</h2>{product.resumo && <p>{product.resumo}</p>}{!product.marketplace && <div className="catalog-price">{product.promocional_centavos != null && <del>{catalogMoney(product.preco_centavos)}</del>}<strong>{catalogMoney(product.promocional_centavos ?? product.preco_centavos)}</strong></div>}<span className="catalog-view">Ver detalhes +</span></div>
             </a>
@@ -151,7 +153,7 @@ export default function CatalogPage() {
         </>}
       </section>
     </main>
-    <footer className="catalog-footer"><span>Rivoxel © {new Date().getFullYear()}</span><span>Feito com criatividade, camada por camada.</span><a href="/rivoxel-preview/">Conheça nosso site ↗</a></footer>
+    <footer className="catalog-footer"><span>Rivoxel © {new Date().getFullYear()}</span><span>Feito com criatividade, camada por camada.</span><a href={urls.home}>Conheça nosso site ↗</a></footer>
     {detail && <ProductDetail key={detail.id} product={{ ...detail, pagina_publicada: publishedPages.includes(detail.slug) }} onClose={close} />}
     {slug && !detail && <CatalogDialog title={detailLoading ? "Carregando produto" : "Detalhes do produto"} onClose={close}>
       {detailLoading ? <div className="catalog-product-loading" role="status">
