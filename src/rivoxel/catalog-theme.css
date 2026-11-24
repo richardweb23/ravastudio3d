@@ -4,3 +4,23 @@
 .catalog-search, .catalog-menu-trigger, .catalog-card { border-color:#b7c7ee; }
 .catalog-cta, .catalog-more { background:#073bff; color:white; }
 .catalog-footer { background:#101c37; color:white; }
+.catalog-site { background:#fff; color:#080b13; }
+.catalog-site::before { background-image:linear-gradient(to bottom,rgba(8,11,19,.15),#fff 96%),url('../assets/hero-vaso.png'); }
+.catalog-site :focus-visible, .catalog-dialog :focus-visible { outline-color:#073bff; }
+.catalog-site-header, .catalog-discovery, .catalog-card-contact { border-color:#c6d3f5; }
+.catalog-social-links a:hover { background:#e6ecff; }
+.catalog-hero > p:last-child, .catalog-card-copy > p:not(.catalog-eyebrow), .catalog-price del, .catalog-detail-info dd { color:#303a50; }
+.catalog-eyebrow, .catalog-view { color:#274aa8; }
+.catalog-search, .catalog-menu-trigger, .catalog-menu-panel, .catalog-card, .catalog-dialog { background:#fff; color:#080b13; border-color:#b7c7ee; }
+.catalog-search { color:#274aa8; }
+.catalog-search:focus-within { border-color:#073bff; box-shadow:0 0 0 3px #073bff20; }
+.catalog-search input { color:#080b13; }
+.catalog-search input::placeholder { color:#53617a; }
+.catalog-card-photo, .catalog-detail-photo { background:#e9efff; color:#263c73; }
+.catalog-featured { background:#073bff; color:#fff; }
+.catalog-message { background:#e9efff; color:#080b13; border-color:#7593ff; }
+.catalog-dialog { color:#080b13; }
+.catalog-thumbnails button[aria-pressed=true] { border-color:#073bff; }
+.catalog-spinner { border-color:#c6d3f5; border-top-color:#073bff; }
+.catalog-cta, .catalog-more { background:#073bff; border-color:#073bff; color:#fff; }
+.catalog-footer { background:#101c37; border-color:#101c37; color:#fff; }

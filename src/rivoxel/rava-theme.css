@@ -13,6 +13,26 @@
 .reviews-invitation, .catalog-invitation { background: #141e32; color: #f3f6ff; border-color: #34456a; }
 .reviews-invitation-copy span, .catalog-invitation-copy a { color: #c1cce5; }
 .footer { background: #101c37; }
+.site-shell { background: #080b13; color: #fff; }
+.site-shell :focus-visible { outline-color: #7593ff; }
+.nav > a:not(.nav-cta):hover { color: #a9bbff; }
+.menu-toggle { color: #fff; border-color: #7593ff; }
+.piece { background: #141e32; }
+.piece-heading h3 { color: #fff; }
+.piece-index, .piece-arrow { background: #fff; color: #073bff; }
+.about-rava-image > span { background: #fff; color: #073bff; }
+.about-rava-copy .about-rava-eyebrow, .about-rava-copy h2 em { color: #a9bbff; }
+.about-rava-copy > p:not(.about-rava-eyebrow), .about-rava-values span { color: #e2e8ff; }
+.about-rava-values span { border-color: #7593ff; }
+.about-rava-copy .under-link { color: #fff; border-color: #7593ff; }
+.reviews-invitation-icon { background: #073bff; color: #fff; }
+.reviews-invitation-copy p { color: #a9bbff; }
+.reviews-invitation-copy h2 { color: #fff; }
+.reviews-invitation > a { color: #fff; border-color: #7593ff; }
+.reviews-invitation > a:hover { color: #fff; background: #073bff; }
+.catalog-invitation-copy { border-color: #7593ff; }
+.catalog-invitation-copy > a { color: #b8c7ff; }
+.footer-description { color: #fff; }
 @media(max-width:640px) {
   .landing-intro, .landing-intro .site-header { background: #0c1425; }
   .landing-intro .hero-scene { background-image: url('../assets/hero-vaso.png'); }
