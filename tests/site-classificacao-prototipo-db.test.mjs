@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { storageTestSchema } from './storage-test-schema.mjs';
+import { prepararMigracaoSites } from '../scripts/preparar-migracao-sites.mjs';
 
 test('classificação do site não altera os dados operacionais', async t => {
   const db = new PGlite();
@@ -261,9 +262,23 @@ test('padrão Rava alcança somente publicações existentes e conserva o catál
     (select jsonb_agg(to_jsonb(c) order by c.nome) from public.financeiro_caixas c) caixas`);
   const before = await snapshot();
   const previous = (await one('select public.catalogo_publico() r')).r;
-  await db.exec(readFileSync('supabase/propostas/catalogo_site_categorias.sql', 'utf8'));
-  await db.exec(readFileSync('supabase/propostas/catalogo_site_padrao_rava_publicados.sql', 'utf8'));
-  await db.exec(readFileSync('supabase/propostas/catalogo_site_indicacoes_compatibilidade.sql', 'utf8'));
+  const migration = await prepararMigracaoSites();
+  assert.equal(readFileSync('supabase/propostas/implantacao_catalogo_sites.sql', 'utf8').replaceAll('\r\n', '\n'), migration.replaceAll('\r\n', '\n'));
+  const originalValidator = (await one("select pg_get_functiondef('public.validar_indicacao_catalogo()'::regprocedure) definition")).definition;
+  await db.exec("create or replace function public.validar_indicacao_catalogo() returns trigger language plpgsql set search_path='' as $$begin return new; end;$$");
+  await assert.rejects(db.exec(migration), /Validação legada/);
+  await db.exec('rollback');
+  await db.exec(originalValidator);
+  await db.exec('alter table public.catalogo_indicacoes disable trigger validar_indicacao_catalogo');
+  await assert.rejects(db.exec(migration), /Gatilho esperado/);
+  await db.exec('rollback');
+  assert.equal((await one("select to_regclass('public.site_classificacao_produtos') t")).t, null);
+  await db.exec('alter table public.catalogo_indicacoes enable trigger validar_indicacao_catalogo');
+  await assert.rejects(db.exec(migration.replace(/commit;\s*$/, "select 1/0;\ncommit;")));
+  await db.exec('rollback');
+  assert.equal((await one("select to_regclass('public.site_classificacao_produtos') t")).t, null);
+  assert.deepEqual(await snapshot(), before);
+  await db.exec(migration);
   assert.deepEqual(await snapshot(), before);
   const classifications = (await db.query('select produto_id,principal_id from public.site_classificacao_produtos order by produto_id')).rows;
   assert.deepEqual(classifications, [

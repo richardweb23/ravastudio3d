@@ -16,7 +16,8 @@ export function releaseEnvironment(env) {
   if (instagramUrl.protocol !== 'https:' || !/^[a-z0-9-]+\.supabase\.co$/.test(instagramUrl.hostname) || instagramUrl.pathname !== '/' || instagramUrl.search || instagramUrl.hash || instagramUrl.username || instagramUrl.password || instagramUrl.port) throw new Error('URL do Instagram inválida.');
   const instagramKey = (env.RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY || '').trim();
   const instagramChecked = previewEnvironment({ ...env, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_URL: instagramUrl.origin, RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: instagramKey });
-  return { ...base, VITE_INSTAGRAM_SUPABASE_URL: instagramUrl.origin, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramChecked.VITE_SUPABASE_PUBLISHABLE_KEY };
+  const multisite = env.RAVA_MULTISITE_RELEASE_CONFIRMED === 'production';
+  return { ...base, RAVA_MULTISITE_BUILD: String(multisite), VITE_SITE_CATEGORIAS_EXPERIMENTAL: String(multisite), VITE_INSTAGRAM_SUPABASE_URL: instagramUrl.origin, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramChecked.VITE_SUPABASE_PUBLISHABLE_KEY };
 }
 
 export async function buildRelease(env = process.env) {
@@ -25,7 +26,13 @@ export async function buildRelease(env = process.env) {
     const result = spawnSync(process.execPath, args, { env: release, stdio: 'inherit' });
     if (result.error || result.status !== 0) throw new Error('Falha ao preparar o build de produção.');
   }
-  await writeFile('dist/_headers', 'https://rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\nhttps://:preview.rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\nhttps://:worker.:account.workers.dev/*\n  X-Robots-Tag: noindex, nofollow\n');
+  const multisite = release.RAVA_MULTISITE_BUILD === 'true';
+  await writeFile('dist/_headers', `${multisite ? '' : 'https://rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\n'}https://:preview.rivoxel.com.br/*\n  X-Robots-Tag: noindex, nofollow\n\nhttps://:worker.:account.workers.dev/*\n  X-Robots-Tag: noindex, nofollow\n`);
+  if (multisite) {
+    await writeFile('dist/site-catalog-config.json', JSON.stringify({ url: release.VITE_SUPABASE_URL, key: release.VITE_SUPABASE_PUBLISHABLE_KEY }));
+    await writeFile('dist/rivoxel-site/robots.txt', 'User-agent: *\nAllow: /\nSitemap: https://rivoxel.com.br/sitemap.xml\n');
+    await writeFile('dist/rivoxel-site/sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://rivoxel.com.br/</loc></url>\n  <url><loc>https://rivoxel.com.br/catalogo/</loc></url>\n  <url><loc>https://rivoxel.com.br/links/</loc></url>\n</urlset>\n');
+  }
   await rm('dist/CNAME', { force: true });
   console.log('Build de produção preparado; nenhuma publicação foi realizada.');
 }

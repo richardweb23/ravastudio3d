@@ -14,7 +14,7 @@ Consulta agregada de produção em 24/11/2026: 114 produtos cadastrados, dos qua
 
 ## Estado conferido
 
-- O layout e a navegação da Rivoxel foram validados na prévia; a seleção pelo domínio definitivo ainda não está ativada no código de produção.
+- O layout e a navegação da Rivoxel foram validados na prévia; a seleção pelo domínio definitivo ainda não está ativada em produção.
 - Em consulta de metadados somente leitura ao Supabase de produção, a tabela `marca_materiais`, a função `catalogo_publico_marca` e o gatilho `marca_rava_material` estavam ausentes. Esta consulta não verifica todo o schema nem garante, por si só, que ele coincida com as migrations do repositório.
 - As migrations `202611230001` a `202611230009` são parte do histórico da homologação. Não devem ser aplicadas como uma sequência automática em produção: foram construídas em etapas e algumas extrapolam o escopo confirmado.
 
@@ -24,7 +24,7 @@ Consulta agregada de produção em 24/11/2026: 114 produtos cadastrados, dos qua
 2. `202611230005` cria uma função de cadastro operacional com marca e `202611230007` a remove. `202611230006` substitui a função de duplicação e a faz depender do vínculo de marca; a remoção da primeira função não desfaz a substituição da segunda. A solução final deve preservar o comportamento operacional existente.
 3. `202611230003` substitui a função pública de catálogo já consumida pela Rava e por integrações. É necessário preservar seu contrato e comparar os resultados, incluindo paginação, produtos, indicações e categorias, antes de qualquer mudança. A seleção por site não deve alterar mensagens ou fluxos existentes de forma indireta.
 4. A associação atual é exclusiva por produto. Ao mudar o vínculo para Rivoxel, o produto deixa de aparecer na consulta da Rava. Isso é um comportamento da implementação de homologação, não uma autorização para reclassificar dados de produção ou remover produtos publicados do site atual.
-5. O build de produção ainda não inclui a página da Rivoxel. O gerador de páginas e sitemap é específico da Rava; a versão em homologação contém `noindex`. Antes de publicar, preparar roteamento, arquivos, SEO, atualização do catálogo e retorno à versão anterior para ambos os domínios.
+5. A publicação exige coordenar os arquivos e o roteamento dos dois domínios. A versão em homologação contém `noindex`. Antes de publicar, validar o build multi-site, atualização do catálogo e retorno à versão anterior para ambos os domínios.
 
 ## Direção para a próxima implementação
 
@@ -50,3 +50,9 @@ Nenhum código de produção ou dado foi alterado nesta revisão; a consulta rem
 - A prévia integrada foi publicada na branch `feat/multi-brand`, com banco de homologação e `noindex`. Na tela, o produto de teste Rivoxel foi associado à subcategoria de teste já existente; o botão “Ver no site” abriu o produto e sua subcategoria na prévia Rivoxel. O usuário precisa validar o fluxo final antes de qualquer implantação de produção.
 - Antes da produção, reconciliar o controle exclusivo de homologação, revisar a migração específica da produção, o build de release, as páginas de produtos já geradas e a compatibilidade das integrações legadas. A instalação de homologação não autoriza replicar a mesma sequência em produção.
 - Ainda faltam concluir a revisão do Marketplace, das páginas estáticas existentes e do plano específico para produção. Os arquivos em `supabase/propostas` não são migrations de produção prontas para execução.
+
+## Preparação local da publicação
+
+- O build multi-site agora tem páginas próprias de início, catálogo e links para Rivoxel, com URLs canônicas, robots e sitemap do domínio. O build normal permanece no fluxo anterior. A preparação exige `RAVA_MULTISITE_RELEASE_CONFIRMED=production` além das validações existentes; a rota pública do Worker exige separadamente `RIVOXEL_SITE_ENABLED=true`. Estas opções ainda não foram configuradas em produção.
+- Ao ativar a rota multi-site, cada acesso a uma página estática de produto da Rava consulta a classificação pública atual. Se o produto deixou de pertencer à Rava, a página antiga não é entregue; se a consulta estiver indisponível, responde 503. Isso introduz uma dependência de disponibilidade e uma chamada ao Supabase para cada acesso a essas páginas. O sitemap e as novas páginas estáticas continuam sendo atualizados no próximo build diário; um produto recém-classificado pode não ter página estática até esse build.
+- A implantação deve ser coordenada: banco, build multi-site e configuração do Worker precisam ser preparados e validados juntos. Publicar o Worker desta branch sem ativar sua rota própria retornaria 503 para o domínio Rivoxel. Os arquivos são uma preparação local, não uma autorização de implantação nem uma garantia de operação em produção.

@@ -47,6 +47,11 @@ export default defineConfig(({ mode }) => {
           rivoxelCatalog: resolve(projectDir, "rivoxel-preview/catalogo/index.html"),
           rivoxelLinks: resolve(projectDir, "rivoxel-preview/links/index.html"),
         } : {}),
+        ...(process.env.RAVA_MULTISITE_BUILD === "true" ? {
+          rivoxelSite: resolve(projectDir, "rivoxel-site/index.html"),
+          rivoxelSiteCatalog: resolve(projectDir, "rivoxel-site/catalogo/index.html"),
+          rivoxelSiteLinks: resolve(projectDir, "rivoxel-site/links/index.html"),
+        } : {}),
       },
     },
   },
