@@ -5,12 +5,13 @@
 .catalog-cta, .catalog-more { background:#073bff; color:white; }
 .catalog-footer { background:#101c37; color:white; }
 .catalog-site { background:#fff; color:#080b13; }
-.catalog-site::before { background-image:linear-gradient(to bottom,rgba(8,11,19,.15),#fff 96%),url('../assets/hero-vaso.png'); }
+.catalog-site::before { background-image:linear-gradient(to bottom,#e9efff,#fff 96%); }
 .catalog-site :focus-visible, .catalog-dialog :focus-visible { outline-color:#073bff; }
 .catalog-site-header, .catalog-discovery, .catalog-card-contact { border-color:#c6d3f5; }
 .catalog-social-links a:hover { background:#e6ecff; }
 .catalog-hero > p:last-child, .catalog-card-copy > p:not(.catalog-eyebrow), .catalog-price del, .catalog-detail-info dd { color:#303a50; }
 .catalog-eyebrow, .catalog-view { color:#274aa8; }
+.catalog-menu-trigger small, .catalog-result-count { color:#465a85; }
 .catalog-search, .catalog-menu-trigger, .catalog-menu-panel, .catalog-card, .catalog-dialog { background:#fff; color:#080b13; border-color:#b7c7ee; }
 .catalog-search { color:#274aa8; }
 .catalog-search:focus-within { border-color:#073bff; box-shadow:0 0 0 3px #073bff20; }
