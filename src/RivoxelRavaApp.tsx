@@ -47,7 +47,7 @@ export default function App() {
     <Header />
       <section className="hero" aria-labelledby="hero-title">
         <div className="hero-copy"><h1 id="hero-title">Transformamos<br />ideias em peças<br />únicas com<br /><em>impressão 3D</em></h1><p className="hero-lead">Peças decorativas, organizadores e presentes criativos feitos em impressão 3D.</p><div className="hero-actions"><a className="button button-dark" href="/rivoxel-preview/catalogo/"><span className="button-layers" aria-hidden="true">◇</span> Ver catálogo <Arrow /></a><a className="text-link" href="#colecoes">Conheça nossos produtos</a></div></div>
-        <div className="hero-scene" role="img" aria-label="Composição de produtos decorativos, organizadores e peças natalinas da Rivoxel" />
+        <div className="hero-scene" role="img" aria-label="Colecionáveis geek em impressão 3D em uma composição azul" />
       </section>
     </div>
     <main>

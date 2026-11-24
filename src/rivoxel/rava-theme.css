@@ -1,5 +1,5 @@
 :root { color: #e9edfa; background: var(--brand-background); }
-.landing-intro { background-color: var(--brand-hero-background); background-image: linear-gradient(90deg, rgba(5,9,19,.97) 0%, rgba(5,9,19,.86) 37%, rgba(5,9,19,.18) 72%), url('../assets/hero-vaso.png'); }
+.landing-intro { background-color: var(--brand-hero-background); background-image: linear-gradient(90deg, rgba(5,9,19,.96) 0%, rgba(5,9,19,.74) 30%, rgba(5,9,19,.05) 58%), url('./assets/hero-rivoxel.webp'); }
 .landing-intro .site-header, .landing-intro .hero-copy, .landing-intro .hero-lead { color: #f2f5ff; }
 .landing-intro .hero h1, .landing-intro .hero .text-link { color: #f2f5ff; }
 .landing-intro .hero h1 em, h1 em, h2 em { color: var(--brand-border); }
@@ -39,6 +39,6 @@
 }
 @media(max-width:640px) {
   .landing-intro, .landing-intro .site-header { background: var(--brand-hero-background); }
-  .landing-intro .hero-scene { background-image: url('../assets/hero-vaso.png'); }
+  .landing-intro .hero-scene { display:block; background-image: url('./assets/hero-rivoxel.webp'); background-position:center; background-size:cover; }
   .nav.is-open { background: var(--brand-menu-bg); color: #fff; }
 }
