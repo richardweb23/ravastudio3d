@@ -16,7 +16,7 @@ export function releaseEnvironment(env) {
   if (instagramUrl.protocol !== 'https:' || !/^[a-z0-9-]+\.supabase\.co$/.test(instagramUrl.hostname) || instagramUrl.pathname !== '/' || instagramUrl.search || instagramUrl.hash || instagramUrl.username || instagramUrl.password || instagramUrl.port) throw new Error('URL do Instagram inválida.');
   const instagramKey = (env.RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY || '').trim();
   const instagramChecked = previewEnvironment({ ...env, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_URL: instagramUrl.origin, RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: instagramKey });
-  const multisite = env.RAVA_MULTISITE_RELEASE_CONFIRMED === 'production';
+  const multisite = env.RAVA_MULTISITE_RELEASE_CONFIRMED === 'production' || (env.WORKERS_CI === '1' && env.WORKERS_CI_BRANCH === 'main');
   return { ...base, RAVA_MULTISITE_BUILD: String(multisite), VITE_SITE_CATEGORIAS_EXPERIMENTAL: String(multisite), VITE_INSTAGRAM_SUPABASE_URL: instagramUrl.origin, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramChecked.VITE_SUPABASE_PUBLISHABLE_KEY };
 }
 
