@@ -23,6 +23,8 @@ test('prévia aceita somente chave pública identificável', () => {
 test('categorias experimentais só são habilitadas explicitamente no ambiente isolado', () => {
   assert.equal(previewEnvironment(valid).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
   assert.equal(previewEnvironment({ ...valid, VITE_SITE_CATEGORIAS_EXPERIMENTAL: 'true' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'true');
+  assert.equal(previewEnvironment({ ...valid, WORKERS_CI: '1', WORKERS_CI_BRANCH: 'feat/multi-brand' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'true');
+  assert.equal(previewEnvironment({ ...valid, WORKERS_CI: '1', WORKERS_CI_BRANCH: 'outra' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
   assert.equal(previewEnvironment({ ...valid, RAVA_PREVIEW_MODE: 'public', RAVA_PRODUCTION_SUPABASE_PUBLIC_KEY: 'sb_publishable_publica', VITE_SITE_CATEGORIAS_EXPERIMENTAL: 'true' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
 });
 

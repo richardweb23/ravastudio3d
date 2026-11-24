@@ -32,7 +32,8 @@ export function previewEnvironment(env) {
     instagramUrl = instagram.VITE_SUPABASE_URL;
     instagramKey = instagram.VITE_SUPABASE_PUBLISHABLE_KEY;
   }
-  return { ...env, VITE_SITE_CATEGORIAS_EXPERIMENTAL: mode === 'staging' && env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true' ? 'true' : 'false', VITE_SUPABASE_URL: target, VITE_SUPABASE_PUBLISHABLE_KEY: key, VITE_SUPABASE_ANON_KEY: '', VITE_INSTAGRAM_SUPABASE_URL: instagramUrl, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramKey };
+  const siteExperimental = mode === 'staging' && (env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true' || (env.WORKERS_CI === '1' && env.WORKERS_CI_BRANCH === 'feat/multi-brand'));
+  return { ...env, VITE_SITE_CATEGORIAS_EXPERIMENTAL: siteExperimental ? 'true' : 'false', VITE_SUPABASE_URL: target, VITE_SUPABASE_PUBLISHABLE_KEY: key, VITE_SUPABASE_ANON_KEY: '', VITE_INSTAGRAM_SUPABASE_URL: instagramUrl, VITE_INSTAGRAM_SUPABASE_PUBLISHABLE_KEY: instagramKey };
 }
 
 function run(args, env) {

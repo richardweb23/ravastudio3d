@@ -9,6 +9,7 @@ test('produção exige autorização explícita, projetos separados e Instagram 
   assert.equal(value.VITE_SUPABASE_URL, env.RAVA_PRODUCTION_SUPABASE_URL);
   assert.equal(value.VITE_INSTAGRAM_SUPABASE_URL, env.RAVA_INSTAGRAM_SUPABASE_URL);
   assert.equal(releaseEnvironment({ ...env, VITE_SITE_CATEGORIAS_EXPERIMENTAL: 'true' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
+  assert.equal(releaseEnvironment({ ...env, WORKERS_CI: '1', WORKERS_CI_BRANCH: 'feat/multi-brand' }).VITE_SITE_CATEGORIAS_EXPERIMENTAL, 'false');
   assert.throws(() => releaseEnvironment({ ...env, RAVA_RELEASE_CONFIRMED:'' }), /não habilitado/);
   assert.throws(() => releaseEnvironment({ ...env, RAVA_STAGING_SUPABASE_URL:env.RAVA_PRODUCTION_SUPABASE_URL }), /diferentes/);
   assert.throws(() => releaseEnvironment({ ...env, RAVA_INSTAGRAM_SUPABASE_PUBLIC_KEY:'sb_secret_invalida' }), /somente/);
