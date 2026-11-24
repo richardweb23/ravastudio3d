@@ -1,4 +1,4 @@
-import { marcaDoHostname } from '../src/lib/marcas.ts';
+import { HOST_PREVIA_RIVOXEL, marcaDoHostname } from '../src/lib/marcas.ts';
 
 type Assets = { fetch(request: Request): Promise<Response> };
 
@@ -6,8 +6,32 @@ type Assets = { fetch(request: Request): Promise<Response> };
 // cabeçalhos enviados pelo cliente para escolher a marca.
 const previasRava = new Set([
   'feat-multi-brand.rivoxel.com.br',
-  'feat-multi-brand-ravastudio3d.studiorava3d.workers.dev',
+  HOST_PREVIA_RIVOXEL,
 ]);
+
+/** Roteamento da vitrine Rivoxel, ativo somente no alias de homologação. */
+export async function atenderRivoxel(request: Request, assets: Assets): Promise<Response> {
+  const url = new URL(request.url);
+  const paginas: Record<string, string> = {
+    '/': '/rivoxel-preview/index.html',
+    '/index.html': '/rivoxel-preview/index.html',
+    '/catalogo/': '/rivoxel-preview/catalogo/index.html',
+    '/catalogo/index.html': '/rivoxel-preview/catalogo/index.html',
+    '/links/': '/rivoxel-preview/links/index.html',
+    '/links/index.html': '/rivoxel-preview/links/index.html',
+  };
+  if (url.pathname === '/catalogo' || url.pathname === '/links') {
+    url.pathname += '/';
+    return Response.redirect(url.toString(), 308);
+  }
+  const destino = paginas[url.pathname] ?? (url.pathname.startsWith('/assets/') ? url.pathname : null);
+  if (!destino) return new Response('Página não encontrada.', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' } });
+  url.pathname = destino;
+  const response = await assets.fetch(new Request(url, request));
+  const headers = new Headers(response.headers);
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
 
 export async function atender(request: Request, assets: Assets): Promise<Response> {
   const url = new URL(request.url);
@@ -15,6 +39,7 @@ export async function atender(request: Request, assets: Assets): Promise<Respons
   if (/^\/(?:rivoxel-preview)(?:\/|$)/i.test(url.pathname) && !previasRava.has(host)) {
     return new Response('Página não encontrada.', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' } });
   }
+  if (host === HOST_PREVIA_RIVOXEL) return atenderRivoxel(request, assets);
   const marca = marcaDoHostname(host) ?? (previasRava.has(host) ? 'rava' : null);
   if (!marca) return new Response('Domínio não configurado.', { status: 404, headers: { 'X-Robots-Tag': 'noindex, nofollow', 'Cache-Control': 'no-store' } });
 

@@ -15,6 +15,12 @@ test("endereços da Rivoxel mantêm a prévia isolada e usam caminhos definitivo
   assert.equal(production.links, "/links/");
   assert.equal(production.product("peca"), "/catalogo/?produto=peca");
 
+  const previewRoot = rivoxelUrls("feat-multi-brand-ravastudio3d.studiorava3d.workers.dev");
+  assert.equal(previewRoot.home, "/");
+  assert.equal(previewRoot.catalog, "/catalogo/");
+  assert.equal(previewRoot.links, "/links/");
+  assert.equal(previewRoot.product("peca"), "/catalogo/?produto=peca");
+
   assert.equal(rivoxelUrls("rivoxel.com.br.example.com").home, "/rivoxel-preview/");
   assert.equal(rivoxelUrls("ravastudio3d.com.br").home, "/rivoxel-preview/");
 });

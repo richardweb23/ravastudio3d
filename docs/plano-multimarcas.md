@@ -1,5 +1,9 @@
 # Plano técnico: Rava e Rivoxel
 
+> **Escopo confirmado em 24/11/2026:** a separação entre Rava e Rivoxel é somente para apresentação e catálogo dos sites. Caixas, categorias operacionais, estoque, pedidos, vendas, financeiro e demais fluxos do sistema de gestão não devem ser separados nem alterados para identificar marca. As propostas anteriores neste documento que sugerem essa separação estão superadas. Qualquer suporte ao catálogo deve ser restrito à gestão do que aparece nos sites e preservar o comportamento operacional existente.
+>
+> Antes de publicar, revisar as migrations já preparadas em homologação: as etapas intermediárias `202611230005` e `202611230006` envolveram funções de cadastro ou duplicação de produtos, e a `202611230007` removeu a primeira função. Não aplicar essa sequência automaticamente em produção; preparar e verificar uma solução compatível com o escopo confirmado e com o estado real do banco.
+
 Data: 19/11/2026. Situação: proposta para revisão; nenhuma migration ou alteração de aplicação foi executada nesta etapa.
 
 ## Base e limites
@@ -17,8 +21,8 @@ Data: 19/11/2026. Situação: proposta para revisão; nenhuma migration ou alter
 | Produto e estoque | `materiais` concentra identidade, código permanente, custo e quantidade; `estoque_por_local` referencia `material_id`. Compras, itens de pedidos, vendas e consignação referenciam materiais. | Preservar IDs e um estoque por item físico; não criar cópias artificiais de material. |
 | Catálogo | `catalogo_produtos.material_id` é chave e referência de `materiais`; categorias, imagens e histórico de slugs se relacionam com o catálogo. `catalogo_indicacoes` é uma origem separada para marketplace. | A separação deve incluir produtos, indicações, imagens e aliases, não apenas a listagem. |
 | Categorias | `catalogo_categorias` tem slug global único; `catalogo_produtos` referencia uma categoria. A estrutura versionada examinada não demonstra hierarquia de subcategorias: confirmar no banco e nos dados reais antes de desenhar a migração. | Preservar categorias e eventuais dados legados; criar hierarquia se comprovadamente necessária, sem confundir com `materiais.categoria`. |
-| Pedidos e vendas | `pedidos`, `pedido_itens`, `pedido_pagamentos`, `vendas` e consignação têm relações e funções de gravação; vendas podem referenciar pedido e item. | Marca da transação precisa ser persistida, inclusive em venda avulsa; manter integridade ao editar, devolver e gerar vendas de pedido. |
-| Financeiro | Despesas, parcelas, pagamentos, movimentos, reembolsos e caixas são estruturas distintas; `financeiro_resumo` e outras funções agregam dados. | Não inferir marca dos nomes dos caixas nem duplicar ou ratear lançamentos automaticamente. Rever origem, estorno, transferência e somatórios. |
+| Pedidos e vendas | `pedidos`, `pedido_itens`, `pedido_pagamentos`, `vendas` e consignação têm relações e funções de gravação; vendas podem referenciar pedido e item. | Preservar os fluxos existentes, sem adicionar separação por marca. |
+| Financeiro | Despesas, parcelas, pagamentos, movimentos, reembolsos e caixas são estruturas distintas; `financeiro_resumo` e outras funções agregam dados. | Preservar os caixas e o comportamento financeiro existente, sem separação por marca. |
 | Segurança | `catalogo_publico` é RPC `security definer`; tabelas administrativas utilizam permissões e RLS. Storage possui bucket público de catálogo e políticas próprias. | Filtrar no backend, revisar todos os pontos públicos e funções privilegiadas; uma URL pública de imagem não garante confidencialidade. |
 | Publicação | Vite/React, Worker com static assets, `scripts/gerar-paginas-catalogo.mjs` e sitemap atualmente voltados à Rava. Worker ativo não tem código de resolução de hostname no repositório. | Precisamos de roteamento por host e assets/SEO por marca sem misturar cache ou quebrar URLs existentes. |
 | Valores históricos | `materiais.categoria` e caixas incluem nomes como Rivoxel e Rava, com significados operacionais. | Não usar esses valores para classificar marca comercial nem modificá-los automaticamente. |
@@ -159,3 +163,9 @@ Inventariar origem, acesso, propriedade dos ativos, produtos, imagens e URLs sem
 - Esta etapa prepara os links, sem habilitar o domínio definitivo. O build de produção ainda não inclui as páginas da Rivoxel e o Worker mantém o bloqueio; o roteamento de produção, os metadados e a publicação precisam de implementação e testes próprios.
 - Os caminhos não autorizam acesso a dados. A RPC pública filtra por marca e as regras de proteção do banco continuam responsáveis pelos dados privados. Nenhuma migration, DNS ou configuração de produção foi alterada nesta etapa.
 - Validação: testes dos caminhos de prévia e produção e do domínio exato, além de `npm run check` e build em modo staging. Reverter a alteração no código restaura os links anteriores, sem afetar o banco.
+
+## 18. Roteamento público preparado para testes
+
+- O Worker serve início, catálogo e links da Rivoxel a partir dos caminhos definitivos exclusivamente no alias de homologação `feat-multi-brand-ravastudio3d.studiorava3d.workers.dev`, preservando parâmetros de produto e mantendo `noindex`. O bloqueio do domínio público Rivoxel permanece ativo no código da branch. A prévia da Rava em `feat-multi-brand.rivoxel.com.br` e seus caminhos existentes não foram alterados.
+- Testes automatizados cobrem as páginas, arquivos estáticos, redirecionamento de barras, URLs desconhecidas e preservação da rota da Rava. Um build staging foi verificado localmente com os arquivos reais gerados e endereços simulados. Isso não comprova o funcionamento em um domínio Cloudflare nem faz publicação.
+- A publicação da branch e a verificação HTTP e funcional do alias continuam necessárias para confirmar a homologação externa. Antes da produção, revisar o build de release, SEO, catálogo, migrations e reversão conforme o escopo confirmado no início deste documento.
