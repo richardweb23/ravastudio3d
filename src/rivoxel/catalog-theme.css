@@ -28,3 +28,58 @@
 .catalog-menu-panel p { color:var(--brand-text-secondary); }
 .catalog-menu-panel button { color:var(--brand-text-dark); }
 .catalog-menu-panel button.is-current { color:var(--brand-catalog-selected); }
+
+/* O catálogo usa a mesma estrutura da Rava com luz e superfícies da Rivoxel. */
+.catalog-site {
+  background: var(--brand-background);
+  color: var(--brand-text-light);
+}
+.catalog-site::before {
+  height: clamp(700px, 100vw, 1200px);
+  background-image:
+    linear-gradient(to bottom, rgba(8,11,19,.05) 0%, rgba(8,11,19,.4) 55%, var(--brand-background) 100%),
+    repeating-conic-gradient(from 220deg at 78% -12%, rgba(108,155,255,.11) 0deg, transparent 4deg, transparent 12deg, rgba(90,135,255,.06) 16deg, transparent 23deg),
+    radial-gradient(ellipse at 78% -8%, rgba(67,125,255,.48), transparent 47%),
+    linear-gradient(145deg, #081020, #0b1837 52%, var(--brand-background));
+  background-size: 100% 100%;
+  background-position: center top;
+}
+.catalog-site-header, .catalog-discovery { border-color: rgba(159,181,255,.25); }
+.catalog-site-header img { background:transparent; }
+.catalog-social-links a:hover { background:rgba(107,145,255,.2); }
+.catalog-hero h1 { color:var(--brand-text-light); }
+.catalog-hero > p:last-child { color:var(--brand-text-muted); }
+.catalog-search {
+  background:rgba(13,24,47,.88);
+  border-color:#435a88;
+  color:#b9caff;
+  box-shadow:0 8px 26px rgba(0,0,0,.16);
+}
+.catalog-search input { color:var(--brand-text-light); }
+.catalog-search input::placeholder { color:#b7c5e3; }
+.catalog-menu-trigger {
+  background:rgba(13,24,47,.92);
+  color:var(--brand-text-light);
+  border-color:#435a88;
+}
+.catalog-menu-trigger small, .catalog-result-count { color:#c1ceec; }
+.catalog-menu-trigger:hover, .catalog-menu-trigger[aria-expanded=true], .catalog-menu-trigger.is-selected {
+  background:#203967;
+  border-color:var(--brand-border);
+}
+.catalog-view-toggle { border-color:#435a88; }
+.catalog-view-toggle button { color:#d3dff9; }
+.catalog-view-toggle button[aria-pressed=true] { background:var(--brand-primary); color:#fff; }
+.catalog-card {
+  background:#101c31;
+  border-color:#30466f;
+  color:#fff;
+  box-shadow:0 12px 30px rgba(0,0,0,.16);
+}
+.catalog-card:hover { box-shadow:0 18px 40px rgba(0,0,0,.3); border-color:var(--brand-border); }
+.catalog-card-copy > p:not(.catalog-eyebrow), .catalog-card .catalog-price del { color:#c2cee7; }
+.catalog-card .catalog-eyebrow, .catalog-card .catalog-view { color:#b1c4ff; }
+.catalog-card-contact { border-color:#435a88; color:#fff; }
+.catalog-card-photo { background:#1a2a46; color:#d5def4; }
+.catalog-empty { color:#fff; }
+.catalog-footer { color:#fff; border-color:#30466f; }
