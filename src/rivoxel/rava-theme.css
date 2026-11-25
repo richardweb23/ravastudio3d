@@ -39,6 +39,5 @@
 }
 @media(max-width:640px) {
   .landing-intro, .landing-intro .site-header { background: var(--brand-hero-background); }
-  .landing-intro .hero-scene { display:block; background-image: url('./assets/hero-rivoxel-hd.webp'); background-position:center; background-size:cover; }
   .nav.is-open { background: var(--brand-menu-bg); color: #fff; }
 }
