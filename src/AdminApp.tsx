@@ -306,6 +306,17 @@ export default function AdminApp() {
       .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)) }));
   }
 
+  async function saveOrderDeliveryDate(order: Order, date: string | null) {
+    let query = requireSupabase().from("pedidos").update({ previsao_entrega: date })
+      .eq("id", order.id).neq("status", "entregue");
+    query = order.previsao_entrega ? query.eq("previsao_entrega", order.previsao_entrega) : query.is("previsao_entrega", null);
+    const { data: saved, error } = await query.select("id, previsao_entrega").maybeSingle();
+    if (error) throw error;
+    if (!saved) throw new Error("O pedido mudou. Atualize a página antes de editar a previsão.");
+    setData(current => ({ ...current, pedidos: current.pedidos.map(item =>
+      item.id === saved.id ? { ...item, previsao_entrega: saved.previsao_entrega } : item) }));
+  }
+
   async function saveOrderDescription(order: Order, description: string) {
     const { data: saved, error } = await requireSupabase().from("pedidos")
       .update({ observacao: description || null }).eq("id", order.id)
@@ -345,7 +356,7 @@ export default function AdminApp() {
       const { error } = await requireSupabase().from("pedido_itens").update({ concluido }).eq("id", item.id);
       if (error) throw error;
       await refresh(true);
-    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDescriptionSave={saveOrderDescription} onLinksSave={saveOrderLinks} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
+    })} onStatusChange={changeOrderStatus} onPriorityChange={changeOrderPriority} onDeliveryDateSave={saveOrderDeliveryDate} onDescriptionSave={saveOrderDescription} onLinksSave={saveOrderLinks} onSituationSave={saveOrderSituation} onSubtaskChange={changeOrderSubtask} />,
     catalogo: <CatalogAdmin materiais={data.materiais} locais={data.locais} onSaved={refresh} show={show} />,
     instagram: <InstagramAdmin />,
     estoque: <EstoqueComLocais materiais={data.materiais} locais={data.locais} estoqueLocal={data.estoqueLocal} onSaved={refresh} show={show} />,

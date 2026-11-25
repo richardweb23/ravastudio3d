@@ -10,10 +10,28 @@ import { formatMoney, formatNumber } from "../../lib/formatters.js";
 
 const dateLabel = (value?: string | null) => value ? new Date(`${value}T12:00:00`).toLocaleDateString("pt-BR") : "Não informada";
 
-export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange, onDescriptionSave, onLinksSave, subtasks = [], onSubtaskChange, onSituationSave, onStatusChange }: OrderActions & { order: Order; items: OrderItem[]; financial: { paid: number; balance: number; status: string }; onClose: () => void; subtasks?: Subtask[] }) {
+export default function PedidoDetalhes({ order, items, financial, onClose, onItemStatusChange, onDeliveryDateSave, onDescriptionSave, onLinksSave, subtasks = [], onSubtaskChange, onSituationSave, onStatusChange }: OrderActions & { order: Order; items: OrderItem[]; financial: { paid: number; balance: number; status: string }; onClose: () => void; subtasks?: Subtask[] }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const saving = useRef(false);
   const [busy, setBusy] = useState(false);
+  const [deliveryDate, setDeliveryDate] = useState(order.previsao_entrega || "");
+  const [dateMessage, setDateMessage] = useState<{ text: string; error: boolean } | null>(null);
+  async function saveDeliveryDate(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onDeliveryDateSave || saving.current) return;
+    saving.current = true;
+    setBusy(true);
+    setDateMessage(null);
+    try {
+      await onDeliveryDateSave(order, deliveryDate || null);
+      setDateMessage({ text: "Previsão salva.", error: false });
+    } catch (error) {
+      setDateMessage({ text: errorMessage(error, "Não foi possível salvar a previsão."), error: true });
+    } finally {
+      saving.current = false;
+      setBusy(false);
+    }
+  }
   const [description, setDescription] = useState(order.observacao || "");
   const [descriptionMessage, setDescriptionMessage] = useState<{ text: string; error: boolean } | null>(null);
   const [newLink, setNewLink] = useState("");
@@ -90,7 +108,11 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
     <div className="order-details-meta">
       <div><span>Status do pedido</span><Status value={order.status} /></div>
       <div><span>Data do pedido</span><strong>{dateLabel(order.data_pedido)}</strong></div>
-      <div><span>Previsão de entrega</span><strong>{dateLabel(order.previsao_entrega)}</strong></div>
+      <div>{onDeliveryDateSave && order.status !== "entregue" ? <form onSubmit={saveDeliveryDate}>
+        <label>Previsão de entrega<input type="date" value={deliveryDate} onChange={event => { setDeliveryDate(event.target.value); setDateMessage(null); }} /></label>
+        <div className="actions"><button type="submit" disabled={busy || deliveryDate === (order.previsao_entrega || "")}>Salvar previsão</button></div>
+        {dateMessage && <small role={dateMessage.error ? "alert" : "status"}>{dateMessage.text}</small>}
+      </form> : <><span>Previsão de entrega</span><strong>{dateLabel(order.previsao_entrega)}</strong></>}</div>
     </div>
     <OrderWorkflow order={order} onStatusChange={onStatusChange} onSituationSave={onSituationSave} />
     <section className="order-details-section order-details-products" aria-labelledby="order-items-title">
