@@ -7,8 +7,7 @@ import CatalogDialog from './CatalogDialog';
 
 type Item = { id: string; nome: string; tipo: 'produto' | 'indicacao' };
 
-export default function SiteCatalogCategories({ open, onClose, itens, onConfig }: { open: boolean; onClose: () => void; itens: Item[]; onConfig: (config: SiteConfiguracao) => void }) {
-  const [config, setConfig] = useState<SiteConfiguracao | null>(null);
+export default function SiteCatalogCategories({ open, onClose, itens, config, onConfig }: { config: SiteConfiguracao | null; open: boolean; onClose: () => void; itens: Item[]; onConfig: (config: SiteConfiguracao) => void }) {
   const [principal, setPrincipal] = useState<SitePrincipal>('rava');
   const [classPrincipal, setClassPrincipal] = useState<SitePrincipal | ''>('');
   const [nome, setNome] = useState('');
@@ -20,14 +19,13 @@ export default function SiteCatalogCategories({ open, onClose, itens, onConfig }
   const refresh = useCallback(async () => {
     const { data, error: failure } = await requireSupabase().rpc('site_configuracao_catalogo');
     if (failure) throw failure;
-    setConfig(data);
     onConfig(data);
   }, [onConfig]);
   useEffect(() => {
     let active = true;
     Promise.resolve().then(() => requireSupabase().rpc('site_configuracao_catalogo')).then(({ data, error: failure }) => {
       if (failure) throw failure;
-      if (active) { setConfig(data); onConfig(data); }
+      if (active) onConfig(data);
     }).catch(e => { if (active) setError(errorMessage(e, 'Não foi possível carregar as categorias do site.')); });
     return () => { active = false; };
   }, [onConfig]);

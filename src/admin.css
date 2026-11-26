@@ -2673,6 +2673,16 @@ input:focus, select:focus, textarea:focus { border-color: var(--admin-gold); box
 .order-details-dialog .order-dialog-body { display: grid; align-content: start; gap: 16px; background: #f8f6f2; }
 .order-details-dialog .order-details-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 16px 18px; border: 1px solid #eee7de; border-radius: 10px; background: white; }
 .order-details-dialog .order-details-meta > div { min-width: 0; }
+.order-date-form { display: grid; gap: 6px; width: 100%; }
+.order-date-form > label { color: #657084; font-size: 12px; }
+.order-date-controls { display: flex; align-items: center; gap: 6px; }
+.order-date-controls input { flex: 1; min-width: 0; width: 100%; }
+.order-date-controls button { display: grid; place-items: center; flex: 0 0 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: #245d46; color: white; cursor: pointer; }
+.order-date-controls button:disabled { background: #ebeef0; color: #697380; cursor: default; }
+.order-date-controls button:focus-visible { outline: 2px solid #245d46; outline-offset: 2px; }
+@media (max-width: 640px) {
+  .order-details-meta > div:has(.order-date-form) { grid-column: 1 / -1; }
+}
 .order-details-dialog :is(.order-details-section, .order-subtasks, .order-workflow) { min-width: 0; margin: 0; padding: 18px; border: 1px solid #eee7de; border-radius: 10px; background: white; }
 .order-details-dialog :is(.order-details-section, .order-subtasks) h3 { margin: 0 0 14px; font-size: 15px; }
 .order-details-dialog .order-workflow fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }

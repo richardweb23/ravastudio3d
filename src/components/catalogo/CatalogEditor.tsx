@@ -1,3 +1,4 @@
+import type { SiteConfiguracao, SitePrincipal } from "../../siteCatalogTypes";
 import type { AdminData } from "../../adminTypes";
 import { errorMessage } from "../../adminTypes";
 import type { Tables } from "../../database.types";
@@ -9,7 +10,7 @@ import { catalogCents, catalogCode, catalogSlug, marketplaceUrl } from "../../li
 import { catalogImageUrl, imageAction, removeCatalogImage, saveCatalog, unwrap, uploadCatalogImage } from "../../services/catalogo.js";
 import CatalogDialog from "./CatalogDialog.tsx";
 import ProductDetail from "./ProductDetail.tsx";
-export default function CatalogEditor({ product, record, images, categories, marcas, marcaAtual, siteClassificado = false, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; marcas: Tables<"marcas">[]; marcaAtual: string; siteClassificado?: boolean; onClose: () => void; onSaved: () => Promise<void> }) {
+export default function CatalogEditor({ product, record, images, categories, marcas, marcaAtual, siteConfig, onClassified, onClose, onSaved }: { product: AdminData["materiais"][number]; record?: Tables<"catalogo_produtos">; images: Tables<"catalogo_imagens">[]; categories: Tables<"catalogo_categorias">[]; marcas: Tables<"marcas">[]; marcaAtual: string; siteConfig: SiteConfiguracao | null; onClassified: (entry: SiteConfiguracao["produtos"][number]) => void; onClose: () => void; onSaved: () => Promise<void> }) {
   const categoriasExperimentais = import.meta.env.VITE_SITE_CATEGORIAS_EXPERIMENTAL === 'true';
   const suggestLink = (title?: string | null) => `${catalogSlug(title?.trim() || product.nome).slice(0, 160).replace(/-$/, "") || "produto"}-${catalogCode(product.codigo)}`;
   const [saved, setSaved] = useState<Tables<"catalogo_produtos"> | null | undefined>(record);
@@ -28,7 +29,15 @@ export default function CatalogEditor({ product, record, images, categories, mar
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [preview, setPreview] = useState<CatalogProduct | null>(null);
-  const [dirty, setDirty] = useState(false);
+  const [formDirty, setDirty] = useState(false);
+  const atual = siteConfig?.produtos.find(c => c.produto_id === product.id);
+  const [selection, setSelection] = useState<{ principal: SitePrincipal; sub: string } | null>(null);
+  const principal = selection?.principal ?? atual?.principal_id;
+  const sub = selection?.sub ?? atual?.subcategoria_id ?? "";
+  const subcategorias = siteConfig?.subcategorias.filter(c => c.principal_id === principal) ?? [];
+  const siteClassificado = principal && (!sub || subcategorias.some(c => c.id === sub && c.ativa));
+  const categoryChanged = selection !== null && (principal !== atual?.principal_id || sub !== (atual?.subcategoria_id ?? ""));
+  const dirty = formDirty || categoryChanged;
   const [novaMarca, setNovaMarca] = useState(marcaAtual);
   const ready = images.filter(i => i.estado === "pronta").sort((a, b) => a.ordem - b.ordem || a.id.localeCompare(b.id));
   const suggestedLink = suggestLink(form.titulo);
@@ -66,8 +75,25 @@ export default function CatalogEditor({ product, record, images, categories, mar
   }
   async function save() {
     if (!categoriasExperimentais && novaMarca !== marcaAtual) throw Error("Confirme a alteração de marca antes de salvar o catálogo.");
-    const value = await saveCatalog(product.id, data(), saved?.versao);
-    setSaved(value); setDirty(false); await onSaved();
+    const payload = data();
+    let current = saved;
+    if (categoryChanged && principal) {
+      // A classificação precisa de um registro de catálogo antes da primeira publicação.
+      if (!current) {
+        current = await saveCatalog(product.id, { ...payload, status: "rascunho" });
+        setSaved(current);
+      }
+      await unwrap(requireSupabase().rpc("site_classificar_produto", {
+        p_produto_id: product.id, p_principal_id: principal, p_subcategoria_id: sub || null,
+      }));
+      onClassified({ produto_id: product.id, principal_id: principal, subcategoria_id: sub || null });
+      setSelection(null);
+    }
+    if (!categoryChanged || formDirty || current?.status !== payload.status) {
+      setSaved(await saveCatalog(product.id, payload, current?.versao));
+    }
+    setDirty(false);
+    await onSaved();
   }
   function close() { if (!dirty || window.confirm("Sair sem salvar as alterações do produto?")) onClose(); }
   async function upload(files: File[], replace: Tables<"catalogo_imagens"> | null = null) {
@@ -88,14 +114,25 @@ export default function CatalogEditor({ product, record, images, categories, mar
     await run(async () => { await imageAction("ordenar", product.id, null, { ids: ordered.map(i => i.id) }); await onSaved(); });
   }
   function showPreview() {
-    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categories.find(c => c.id === form.categoria_id)?.nome ?? null, marketplace: Boolean(categories.find(c => c.id === form.categoria_id)?.marketplace), imagens: ready }); }
+    try { setPreview({ ...data(), id: product.id, nome: form.titulo.trim() || product.nome, codigo: product.codigo, categoria: categoriasExperimentais ? subcategorias.find(c => c.id === sub)?.nome ?? siteConfig?.principais.find(c => c.id === principal)?.nome ?? null : categories.find(c => c.id === form.categoria_id)?.nome ?? null, marketplace: Boolean(categories.find(c => c.id === form.categoria_id)?.marketplace), imagens: ready }); }
     catch (err) { setError(errorMessage(err, "Não foi possível abrir a prévia.")); }
   }
   return <CatalogDialog title={`Catálogo · ${catalogCode(product.codigo)} — ${product.nome}`} onClose={close} busy={busy}>
     <form className="catalog-admin-form" onSubmit={e => { e.preventDefault(); run(save, "Produto salvo."); }}>
       <fieldset disabled={busy}>
         <p>Nome na Gestão: <strong>{product.nome}</strong> · Código: <strong>{catalogCode(product.codigo)}</strong></p>
-        {categoriasExperimentais && !siteClassificado && <p>Para publicar, salve como não publicado e escolha uma categoria principal e, se necessário, uma subcategoria ativa em “Categorias do Catálogo do Site”.</p>}
+        {categoriasExperimentais && <div className="form-grid">
+          <label>Categoria principal do site<SearchSelect disabled={!siteConfig} value={principal} onChange={e => {
+            const id = siteConfig?.principais.find(c => c.id === e.target.value)?.id;
+            if (id && id !== principal) setSelection({ principal: id, sub: "" });
+          }}><option value="" disabled>{siteConfig ? "Selecione a categoria" : "Aguardando categorias"}</option>
+            {siteConfig?.principais.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+          </SearchSelect></label>
+          <label>Subcategoria do site<SearchSelect disabled={!principal} value={sub} onChange={e => principal && setSelection({ principal, sub: e.target.value })}>
+            <option value="">Sem subcategoria</option>
+            {subcategorias.filter(c => c.ativa || c.id === sub).map(c => <option key={c.id} value={c.id} disabled={!c.ativa}>{c.nome}{c.ativa ? "" : " (inativa)"}</option>)}
+          </SearchSelect></label>
+        </div>}
         {!categoriasExperimentais && <div className="form-grid"><label>Marca no site<SearchSelect value={novaMarca} onChange={e => setNovaMarca(e.target.value)}><option value="">Selecione</option>{marcas.filter(m => m.ativa).map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}</SearchSelect></label><div><button type="button" disabled={!novaMarca || novaMarca === marcaAtual || dirty} onClick={() => run(async () => { await unwrap(requireSupabase().rpc('alterar_marca_material', { p_material_id: product.id, p_marca_atual: marcaAtual, p_nova_marca: novaMarca })); await onSaved(); }, 'Marca no site atualizada.')}>Alterar marca no site</button><small>Salve as alterações antes de mudar a marca. O cadastro e o estoque do produto permanecem os mesmos.</small></div></div>}
         <div className="form-grid">
           {field("Título no catálogo (opcional)", "titulo", { maxLength: 180, placeholder: product.nome })}

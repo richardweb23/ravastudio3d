@@ -108,9 +108,14 @@ export default function PedidoDetalhes({ order, items, financial, onClose, onIte
     <div className="order-details-meta">
       <div><span>Status do pedido</span><Status value={order.status} /></div>
       <div><span>Data do pedido</span><strong>{dateLabel(order.data_pedido)}</strong></div>
-      <div>{onDeliveryDateSave && order.status !== "entregue" ? <form onSubmit={saveDeliveryDate}>
-        <label>Previsão de entrega<input type="date" value={deliveryDate} onChange={event => { setDeliveryDate(event.target.value); setDateMessage(null); }} /></label>
-        <div className="actions"><button type="submit" disabled={busy || deliveryDate === (order.previsao_entrega || "")}>Salvar previsão</button></div>
+      <div>{onDeliveryDateSave && order.status !== "entregue" ? <form className="order-date-form" onSubmit={saveDeliveryDate}>
+        <label htmlFor="board-delivery-date">Previsão de entrega</label>
+        <div className="order-date-controls">
+          <input id="board-delivery-date" type="date" value={deliveryDate} onChange={event => { setDeliveryDate(event.target.value); setDateMessage(null); }} />
+          <button type="submit" aria-label="Salvar previsão de entrega" title="Salvar previsão de entrega" disabled={busy || deliveryDate === (order.previsao_entrega || "")}>
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4 10-10" /></svg>
+          </button>
+        </div>
         {dateMessage && <small role={dateMessage.error ? "alert" : "status"}>{dateMessage.text}</small>}
       </form> : <><span>Previsão de entrega</span><strong>{dateLabel(order.previsao_entrega)}</strong></>}</div>
     </div>
